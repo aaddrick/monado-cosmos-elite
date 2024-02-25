@@ -1,5 +1,5 @@
 // Copyright 2019-2021, Collabora, Ltd.
-// Copyright 2025, NVIDIA CORPORATION.
+// Copyright 2024-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -15,6 +15,7 @@
 
 #ifndef XRT_OS_LINUX
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +36,27 @@ namespace fs = std::experimental::filesystem;
  * Helpers
  *
  */
+
+#ifdef XRT_OS_OSX
+static inline errno_t
+fopen_s(FILE **f, const char *name, const char *mode)
+{
+	FILE *file = nullptr;
+	errno_t ret = 0;
+
+	assert(f);
+
+	file = fopen(name, mode);
+
+	if (file == nullptr) {
+		ret = errno;
+	}
+
+	*f = file;
+
+	return ret;
+}
+#endif // XRT_OS_OSX
 
 static inline fs::path
 get_config_path()
