@@ -1,5 +1,5 @@
 // Copyright 2019-2025, Collabora, Ltd.
-// Copyright 2025, NVIDIA CORPORATION.
+// Copyright 2024-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -429,7 +429,7 @@ do_print(const char *file, int line, const char *func, enum u_logging_level leve
 	} else {
 		__android_log_write(prio, storage_tag, storage);
 	}
-#elif defined XRT_OS_WINDOWS || defined XRT_OS_LINUX
+#elif defined(XRT_OS_WINDOWS) || defined(XRT_OS_LINUX) || defined(XRT_OS_OSX)
 
 	// We want a newline, so add it, then null-terminate again.
 	storage[printed++] = '\n';
