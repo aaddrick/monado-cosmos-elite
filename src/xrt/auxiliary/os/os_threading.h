@@ -1,4 +1,5 @@
 // Copyright 2019-2022, Collabora, Ltd.
+// Copyright 2024-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -17,19 +18,29 @@
 
 #include "os/os_time.h"
 
-#if defined(XRT_OS_LINUX) || defined(XRT_ENV_MINGW)
+#if defined(XRT_OS_OSX)
+#include <pthread.h>
+#include <assert.h>
+
+#elif defined(XRT_OS_LINUX) || defined(XRT_ENV_MINGW)
 #include <pthread.h>
 #include <semaphore.h>
 #include <assert.h>
 #define OS_THREAD_HAVE_SETNAME
+#define OS_THREAD_HAVE_SEMAPHORE
+
 #elif defined(XRT_OS_WINDOWS)
 #include <pthread.h>
 #include <sched.h>
 #include <semaphore.h>
 #include <assert.h>
 #define OS_THREAD_HAVE_SETNAME
+#define OS_THREAD_HAVE_SEMAPHORE
+
 #else
+
 #error "OS not supported"
+
 #endif
 
 #ifdef __cplusplus
@@ -353,6 +364,7 @@ os_thread_name(struct os_thread *ost, const char *name)
 #endif
 }
 
+#ifdef OS_THREAD_HAVE_SEMAPHORE
 /*
  *
  * Semaphore.
@@ -449,6 +461,7 @@ os_semaphore_destroy(struct os_semaphore *os)
 {
 	sem_destroy(&os->sem);
 }
+#endif // OS_THREAD_HAVE_SEMAPHORE
 
 
 /*
