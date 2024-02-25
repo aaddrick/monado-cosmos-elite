@@ -1,4 +1,5 @@
 // Copyright 2019-2022, Collabora, Ltd.
+// Copyright 2024-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -22,7 +23,15 @@
 
 #include "util/u_time.h"
 
-#ifdef XRT_OS_LINUX
+
+#if defined(XRT_OS_OSX)
+#include <time.h>
+#include <sys/time.h>
+#include <mach/mach_time.h>
+#define XRT_HAVE_TIMESPEC
+#define XRT_HAVE_TIMEVAL
+
+#elif defined(XRT_OS_LINUX)
 #include <time.h>
 #include <sys/time.h>
 #define XRT_HAVE_TIMESPEC
@@ -307,7 +316,7 @@ os_ns_per_qpc_tick_get(void)
 static inline int64_t
 os_monotonic_get_ns(void)
 {
-#if defined(XRT_OS_LINUX)
+#if defined(XRT_OS_LINUX) || defined(XRT_OS_OSX)
 	struct timespec ts;
 	int ret = clock_gettime(CLOCK_MONOTONIC, &ts);
 	if (ret != 0) {
