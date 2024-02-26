@@ -164,9 +164,9 @@ static inline int64_t
 os_timeval_to_ns(struct timeval *val);
 #endif
 
-#if defined(XRT_OS_LINUX) || defined(XRT_DOXYGEN)
+#if defined(XRT_OS_LINUX) || defined(XRT_OS_OSX) || defined(XRT_DOXYGEN)
 /*!
- * Return a realtime clock in nanoseconds (Linux-only)
+ * Return a realtime clock in nanoseconds (Linux and OSX)
  *
  * @ingroup aux_os_time_extra
  */
@@ -333,7 +333,7 @@ os_monotonic_get_ns(void)
 #endif
 }
 
-#ifdef XRT_OS_LINUX
+#if defined(XRT_OS_LINUX) || defined(XRT_OS_OSX)
 static inline int64_t
 os_realtime_get_ns(void)
 {
@@ -345,6 +345,10 @@ os_realtime_get_ns(void)
 
 	return os_timespec_to_ns(&ts);
 }
+#elif defined(XRT_OS_WINDOWS)
+// Not implemented on Windows
+#else
+#error "need port or decide not to implement"
 #endif
 
 
