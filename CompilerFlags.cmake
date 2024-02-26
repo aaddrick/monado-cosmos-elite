@@ -30,8 +30,9 @@ else()
 	target_compile_options(xrt-optimized-math INTERFACE $<IF:$<CONFIG:Debug>,-O2,-O3>)
 endif()
 
-if(NOT WIN32)
+if(NOT WIN32 AND NOT APPLE)
 	# Even clang's gnu-style driver on windows doesn't accept this argument.
+	# Apple's compiler doesn't like it either.
 
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
 	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--no-undefined")
