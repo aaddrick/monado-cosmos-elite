@@ -181,6 +181,7 @@ vk_fill_in_has_instance_extensions(struct vk_bundle *vk, struct u_string_list *e
 	// beginning of GENERATED instance extension code - do not modify - used by scripts
 	// Reset before filling out.
 	vk->has_KHR_external_memory_capabilities = false;
+	vk->has_KHR_portability_enumeration = false;
 	vk->has_EXT_display_surface_counter = false;
 	vk->has_EXT_swapchain_colorspace = false;
 	vk->has_EXT_debug_utils = false;
@@ -197,6 +198,13 @@ vk_fill_in_has_instance_extensions(struct vk_bundle *vk, struct u_string_list *e
 			continue;
 		}
 #endif // defined(VK_KHR_external_memory_capabilities)
+
+#if defined(VK_KHR_portability_enumeration)
+		if (strcmp(ext, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0) {
+			vk->has_KHR_portability_enumeration = true;
+			continue;
+		}
+#endif // defined(VK_KHR_portability_enumeration)
 
 #if defined(VK_EXT_display_surface_counter)
 		if (strcmp(ext, VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME) == 0) {
@@ -770,6 +778,7 @@ fill_in_has_device_extensions(struct vk_bundle *vk, struct u_string_list *ext_li
 	vk->has_KHR_maintenance3 = false;
 	vk->has_KHR_maintenance4 = false;
 	vk->has_KHR_present_wait = false;
+	vk->has_KHR_portability_subset = false;
 	vk->has_KHR_synchronization2 = false;
 	vk->has_KHR_timeline_semaphore = false;
 	vk->has_KHR_video_maintenance1 = false;
@@ -873,6 +882,13 @@ fill_in_has_device_extensions(struct vk_bundle *vk, struct u_string_list *ext_li
 			continue;
 		}
 #endif // defined(VK_KHR_present_wait)
+
+#if defined(VK_KHR_portability_subset)
+		if (strcmp(ext, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME) == 0) {
+			vk->has_KHR_portability_subset = true;
+			continue;
+		}
+#endif // defined(VK_KHR_portability_subset)
 
 #if defined(VK_KHR_synchronization2)
 		if (strcmp(ext, VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME) == 0) {
