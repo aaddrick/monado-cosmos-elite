@@ -203,13 +203,15 @@ os_ns_per_qpc_tick_get(void);
 static inline void
 os_nanosleep(int64_t nsec)
 {
-#if defined(XRT_OS_LINUX)
+#if defined(XRT_OS_LINUX) || defined(XRT_OS_OSX)
 	struct timespec spec;
 	spec.tv_sec = (nsec / U_1_000_000_000);
 	spec.tv_nsec = (nsec % U_1_000_000_000);
 	nanosleep(&spec, NULL);
 #elif defined(XRT_OS_WINDOWS)
 	Sleep((DWORD)(nsec / U_TIME_1MS_IN_NS));
+#else
+#error "need port"
 #endif
 }
 
