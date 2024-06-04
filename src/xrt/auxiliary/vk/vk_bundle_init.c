@@ -779,6 +779,7 @@ fill_in_has_device_extensions(struct vk_bundle *vk, struct u_string_list *ext_li
 	vk->has_EXT_external_memory_host = false;
 	vk->has_EXT_global_priority = false;
 	vk->has_EXT_image_drm_format_modifier = false;
+	vk->has_EXT_metal_objects = false;
 	vk->has_EXT_robustness2 = false;
 	vk->has_ANDROID_external_format_resolve = false;
 	vk->has_GOOGLE_display_timing = false;
@@ -935,6 +936,13 @@ fill_in_has_device_extensions(struct vk_bundle *vk, struct u_string_list *ext_li
 			continue;
 		}
 #endif // defined(VK_EXT_image_drm_format_modifier)
+
+#if defined(VK_EXT_metal_objects)
+		if (strcmp(ext, VK_EXT_METAL_OBJECTS_EXTENSION_NAME) == 0) {
+			vk->has_EXT_metal_objects = true;
+			continue;
+		}
+#endif // defined(VK_EXT_metal_objects)
 
 #if defined(VK_EXT_robustness2)
 		if (strcmp(ext, VK_EXT_ROBUSTNESS_2_EXTENSION_NAME) == 0) {

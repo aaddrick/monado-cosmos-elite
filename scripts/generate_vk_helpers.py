@@ -156,6 +156,8 @@ def get_device_cmds():
         Cmd("vkImportFenceFdKHR", requires=("!defined(VK_USE_PLATFORM_WIN32_KHR)",)),
         Cmd("vkImportSemaphoreFdKHR", requires=("!defined(VK_USE_PLATFORM_WIN32_KHR)",)),
         None,
+        Cmd("vkExportMetalObjectsEXT", requires=("VK_USE_PLATFORM_METAL_EXT",)),
+        None,
         Cmd(
             "vkGetMemoryAndroidHardwareBufferANDROID",
             requires=("VK_USE_PLATFORM_ANDROID_KHR",),
@@ -314,6 +316,7 @@ DEVICE_EXTENSIONS_TO_CHECK = [
     "VK_EXT_external_memory_host",
     "VK_EXT_global_priority",
     "VK_EXT_image_drm_format_modifier",
+    "VK_EXT_metal_objects",
     "VK_EXT_robustness2",
     "VK_ANDROID_external_format_resolve",
     "VK_GOOGLE_display_timing",

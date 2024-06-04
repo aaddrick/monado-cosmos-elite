@@ -181,6 +181,7 @@ struct vk_bundle
 	bool has_EXT_external_memory_host;
 	bool has_EXT_global_priority;
 	bool has_EXT_image_drm_format_modifier;
+	bool has_EXT_metal_objects;
 	bool has_EXT_robustness2;
 	bool has_ANDROID_external_format_resolve;
 	bool has_GOOGLE_display_timing;
@@ -472,6 +473,11 @@ struct vk_bundle
 	PFN_vkImportSemaphoreFdKHR vkImportSemaphoreFdKHR;
 
 #endif // !defined(VK_USE_PLATFORM_WIN32_KHR)
+
+#if defined(VK_USE_PLATFORM_METAL_EXT)
+	PFN_vkExportMetalObjectsEXT vkExportMetalObjectsEXT;
+
+#endif // defined(VK_USE_PLATFORM_METAL_EXT)
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	PFN_vkGetMemoryAndroidHardwareBufferANDROID vkGetMemoryAndroidHardwareBufferANDROID;
