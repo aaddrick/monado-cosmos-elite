@@ -84,6 +84,7 @@ oxr_xrCreateSwapchain(XrSession session, const XrSwapchainCreateInfo *createInfo
 	// Short hand.
 	struct oxr_instance *inst = sess->sys->inst;
 	struct xrt_compositor_info *xc_info = &sess->compositor->info;
+	struct xrt_system_compositor_info *xsysc_info = &sess->sys->xsysc->info;
 
 
 	/*
@@ -153,6 +154,24 @@ oxr_xrCreateSwapchain(XrSession session, const XrSwapchainCreateInfo *createInfo
 		}
 	}
 #endif
+
+
+	/*
+	 * Sample count.
+	 */
+
+	if (createInfo->sampleCount == 0) {
+		return oxr_error(&log, XR_ERROR_VALIDATION_FAILURE, "(createInfo->sampleCount == 0) must not be zero");
+	}
+
+	// TODO Find the max of the views[0].max.sample_count limits.
+	uint32_t max_sample_count = xsysc_info->views[0].max.sample_count;
+
+	if (createInfo->sampleCount > max_sample_count) {
+		return oxr_error(&log, XR_ERROR_VALIDATION_FAILURE,
+		                 "(createInfo->sampleCount == %u) must not be larger then max (%u)",
+		                 createInfo->sampleCount, max_sample_count);
+	}
 
 
 	/*
