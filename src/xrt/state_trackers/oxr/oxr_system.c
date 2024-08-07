@@ -121,6 +121,7 @@ oxr_system_fill_in(
 #ifdef XR_USE_GRAPHICS_API_VULKAN
 	sys->vulkan_enable2_instance = VK_NULL_HANDLE;
 	sys->suggested_vulkan_physical_device = VK_NULL_HANDLE;
+	sys->vk_get_instance_proc_addr = VK_NULL_HANDLE;
 #endif
 #if defined(XR_USE_GRAPHICS_API_D3D11) || defined(XR_USE_GRAPHICS_API_D3D12)
 	U_ZERO(&(sys->suggested_d3d_luid));

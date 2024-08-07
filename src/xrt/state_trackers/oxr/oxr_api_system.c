@@ -1,4 +1,5 @@
 // Copyright 2018-2020, Collabora, Ltd.
+// Copyright 2024-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -328,9 +329,10 @@ oxr_xrGetVulkanGraphicsDevice2KHR(XrInstance instance,
 
 	OXR_VERIFY_SYSTEM_AND_GET(&log, inst, getInfo->systemId, sys);
 	OXR_VERIFY_ARG_NOT_NULL(&log, vkPhysicalDevice);
+	OXR_VERIFY_ARG_NOT_NULL(&log, sys->vk_get_instance_proc_addr);
 	OXR_VERIFY_XSYSC(&log, sys);
 
-	return oxr_vk_get_physical_device(&log, inst, sys, getInfo->vulkanInstance, vkGetInstanceProcAddr,
+	return oxr_vk_get_physical_device(&log, inst, sys, getInfo->vulkanInstance, sys->vk_get_instance_proc_addr,
 	                                  vkPhysicalDevice);
 }
 
@@ -393,6 +395,8 @@ oxr_xrCreateVulkanInstanceKHR(XrInstance instance,
 
 	// createInfo->vulkanAllocator can be NULL
 
+	sys->vk_get_instance_proc_addr = createInfo->pfnGetInstanceProcAddr;
+
 	if (createInfo->vulkanCreateInfo->sType != VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO) {
 		return oxr_error(&log, XR_ERROR_VALIDATION_FAILURE,
 		                 "createInfo->vulkanCreateInfo->sType must be "
@@ -428,6 +432,8 @@ oxr_xrCreateVulkanDeviceKHR(XrInstance instance,
 	OXR_VERIFY_ARG_NOT_NULL(&log, sys->suggested_vulkan_physical_device);
 	OXR_VERIFY_ARG_NOT_NULL(&log, sys->vulkan_enable2_instance);
 	OXR_VERIFY_XSYSC(&log, sys);
+
+	sys->vk_get_instance_proc_addr = createInfo->pfnGetInstanceProcAddr;
 
 	if (sys->suggested_vulkan_physical_device != createInfo->vulkanPhysicalDevice) {
 		return oxr_error(&log, XR_ERROR_HANDLE_INVALID,

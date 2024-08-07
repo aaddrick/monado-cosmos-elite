@@ -1,5 +1,5 @@
 // Copyright 2018-2024, Collabora, Ltd.
-// Copyright 2023, NVIDIA CORPORATION.
+// Copyright 2023-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -1529,6 +1529,12 @@ struct oxr_system
 	//! The device returned with the last xrGetVulkanGraphicsDeviceKHR or xrGetVulkanGraphicsDevice2KHR call.
 	//! XR_NULL_HANDLE if neither has been called.
 	VkPhysicalDevice suggested_vulkan_physical_device;
+
+	/*!
+	 * Stores the vkGetInstanceProcAddr passed to xrCreateVulkanInstanceKHR to be
+	 * used when looking up Vulkan functions used by xrGetVulkanGraphicsDevice2KHR.
+	 */
+	PFN_vkGetInstanceProcAddr vk_get_instance_proc_addr;
 
 	struct
 	{
