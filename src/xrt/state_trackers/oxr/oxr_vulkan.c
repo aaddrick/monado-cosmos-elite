@@ -196,8 +196,8 @@ vk_get_instance_ext_props(struct oxr_logger *log,
                           uint32_t *out_prop_count)
 {
 	PFN_vkEnumerateInstanceExtensionProperties EnumerateInstanceExtensionProperties =
-	    (PFN_vkEnumerateInstanceExtensionProperties)vkGetInstanceProcAddr(NULL,
-	                                                                      "vkEnumerateInstanceExtensionProperties");
+	    (PFN_vkEnumerateInstanceExtensionProperties)GetInstanceProcAddr(NULL,
+	                                                                    "vkEnumerateInstanceExtensionProperties");
 
 	if (!EnumerateInstanceExtensionProperties) {
 		return oxr_error(log, XR_ERROR_RUNTIME_FAILURE,
