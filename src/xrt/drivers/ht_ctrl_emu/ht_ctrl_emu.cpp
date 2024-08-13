@@ -46,8 +46,8 @@ DEBUG_GET_ONCE_LOG_OPTION(cemu_log, "CEMU_LOG", U_LOGGING_TRACE)
 enum cemu_input_index
 {
 	CEMU_INDEX_HAND_TRACKING,
-	CEMU_INDEX_SELECT,
-	CEMU_INDEX_MENU,
+	CEMU_INDEX_PINCH_BOOL,
+	CEMU_INDEX_PINCH_FLOAT,
 	CEMU_INDEX_GRIP,
 	CEMU_INDEX_AIM,
 	CEMU_NUM_INPUTS,
@@ -373,7 +373,7 @@ cemu_device_get_tracked_pose(struct xrt_device *xdev,
 	struct cemu_device *dev = cemu_device(xdev);
 	struct cemu_system *sys = dev->sys;
 
-	if (name != XRT_INPUT_SIMPLE_GRIP_POSE && name != XRT_INPUT_SIMPLE_AIM_POSE) {
+	if (name != XRT_INPUT_HAND_CTRL_EMU_AIM_POSE && name != XRT_INPUT_HAND_CTRL_EMU_GRIP_POSE) {
 		U_LOG_XDEV_UNSUPPORTED_INPUT(&dev->base, dev->sys->log_level, name);
 		return XRT_ERROR_INPUT_UNSUPPORTED;
 	}
@@ -391,11 +391,11 @@ cemu_device_get_tracked_pose(struct xrt_device *xdev,
 
 	xret = XRT_SUCCESS;
 	switch (name) {
-	case XRT_INPUT_SIMPLE_GRIP_POSE: {
+	case XRT_INPUT_HAND_CTRL_EMU_GRIP_POSE: {
 		xret = do_grip_pose(&joint_set, out_relation, sys->grip_offset_from_palm, dev->hand_index);
 		break;
 	}
-	case XRT_INPUT_SIMPLE_AIM_POSE: {
+	case XRT_INPUT_HAND_CTRL_EMU_AIM_POSE: {
 		// Assume that now we're doing everything in the timestamp from the hand-tracker, so use
 		// hand_timestamp_ns. This will cause the controller to lag behind but otherwise be correct
 		xret = do_aim_pose(dev, &joint_set, at_timestamp_ns, hand_timestamp_ns, out_relation);
@@ -436,22 +436,41 @@ cemu_device_update_inputs(struct xrt_device *xdev)
 	U_LOG_CHK_AND_RET(sys->log_level, xret, "xrt_device_get_hand_tracking");
 
 	if (!joint_set.is_active) {
-		xdev->inputs[CEMU_INDEX_SELECT].value.boolean = false;
-		xdev->inputs[CEMU_INDEX_MENU].value.boolean = false;
+		xdev->inputs[CEMU_INDEX_PINCH_BOOL].value.boolean = false;
+		xdev->inputs[CEMU_INDEX_PINCH_FLOAT].value.vec1.x = 0.f;
 		return XRT_SUCCESS;
 	}
 
 	decide(joint_set.values.hand_joint_set_default[XRT_HAND_JOINT_INDEX_TIP].relation.pose.position,
 	       joint_set.values.hand_joint_set_default[XRT_HAND_JOINT_THUMB_TIP].relation.pose.position,
-	       &xdev->inputs[CEMU_INDEX_SELECT].value.boolean);
+	       &xdev->inputs[CEMU_INDEX_PINCH_BOOL].value.boolean);
 
 	// For now, all other inputs are off - detecting any gestures more complicated than pinch is too unreliable for
 	// now.
-	xdev->inputs[CEMU_INDEX_MENU].value.boolean = false;
+	if (xdev->inputs[CEMU_INDEX_PINCH_BOOL].value.boolean) {
+		xdev->inputs[CEMU_INDEX_PINCH_FLOAT].value.vec1.x = 1.0f;
+	} else {
+		xdev->inputs[CEMU_INDEX_PINCH_FLOAT].value.vec1.x = 0.0f;
+	}
 
 	return XRT_SUCCESS;
 }
 
+static struct xrt_binding_input_pair simple_inputs[3] = {
+    {XRT_INPUT_SIMPLE_SELECT_CLICK, XRT_INPUT_HAND_CTRL_EMU_PINCH_BOOL},
+    {XRT_INPUT_SIMPLE_GRIP_POSE, XRT_INPUT_HAND_CTRL_EMU_GRIP_POSE},
+    {XRT_INPUT_SIMPLE_AIM_POSE, XRT_INPUT_HAND_CTRL_EMU_AIM_POSE},
+};
+
+static struct xrt_binding_profile binding_profiles[1] = {
+    {
+        .name = XRT_DEVICE_SIMPLE_CONTROLLER,
+        .inputs = simple_inputs,
+        .input_count = ARRAY_SIZE(simple_inputs),
+        .outputs = nullptr,
+        .output_count = 0,
+    },
+};
 
 extern "C" int
 cemu_devices_create(struct xrt_device *head, struct xrt_device *hands, struct xrt_device **out_xdevs)
@@ -481,16 +500,18 @@ cemu_devices_create(struct xrt_device *head, struct xrt_device *hands, struct xr
 
 		cemud[i]->base.tracking_origin = hands->tracking_origin;
 
-		cemud[i]->base.name = XRT_DEVICE_SIMPLE_CONTROLLER;
+		cemud[i]->base.name = XRT_DEVICE_HAND_CTRL_EMU;
 		cemud[i]->base.supported.hand_tracking = true;
 		cemud[i]->base.supported.orientation_tracking = true;
 		cemud[i]->base.supported.position_tracking = true;
+		cemud[i]->base.binding_profiles = binding_profiles;
+		cemud[i]->base.binding_profile_count = ARRAY_SIZE(binding_profiles);
 
 		cemud[i]->base.inputs[CEMU_INDEX_HAND_TRACKING].name = ht_input_names[i];
-		cemud[i]->base.inputs[CEMU_INDEX_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
-		cemud[i]->base.inputs[CEMU_INDEX_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
-		cemud[i]->base.inputs[CEMU_INDEX_GRIP].name = XRT_INPUT_SIMPLE_GRIP_POSE;
-		cemud[i]->base.inputs[CEMU_INDEX_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE;
+		cemud[i]->base.inputs[CEMU_INDEX_PINCH_BOOL].name = XRT_INPUT_HAND_CTRL_EMU_PINCH_BOOL;
+		cemud[i]->base.inputs[CEMU_INDEX_PINCH_FLOAT].name = XRT_INPUT_HAND_CTRL_EMU_PINCH_VALUE;
+		cemud[i]->base.inputs[CEMU_INDEX_GRIP].name = XRT_INPUT_HAND_CTRL_EMU_GRIP_POSE;
+		cemud[i]->base.inputs[CEMU_INDEX_AIM].name = XRT_INPUT_HAND_CTRL_EMU_AIM_POSE;
 
 		cemud[i]->base.update_inputs = cemu_device_update_inputs;
 		cemud[i]->base.get_tracked_pose = cemu_device_get_tracked_pose;
