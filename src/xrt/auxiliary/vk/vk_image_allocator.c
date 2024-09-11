@@ -184,7 +184,6 @@ create_image(struct vk_bundle *vk, const struct xrt_swapchain_create_info *info,
 	    .sType = VK_STRUCTURE_TYPE_EXTERNAL_FORMAT_ANDROID,
 	    .externalFormat = a_buffer_format_props.externalFormat,
 	};
-	CHAIN(format_android);
 
 	if (image_format == VK_FORMAT_R8G8B8A8_SRGB) {
 		// Some versions of Android can't allocate native sRGB, use UNORM and correct gamma later.
@@ -192,14 +191,23 @@ create_image(struct vk_bundle *vk, const struct xrt_swapchain_create_info *info,
 
 		// https://www.khronos.org/registry/vulkan/specs/1.0/html/vkspec.html#VUID-VkImageViewCreateInfo-image-01019
 		image_create_flags |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
-
-		// https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VkImageCreateInfo.html#VUID-VkImageCreateInfo-pNext-02396
-		format_android.externalFormat = 0;
-		assert(a_buffer_format_props.format != VK_FORMAT_UNDEFINED); // Make sure there is a Vulkan format.
-		assert(format_android.externalFormat == 0);
+		has_mutable_usage = true;
 
 		add_format_non_dup(&flh, VK_FORMAT_R8G8B8A8_UNORM);
 		add_format_non_dup(&flh, VK_FORMAT_R8G8B8A8_SRGB);
+	}
+
+	// https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VkImageCreateInfo.html#VUID-VkImageCreateInfo-pNext-02396
+	if (has_mutable_usage) {
+		format_android.externalFormat = 0;
+		// Make sure there is a Vulkan format.
+		if (a_buffer_format_props.format == VK_FORMAT_UNDEFINED) {
+			VK_WARN(vk,
+			        "vkGetAndroidHardwareBufferPropertiesANDROID: AHB has no Vulkan-mappable format. "
+			        "External format chain required, but external formats cannot be mutable. Swapchain "
+			        "creation may fail!");
+			assert(false);
+		}
 	}
 
 	if (vk_csci_is_format_supported(vk, image_format, info->bits)) {
@@ -256,6 +264,7 @@ create_image(struct vk_bundle *vk, const struct xrt_swapchain_create_info *info,
 	// VUID-VkImageCreateInfo-pNext-01974
 	if (format_android.externalFormat != 0) {
 		create_info.format = VK_FORMAT_UNDEFINED;
+		CHAIN(format_android);
 	}
 #endif
 
