@@ -1,4 +1,5 @@
 // Copyright 2021, Collabora, Ltd.
+// Copyright 2024-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -485,7 +486,6 @@ cemu_devices_create(struct xrt_device *head, struct xrt_device *hands, struct xr
 		cemud[i]->base.supported.orientation_tracking = true;
 		cemud[i]->base.supported.position_tracking = true;
 
-
 		cemud[i]->base.inputs[CEMU_INDEX_HAND_TRACKING].name = ht_input_names[i];
 		cemud[i]->base.inputs[CEMU_INDEX_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
 		cemud[i]->base.inputs[CEMU_INDEX_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
@@ -513,7 +513,6 @@ cemu_devices_create(struct xrt_device *head, struct xrt_device *hands, struct xr
 		}
 
 		cemud[i]->ht_input_name = ht_input_names[i];
-
 		cemud[i]->hand_index = i;
 		system->out_hand[i] = cemud[i];
 
