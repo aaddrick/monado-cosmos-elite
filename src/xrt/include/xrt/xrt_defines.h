@@ -1,4 +1,5 @@
 // Copyright 2019-2024, Collabora, Ltd.
+// Copyright 2024-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -789,6 +790,9 @@ enum xrt_device_name
 	XRT_DEVICE_TOUCH_CONTROLLER_RIFT_CV1,
 	XRT_DEVICE_TOUCH_CONTROLLER_QUEST_1_RIFT_S,
 	XRT_DEVICE_TOUCH_CONTROLLER_QUEST_2,
+
+	// Hand based controller emulation.
+	XRT_DEVICE_HAND_CTRL_EMU,
 };
 
 /*!
@@ -1318,9 +1322,14 @@ enum xrt_input_type
 \
 	_(XRT_INPUT_BLUBUR_S1_MENU_CLICK                   , XRT_INPUT_NAME(0x1000, BOOLEAN)) \
 \
-	_(XRT_INPUT_PSVR2_SYSTEM_CLICK                     , XRT_INPUT_NAME(0x1100, BOOLEAN))
-
-
+	_(XRT_INPUT_PSVR2_SYSTEM_CLICK                     , XRT_INPUT_NAME(0x1100, BOOLEAN)) \
+\
+	_(XRT_INPUT_HAND_CTRL_EMU_PINCH_BOOL               , XRT_INPUT_NAME(0x1200, BOOLEAN)) \
+	_(XRT_INPUT_HAND_CTRL_EMU_PINCH_VALUE              , XRT_INPUT_NAME(0x1201, VEC1_ZERO_TO_ONE)) \
+	_(XRT_INPUT_HAND_CTRL_EMU_GRIP_POSE                , XRT_INPUT_NAME(0x1202, POSE)) \
+	_(XRT_INPUT_HAND_CTRL_EMU_AIM_POSE                 , XRT_INPUT_NAME(0x1203, POSE)) \
+\
+	/* Please keep this comment and the trailing \ to reduce lines changed when adding entries. */
 // clang-format on
 
 
