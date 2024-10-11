@@ -70,7 +70,7 @@ should_skip_format_vk_1_and_2(const struct oxr_instance *inst, uint64_t format)
 {
 	bool skip_depth_stencil = inst->quirks.disable_vulkan_format_depth_stencil;
 	bool skip_stencil = false;
-	bool skip_depth = false;
+	bool skip_depth = inst->quirks.disable_vulkan_format_depth;
 
 	// Access to Vulkan headers are not guaranteed.
 	switch (format) {

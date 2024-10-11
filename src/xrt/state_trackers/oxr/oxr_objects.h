@@ -1754,8 +1754,27 @@ struct oxr_instance
 
 	struct
 	{
-		//! Unreal has a bug in the VulkanRHI backend.
+		/*!
+		 * Some applications can't handle depth formats, or they trigger
+		 * a bug in a specific version of the application or engine.
+		 * This flag only disables depth formats
+		 * @see disable_vulkan_format_depth_stencil for depth-stencil formats.
+		 */
+		bool disable_vulkan_format_depth;
+
+		/*!
+		 * Some applications can't handle depth stencil formats, or they
+		 * trigger a bug in a specific version of the application or
+		 * engine.
+		 *
+		 * This flag only disables depth-stencil formats,
+		 * @see disable_vulkan_format_depth flag for depth only formats.
+		 *
+		 * In the past it was used to work around a bug in Unreal's
+		 * VulkanRHI backend.
+		 */
 		bool disable_vulkan_format_depth_stencil;
+
 		//! Unreal 4 has a bug calling xrEndSession; the function should just exit
 		bool skip_end_session;
 

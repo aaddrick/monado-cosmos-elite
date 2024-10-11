@@ -199,6 +199,7 @@ apply_quirks(struct oxr_logger *log, struct oxr_instance *inst)
 {
 	// Reset.
 	inst->quirks.skip_end_session = false;
+	inst->quirks.disable_vulkan_format_depth = false;
 	inst->quirks.disable_vulkan_format_depth_stencil = false;
 	inst->quirks.no_validation_error_in_create_ref_space = false;
 
@@ -442,6 +443,7 @@ oxr_instance_create(struct oxr_logger *log,
 	        "\tcreateInfo->applicationInfo.apiVersion: %d.%d.%d\n"
 	        "\tappinfo.detected.engine.name: %s\n"
 	        "\tappinfo.detected.engine.version: %i.%i.%i\n"
+	        "\tquirks.disable_vulkan_format_depth: %s\n"
 	        "\tquirks.disable_vulkan_format_depth_stencil: %s\n"
 	        "\tquirks.no_validation_error_in_create_ref_space: %s\n"
 	        "\tquirks.skip_end_session: %s\n"
@@ -457,6 +459,7 @@ oxr_instance_create(struct oxr_logger *log,
 	        inst->appinfo.detected.engine.major,                                     //
 	        inst->appinfo.detected.engine.minor,                                     //
 	        inst->appinfo.detected.engine.patch,                                     //
+	        inst->quirks.disable_vulkan_format_depth ? "true" : "false",             //
 	        inst->quirks.disable_vulkan_format_depth_stencil ? "true" : "false",     //
 	        inst->quirks.no_validation_error_in_create_ref_space ? "true" : "false", //
 	        inst->quirks.skip_end_session ? "true" : "false",                        //
