@@ -1,4 +1,5 @@
 // Copyright 2018-2024, Collabora, Ltd.
+// Copyright 2024-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -63,6 +64,40 @@ DEBUG_GET_ONCE_BOOL_OPTION(hand_tracking_prioritize_conforming, "OXR_HAND_TRACKI
  * Helpers.
  *
  */
+
+static bool
+should_skip_format_vk_1_and_2(const struct oxr_instance *inst, uint64_t format)
+{
+	bool skip_depth_stencil = inst->quirks.disable_vulkan_format_depth_stencil;
+	bool skip_stencil = false;
+	bool skip_depth = false;
+
+	// Access to Vulkan headers are not guaranteed.
+	switch (format) {
+	case 124: /* VK_FORMAT_D16_UNORM          */ return skip_depth;
+	case 125: /* VK_FORMAT_X8_D24_UNORM_PACK32*/ return skip_depth;
+	case 126: /* VK_FORMAT_D32_SFLOAT         */ return skip_depth;
+	case 127: /* VK_FORMAT_S8_UINT            */ return skip_stencil;
+	case 129: /* VK_FORMAT_D24_UNORM_S8_UINT  */ return skip_depth_stencil;
+	case 130: /* VK_FORMAT_D32_SFLOAT_S8_UINT */ return skip_depth_stencil;
+	default: return false;
+	}
+}
+
+static bool
+should_skip_format(const struct oxr_instance *inst, const struct oxr_session *sess, uint64_t format)
+{
+	if (sess->gfx_ext == OXR_SESSION_GRAPHICS_EXT_VULKAN) {
+		/*
+		 * Hello future computer whisperer, if we split the graphics
+		 * extension enum into Vulkan1 and Vulkan2, make sure we call this
+		 * function for both, kthx.
+		 */
+		return should_skip_format_vk_1_and_2(inst, format);
+	} else {
+		return false;
+	}
+}
 
 static bool
 should_render(XrSessionState state)
@@ -224,8 +259,7 @@ oxr_session_enumerate_formats(struct oxr_logger *log,
 	for (uint32_t i = 0; i < xc->info.format_count; i++) {
 		int64_t format = xc->info.formats[i];
 
-		if (inst->quirks.disable_vulkan_format_depth_stencil &&
-		    format == 130 /* VK_FORMAT_D32_SFLOAT_S8_UINT */) {
+		if (should_skip_format(inst, sess, format)) {
 			continue;
 		}
 
