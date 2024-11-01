@@ -1,4 +1,5 @@
 // Copyright 2022, Collabora, Ltd.
+// Copyright 2024-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -401,8 +402,8 @@ u_worker_thread_pool_create(uint32_t starting_worker_count, uint32_t thread_coun
 	XRT_TRACE_MARKER();
 	int ret;
 
-	assert(starting_worker_count < thread_count);
-	if (starting_worker_count >= thread_count) {
+	assert(starting_worker_count <= thread_count);
+	if (starting_worker_count > thread_count) {
 		return NULL;
 	}
 
