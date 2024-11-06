@@ -95,8 +95,17 @@ struct group
 	//! Pointer to poll of threads.
 	struct u_worker_thread_pool *uwtp;
 
-	//! Number of tasks that is pending or being worked on in this group.
-	size_t current_submitted_tasks_count;
+	/*!
+	 * The number of tasks that are pending execution by a worker.
+	 * They reside in the pool::tasks array.
+	 */
+	uint32_t current_tasks_in_array;
+
+	/*!
+	 * Number of tasks that are being worked on.
+	 * They live inside of the working thread.
+	 */
+	uint32_t current_working_tasks;
 
 	/*!
 	 * Number of waiting threads that have been released by a worker,
@@ -147,9 +156,15 @@ locked_pool_pop_task(struct pool *p, struct task *out_task)
 			continue;
 		}
 
-		*out_task = p->tasks[i];
+		struct task task = p->tasks[i];
 		p->tasks[i] = (struct task){NULL, NULL, NULL};
+
 		p->tasks_in_array_count--;
+		task.g->current_tasks_in_array--;
+		task.g->current_working_tasks++;
+
+		*out_task = task;
+
 		return;
 	}
 
@@ -168,7 +183,7 @@ locked_pool_push_task(struct pool *p, struct group *g, u_worker_group_func_t fun
 
 		p->tasks[i] = (struct task){g, func, data};
 		p->tasks_in_array_count++;
-		g->current_submitted_tasks_count++;
+		g->current_tasks_in_array++;
 		return;
 	}
 
@@ -207,7 +222,7 @@ locked_pool_wake_worker_if_allowed(struct pool *p)
 static bool
 locked_group_has_tasks_waiting_or_inflight(const struct group *g)
 {
-	if (g->current_submitted_tasks_count == 0) {
+	if (g->current_tasks_in_array == 0 && g->current_working_tasks == 0) {
 		return false;
 	}
 
@@ -375,8 +390,11 @@ run_func(void *ptr)
 		// No longer working.
 		p->working_count--;
 
-		// Only now decrement the task count on the owning group.
-		task.g->current_submitted_tasks_count--;
+		// We are no longer working on the task.
+		task.g->current_working_tasks--;
+
+		// This must hold true.
+		assert(task.g->current_tasks_in_array <= p->tasks_in_array_count);
 
 		// Wake up any waiter.
 		locked_group_wake_waiter_if_allowed(p, task.g);
