@@ -98,7 +98,10 @@ struct group
 	//! Number of tasks that is pending or being worked on in this group.
 	size_t current_submitted_tasks_count;
 
-	//! Number of threads that have been released or newly entered wait.
+	/*!
+	 * Number of waiting threads that have been released by a worker,
+	 * or a thread that has started waiting (see u_worker_group_wait_all).
+	 */
 	size_t released_count;
 
 	struct
@@ -202,14 +205,11 @@ locked_pool_wake_worker_if_allowed(struct pool *p)
  */
 
 static bool
-locked_group_should_enter_wait_loop(struct pool *p, struct group *g)
+locked_group_has_tasks_waiting_or_inflight(const struct group *g)
 {
 	if (g->current_submitted_tasks_count == 0) {
 		return false;
 	}
-
-	// Enter the loop as a released thread.
-	g->released_count++;
 
 	return true;
 }
@@ -238,7 +238,7 @@ locked_group_should_wait(struct pool *p, struct group *g)
 	 */
 
 	// Tasks available.
-	if (g->current_submitted_tasks_count > 0) {
+	if (locked_group_has_tasks_waiting_or_inflight(g)) {
 
 		// We have been released or newly entered the loop.
 		if (g->released_count > 0) {
@@ -266,7 +266,7 @@ static void
 locked_group_wake_waiter_if_allowed(struct pool *p, struct group *g)
 {
 	// Are there still outstanding tasks?
-	if (g->current_submitted_tasks_count > 0) {
+	if (locked_group_has_tasks_waiting_or_inflight(g)) {
 		return;
 	}
 
@@ -534,10 +534,25 @@ u_worker_group_wait_all(struct u_worker_group *uwg)
 	os_mutex_lock(&p->mutex);
 
 	// Can we early out?
-	if (!locked_group_should_enter_wait_loop(p, g)) {
+	if (!locked_group_has_tasks_waiting_or_inflight(g)) {
 		os_mutex_unlock(&p->mutex);
 		return;
 	}
+
+	/*
+	 * The released_count is tied to the decrement of worker_limit, that is
+	 * when a waiting thread is woken up the worker_limit is decreased, and
+	 * released_count is increased. The waiting thread will then double
+	 * check that it can be released or not, if it can not be released it
+	 * will once again donate this thread and increase the worker_limit.
+	 *
+	 * If it can be released it will decrement released_count and exit the
+	 * loop below.
+	 *
+	 * So if we increment it here, the loop will increase worker_limit
+	 * which is what we want.
+	 */
+	g->released_count++;
 
 	// Wait here until all work been started and completed.
 	while (locked_group_should_wait(p, g)) {
