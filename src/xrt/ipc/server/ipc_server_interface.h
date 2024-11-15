@@ -10,12 +10,12 @@
  * @ingroup ipc_server
  */
 
-#include "xrt/xrt_compiler.h"
-#include "xrt/xrt_config_os.h"
+#pragma once
 
-#ifndef XRT_OS_ANDROID
+#include "xrt/xrt_config_os.h"
+#include "xrt/xrt_results.h"
+
 #include "util/u_debug_gui.h"
-#endif
 
 
 #ifdef __cplusplus
@@ -23,7 +23,8 @@ extern "C" {
 #endif
 
 
-#ifndef XRT_OS_ANDROID
+struct xrt_instance;
+struct ipc_server;
 
 /*!
  * Information passed into the IPC server main function, used for customization
@@ -38,31 +39,57 @@ struct ipc_server_main_info
 };
 
 /*!
+ *
+ * @ingroup ipc_server
+ */
+struct ipc_server_callbacks
+{
+	/*!
+	 * The IPC server failed to init.
+	 *
+	 * @param[in] xret The error code generated during init.
+	 * @param[in] data User data given passed into the main function.
+	 */
+	void (*init_failed)(xrt_result_t xret, void *data);
+
+	/*!
+	 * The service has completed init and is entering its mainloop.
+	 *
+	 * @param[in] s     The IPC server.
+	 * @param[in] xinst Instance that was created by the IPC server.
+	 * @param[in] data  User data given passed into the main function.
+	 */
+	void (*mainloop_entering)(struct ipc_server *s, struct xrt_instance *xinst, void *data);
+
+	/*!
+	 * The service is leaving the mainloop, after this callback returns the
+	 * IPC server will destroy all resources created.
+	 *
+	 * @param[in] s     The IPC server.
+	 * @param[in] xinst Instance that was created by the IPC server.
+	 * @param[in] data  User data given passed into the main function.
+	 */
+	void (*mainloop_leaving)(struct ipc_server *s, struct xrt_instance *xinst, void *data);
+};
+
+/*!
+ * Common main function for starting the IPC service.
+ *
+ * @ingroup ipc_server
+ */
+int
+ipc_server_main_common(const struct ipc_server_main_info *ismi, const struct ipc_server_callbacks *iscb, void *data);
+
+
+#ifndef XRT_OS_ANDROID
+
+/*!
  * Main entrypoint to the compositor process.
  *
  * @ingroup ipc_server
  */
 int
 ipc_server_main(int argc, char **argv, const struct ipc_server_main_info *ismi);
-
-#endif
-
-
-#ifdef XRT_OS_ANDROID
-
-/*!
- * Main entrypoint to the server process.
- *
- * @param ps Pointer to populate with the server struct.
- * @param startup_complete_callback Function to call upon completing startup
- *                                  and populating *ps, but before entering
- *                                  the mainloop.
- * @param data user data to pass to your callback.
- *
- * @ingroup ipc_server
- */
-int
-ipc_server_main_android(struct ipc_server **ps, void (*startup_complete_callback)(void *data), void *data);
 
 #endif
 
