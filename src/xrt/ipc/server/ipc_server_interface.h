@@ -36,6 +36,9 @@ struct ipc_server_main_info
 {
 	//! Information passed onto the debug gui.
 	struct u_debug_gui_create_info udgci;
+
+	//! Flag whether runtime should exit on app disconnect.
+	bool exit_on_disconnect;
 };
 
 /*!

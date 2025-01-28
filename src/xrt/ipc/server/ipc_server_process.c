@@ -57,7 +57,6 @@
  *
  */
 
-DEBUG_GET_ONCE_BOOL_OPTION(exit_on_disconnect, "IPC_EXIT_ON_DISCONNECT", false)
 DEBUG_GET_ONCE_BOOL_OPTION(exit_when_idle, "IPC_EXIT_WHEN_IDLE", false)
 DEBUG_GET_ONCE_NUM_OPTION(exit_when_idle_delay_ms, "IPC_EXIT_WHEN_IDLE_DELAY_MS", 5000)
 DEBUG_GET_ONCE_LOG_OPTION(ipc_log, "IPC_LOG", U_LOGGING_INFO)
@@ -455,7 +454,7 @@ init_server_state(struct ipc_server *s)
 }
 
 static xrt_result_t
-init_all(struct ipc_server *s, enum u_logging_level log_level)
+init_all(struct ipc_server *s, enum u_logging_level log_level, bool exit_on_disconnect)
 {
 	xrt_result_t xret = XRT_SUCCESS;
 	int ret;
@@ -480,7 +479,7 @@ init_all(struct ipc_server *s, enum u_logging_level log_level)
 
 	// Yes we should be running.
 	s->running = true;
-	s->exit_on_disconnect = debug_get_bool_option_exit_on_disconnect();
+	s->exit_on_disconnect = exit_on_disconnect;
 	s->exit_when_idle = debug_get_bool_option_exit_when_idle();
 	s->last_client_disconnect_ns = 0;
 	uint64_t delay_ms = debug_get_num_option_exit_when_idle_delay_ms();
@@ -1033,7 +1032,7 @@ ipc_server_main_common(const struct ipc_server_main_info *ismi,
 	 */
 	u_debug_gui_create(&ismi->udgci, &s->debug_gui);
 
-	xret = init_all(s, log_level);
+	xret = init_all(s, log_level, ismi->exit_on_disconnect);
 	U_LOG_CHK_ONLY_PRINT(log_level, xret, "init_all");
 	if (xret != XRT_SUCCESS) {
 		// Propegate the failure.
