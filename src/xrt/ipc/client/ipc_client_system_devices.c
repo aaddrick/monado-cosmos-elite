@@ -1,4 +1,5 @@
 // Copyright 2023, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -12,18 +13,7 @@
 #include "ipc_client_generated.h"
 
 #include "util/u_system_helpers.h"
-
-
-struct ipc_client_system_devices
-{
-	//! @public Base
-	struct u_system_devices base;
-
-	//! Connection to service.
-	struct ipc_connection *ipc_c;
-
-	struct xrt_reference feature_use[XRT_DEVICE_FEATURE_MAX_ENUM];
-};
+#include "util/u_var.h"
 
 
 /*
@@ -93,6 +83,13 @@ ipc_client_system_devices_destroy(struct xrt_system_devices *xsysd)
 {
 	struct ipc_client_system_devices *usysd = ipc_system_devices(xsysd);
 
+	for (size_t i = 0; i < usysd->xtrack_count; i++) {
+		u_var_remove_root(usysd->xtracks[i]);
+		free(usysd->xtracks[i]);
+		usysd->xtracks[i] = NULL;
+	}
+	usysd->xtrack_count = 0;
+
 	u_system_devices_close(&usysd->base.base);
 
 	free(usysd);
@@ -105,7 +102,7 @@ ipc_client_system_devices_destroy(struct xrt_system_devices *xsysd)
  *
  */
 
-struct xrt_system_devices *
+struct ipc_client_system_devices *
 ipc_client_system_devices_create(struct ipc_connection *ipc_c)
 {
 	struct ipc_client_system_devices *icsd = U_TYPED_CALLOC(struct ipc_client_system_devices);
@@ -115,5 +112,5 @@ ipc_client_system_devices_create(struct ipc_connection *ipc_c)
 	icsd->base.base.feature_dec = ipc_client_system_devices_feature_dec;
 	icsd->ipc_c = ipc_c;
 
-	return &icsd->base.base;
+	return icsd;
 }

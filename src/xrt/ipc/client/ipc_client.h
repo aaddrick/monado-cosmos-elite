@@ -1,4 +1,5 @@
 // Copyright 2020-2023, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -16,6 +17,7 @@
 
 #include "util/u_threading.h"
 #include "util/u_logging.h"
+#include "util/u_system_helpers.h"
 
 #include "shared/ipc_utils.h"
 #include "shared/ipc_protocol.h"
@@ -67,6 +69,24 @@ struct ipc_connection
 #ifdef XRT_OS_ANDROID
 	struct ipc_client_android *ica;
 #endif // XRT_OS_ANDROID
+};
+
+/*!
+ * Client side implementation of the system devices struct.
+ */
+struct ipc_client_system_devices
+{
+	//! @public Base
+	struct u_system_devices base;
+
+	//! Connection to service.
+	struct ipc_connection *ipc_c;
+
+	struct xrt_tracking_origin *xtracks[XRT_SYSTEM_MAX_DEVICES];
+
+	size_t xtrack_count;
+
+	struct xrt_reference feature_use[XRT_DEVICE_FEATURE_MAX_ENUM];
 };
 
 
@@ -125,7 +145,7 @@ ipc_client_system_create(struct ipc_connection *ipc_c, struct xrt_system_composi
 struct xrt_space_overseer *
 ipc_client_space_overseer_create(struct ipc_connection *ipc_c);
 
-struct xrt_system_devices *
+struct ipc_client_system_devices *
 ipc_client_system_devices_create(struct ipc_connection *ipc_c);
 
 struct xrt_session *

@@ -1,4 +1,5 @@
 // Copyright 2020-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -78,12 +79,6 @@ struct ipc_client_instance
 
 	struct ipc_connection ipc_c;
 
-	struct xrt_tracking_origin *xtracks[XRT_SYSTEM_MAX_DEVICES];
-	size_t xtrack_count;
-
-	struct xrt_device *xdevs[XRT_SYSTEM_MAX_DEVICES];
-	size_t xdev_count;
-
 #ifdef XRT_OS_ANDROID
 	struct android_instance_base android;
 #endif
@@ -151,19 +146,46 @@ ipc_client_instance_create_system(struct xrt_instance *xinst,
 	assert(*out_xsysd == NULL);
 	assert(out_xsysc == NULL || *out_xsysc == NULL);
 
-	struct xrt_system_devices *xsysd = NULL;
 	struct xrt_system_compositor *xsysc = NULL;
 
 	// Allocate a helper xrt_system_devices struct.
-	xsysd = ipc_client_system_devices_create(&ii->ipc_c);
+	struct ipc_client_system_devices *icsd = ipc_client_system_devices_create(&ii->ipc_c);
+	struct xrt_system_devices *xsysd = &icsd->base.base;
 
-	// Take the devices from this instance.
-	for (uint32_t i = 0; i < ii->xdev_count; i++) {
-		xsysd->xdevs[i] = ii->xdevs[i];
-		ii->xdevs[i] = NULL;
+	uint32_t count = 0;
+	struct xrt_tracking_origin *xtrack = NULL;
+	struct ipc_shared_memory *ism = ii->ipc_c.ism;
+
+	// Query the server for how many tracking origins it has.
+	count = 0;
+	for (uint32_t i = 0; i < ism->itrack_count; i++) {
+		xtrack = U_TYPED_CALLOC(struct xrt_tracking_origin);
+
+		memcpy(xtrack->name, ism->itracks[i].name, sizeof(xtrack->name));
+
+		xtrack->type = ism->itracks[i].type;
+		xtrack->initial_offset = ism->itracks[i].offset;
+		icsd->xtracks[count++] = xtrack;
+
+		u_var_add_root(xtrack, "Tracking origin", true);
+		u_var_add_ro_text(xtrack, xtrack->name, "name");
+		u_var_add_pose(xtrack, &xtrack->initial_offset, "offset");
 	}
-	xsysd->xdev_count = ii->xdev_count;
-	ii->xdev_count = 0;
+	icsd->xtrack_count = count;
+
+	// Query the server for how many devices it has.
+	count = 0;
+	for (uint32_t i = 0; i < ism->isdev_count; i++) {
+		struct ipc_shared_device *isdev = &ism->isdevs[i];
+		xtrack = icsd->xtracks[isdev->tracking_origin_index];
+
+		if (isdev->device_type == XRT_DEVICE_TYPE_HMD) {
+			xsysd->xdevs[count++] = ipc_client_hmd_create(&ii->ipc_c, xtrack, i);
+		} else {
+			xsysd->xdevs[count++] = ipc_client_device_create(&ii->ipc_c, xtrack, i);
+		}
+	}
+	xsysd->xdev_count = count;
 
 #define SET_ROLE(ROLE)                                                                                                 \
 	do {                                                                                                           \
@@ -232,13 +254,6 @@ ipc_client_instance_destroy(struct xrt_instance *xinst)
 	// service considers us to be connected until fd is closed
 	ipc_client_connection_fini(&ii->ipc_c);
 
-	for (size_t i = 0; i < ii->xtrack_count; i++) {
-		u_var_remove_root(ii->xtracks[i]);
-		free(ii->xtracks[i]);
-		ii->xtracks[i] = NULL;
-	}
-	ii->xtrack_count = 0;
-
 #ifdef XRT_OS_ANDROID
 	android_instance_base_cleanup(&(ii->android), xinst);
 	ipc_client_android_destroy(&(ii->ipc_c.ica));
@@ -294,43 +309,6 @@ ipc_instance_create(const struct xrt_instance_info *i_info, struct xrt_instance 
 		free(ii);
 		return xret;
 	}
-
-	uint32_t count = 0;
-	struct xrt_tracking_origin *xtrack = NULL;
-	struct ipc_shared_memory *ism = ii->ipc_c.ism;
-
-	// Query the server for how many tracking origins it has.
-	count = 0;
-	for (uint32_t i = 0; i < ism->itrack_count; i++) {
-		xtrack = U_TYPED_CALLOC(struct xrt_tracking_origin);
-
-		memcpy(xtrack->name, ism->itracks[i].name, sizeof(xtrack->name));
-
-		xtrack->type = ism->itracks[i].type;
-		xtrack->initial_offset = ism->itracks[i].offset;
-		ii->xtracks[count++] = xtrack;
-
-		u_var_add_root(xtrack, "Tracking origin", true);
-		u_var_add_ro_text(xtrack, xtrack->name, "name");
-		u_var_add_pose(xtrack, &xtrack->initial_offset, "offset");
-	}
-
-	ii->xtrack_count = count;
-
-	// Query the server for how many devices it has.
-	count = 0;
-	for (uint32_t i = 0; i < ism->isdev_count; i++) {
-		struct ipc_shared_device *isdev = &ism->isdevs[i];
-		xtrack = ii->xtracks[isdev->tracking_origin_index];
-
-		if (isdev->device_type == XRT_DEVICE_TYPE_HMD) {
-			ii->xdevs[count++] = ipc_client_hmd_create(&ii->ipc_c, xtrack, i);
-		} else {
-			ii->xdevs[count++] = ipc_client_device_create(&ii->ipc_c, xtrack, i);
-		}
-	}
-
-	ii->xdev_count = count;
 
 	ii->base.startup_timestamp = ii->ipc_c.ism->startup_timestamp;
 
