@@ -91,6 +91,8 @@ oxr_instance_destroy(struct oxr_logger *log, struct oxr_handle_base *hb)
 		inst->system.visibility_mask[i] = NULL;
 	}
 
+	os_mutex_destroy(&inst->system_init_lock);
+
 	xrt_space_overseer_destroy(&inst->system.xso);
 	os_mutex_destroy(&inst->system.sync_actions_mutex);
 	xrt_system_devices_destroy(&inst->system.xsysd);
@@ -258,6 +260,13 @@ oxr_instance_create(struct oxr_logger *log,
 		return ret;
 	}
 
+	m_ret = os_mutex_init(&inst->system_init_lock);
+	if (m_ret < 0) {
+		ret = oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Failed to init system init mutex");
+		return ret;
+	}
+
+
 #ifdef XRT_FEATURE_CLIENT_DEBUG_GUI
 	struct u_debug_gui_create_info udgci = {
 	    .window_title = "Monado! ✨⚡🔥",
@@ -371,53 +380,6 @@ oxr_instance_create(struct oxr_logger *log,
 	}
 #endif // XRT_OS_ANDROID
 
-	struct oxr_system *sys = &inst->system;
-
-	// Create the compositor if we are not headless, currently always create it.
-	bool should_create_compositor = true /* !inst->extensions.MND_headless */;
-
-	// Create the system.
-	if (should_create_compositor) {
-		xret = xrt_instance_create_system(inst->xinst, &sys->xsys, &sys->xsysd, &sys->xso, &sys->xsysc);
-	} else {
-		xret = xrt_instance_create_system(inst->xinst, &sys->xsys, &sys->xsysd, &sys->xso, NULL);
-	}
-
-	if (xret != XRT_SUCCESS) {
-		ret = oxr_error(log, XR_ERROR_INITIALIZATION_FAILED, "Failed to create the system '%i'", xret);
-		oxr_instance_destroy(log, &inst->handle);
-		return ret;
-	}
-
-	ret = XR_SUCCESS;
-	if (sys->xsysd == NULL) {
-		ret = oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Huh?! Field sys->xsysd was NULL?");
-	} else if (should_create_compositor && sys->xsysc == NULL) {
-		ret = oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Huh?! Field sys->xsysc was NULL?");
-	} else if (!should_create_compositor && sys->xsysc != NULL) {
-		ret = oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Huh?! Field sys->xsysc was not NULL?");
-	}
-
-	if (ret != XR_SUCCESS) {
-		oxr_instance_destroy(log, &inst->handle);
-		return ret;
-	}
-
-	// Did we find any HMD
-	// @todo Headless with only controllers?
-	struct xrt_device *dev = GET_XDEV_BY_ROLE(sys, head);
-	if (dev == NULL) {
-		ret = oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Failed to find any HMD device");
-		oxr_instance_destroy(log, &inst->handle);
-		return ret;
-	}
-	uint32_t view_count = dev->hmd->view_count;
-	ret = oxr_system_fill_in(log, inst, XRT_SYSTEM_ID, view_count, &inst->system);
-	if (ret != XR_SUCCESS) {
-		oxr_instance_destroy(log, &inst->handle);
-		return ret;
-	}
-
 	inst->timekeeping = time_state_create(inst->xinst->startup_timestamp);
 
 	//! @todo check if this (and other creates) failed?
@@ -429,10 +391,6 @@ oxr_instance_create(struct oxr_logger *log,
 	apply_quirks(log, inst);
 
 	u_var_add_root((void *)inst, "XrInstance", true);
-
-#ifdef XRT_FEATURE_CLIENT_DEBUG_GUI
-	u_debug_gui_start(inst->debug_ui, inst->xinst, sys->xsysd);
-#endif
 
 	oxr_log(log,
 	        "Instance created\n"
@@ -465,9 +423,6 @@ oxr_instance_create(struct oxr_logger *log,
 	        inst->quirks.skip_end_session ? "true" : "false",                        //
 	        inst->quirks.parallel_views ? "true" : "false"                           //
 	);                                                                               //
-
-	debug_print_devices(log, sys);
-
 
 #ifdef XRT_FEATURE_RENDERDOC
 
@@ -509,6 +464,72 @@ oxr_instance_create(struct oxr_logger *log,
 #endif
 
 	*out_instance = inst;
+
+	return XR_SUCCESS;
+}
+
+XrResult
+oxr_instance_init_system_locked(struct oxr_logger *log, struct oxr_instance *inst)
+{
+	struct oxr_system *sys = &inst->system;
+	if (sys->xsys) {
+		return XR_SUCCESS;
+	}
+
+	xrt_result_t xret;
+	XrResult ret;
+
+	// Create the compositor if we are not headless, currently always create it.
+	bool should_create_compositor = true /* !inst->extensions.MND_headless */;
+
+	// Create the system.
+	if (should_create_compositor) {
+		xret = xrt_instance_create_system(inst->xinst, &sys->xsys, &sys->xsysd, &sys->xso, &sys->xsysc);
+	} else {
+		xret = xrt_instance_create_system(inst->xinst, &sys->xsys, &sys->xsysd, &sys->xso, NULL);
+	}
+
+	if (xret != XRT_SUCCESS) {
+		struct u_pp_sink_stack_only sink;
+		u_pp_delegate_t dg = u_pp_sink_stack_only_init(&sink);
+		u_pp(dg, "Call to xrt_instance_create_system failed: ");
+		u_pp_xrt_result(dg, xret);
+		ret = oxr_error(log, XR_ERROR_INITIALIZATION_FAILED, "%s", sink.buffer);
+		return ret;
+	}
+
+#ifdef XRT_FEATURE_CLIENT_DEBUG_GUI
+	// Do this after creating the system.
+	u_debug_gui_start(inst->debug_ui, inst->xinst, sys->xsysd);
+#endif
+
+	ret = XR_SUCCESS;
+	if (sys->xsysd == NULL) {
+		ret = oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Huh?! Field sys->xsysd was NULL?");
+	} else if (should_create_compositor && sys->xsysc == NULL) {
+		ret = oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Huh?! Field sys->xsysc was NULL?");
+	} else if (!should_create_compositor && sys->xsysc != NULL) {
+		ret = oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Huh?! Field sys->xsysc was not NULL?");
+	}
+
+	if (ret != XR_SUCCESS) {
+		return ret;
+	}
+
+	// Did we find any HMD
+	// @todo Headless with only controllers?
+	struct xrt_device *dev = GET_XDEV_BY_ROLE(sys, head);
+	if (dev == NULL) {
+		ret = oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Failed to find any HMD device");
+		return ret;
+	}
+	uint32_t view_count = (uint32_t)dev->hmd->view_count;
+	ret = oxr_system_fill_in(log, inst, XRT_SYSTEM_ID, view_count, &inst->system);
+	if (ret != XR_SUCCESS) {
+		return ret;
+	}
+
+	debug_print_devices(log, sys);
 
 	return XR_SUCCESS;
 }

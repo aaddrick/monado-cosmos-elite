@@ -252,6 +252,14 @@ oxr_instance_create(struct oxr_logger *log,
                     struct oxr_instance **out_inst);
 
 /*!
+ * Must be called with oxr_instance::system_init_lock held.
+ *
+ * @public @memberof oxr_instance
+ */
+XrResult
+oxr_instance_init_system_locked(struct oxr_logger *log, struct oxr_instance *inst);
+
+/*!
  * @public @memberof oxr_instance
  */
 XrResult
@@ -1694,6 +1702,9 @@ struct oxr_instance
 		//! Stores only major.minor version. Simplifies comparisons for e.g. "at least OpenXR 1.1".
 		XrVersion major_minor;
 	} openxr_version;
+
+	// Protects the function oxr_instance_init_system_locked.
+	struct os_mutex system_init_lock;
 
 	// Hardcoded single system.
 	struct oxr_system system;

@@ -65,9 +65,21 @@ oxr_xrGetSystem(XrInstance instance, const XrSystemGetInfo *getInfo, XrSystemId 
 	struct oxr_system *systems[1] = {&inst->system};
 	uint32_t system_count = ARRAY_SIZE(systems);
 
-	XrResult ret = oxr_system_select(&log, systems, system_count, getInfo->formFactor, &selected);
+	/*
+	 * This lock is needed to make sure that xrGetSystem can be called from
+	 * multiple threads. This happens in the CTS.
+	 */
+	os_mutex_lock(&inst->system_init_lock);
+	XrResult ret = oxr_instance_init_system_locked(&log, inst);
+	os_mutex_unlock(&inst->system_init_lock);
+
 	if (ret != XR_SUCCESS) {
-		return ret;
+		return ret; // Already logged
+	}
+
+	ret = oxr_system_select(&log, systems, system_count, getInfo->formFactor, &selected);
+	if (ret != XR_SUCCESS) {
+		return ret; // Already logged
 	}
 
 	*systemId = selected->systemId;
