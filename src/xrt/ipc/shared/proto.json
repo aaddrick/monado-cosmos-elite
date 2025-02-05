@@ -11,6 +11,12 @@
 		]
 	},
 
+	"instance_is_system_available": {
+		"out": [
+			{"name": "available", "type": "bool"}
+		]
+	},
+
 	"system_get_properties": {
 		"out": [
 			{"name": "properties", "type": "struct xrt_system_properties"}

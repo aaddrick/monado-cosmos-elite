@@ -131,6 +131,14 @@ err_xina:
  */
 
 static xrt_result_t
+ipc_client_instance_is_system_available(struct xrt_instance *xinst, bool *out_available)
+{
+	struct ipc_client_instance *ii = ipc_client_instance(xinst);
+	xrt_result_t xret = ipc_call_instance_is_system_available(&ii->ipc_c, out_available);
+	IPC_CHK_ALWAYS_RET(&ii->ipc_c, xret, "ipc_call_instance_is_system_available");
+}
+
+static xrt_result_t
 ipc_client_instance_create_system(struct xrt_instance *xinst,
                                   struct xrt_system **out_xsys,
                                   struct xrt_system_devices **out_xsysd,
@@ -284,6 +292,7 @@ xrt_result_t
 ipc_instance_create(const struct xrt_instance_info *i_info, struct xrt_instance **out_xinst)
 {
 	struct ipc_client_instance *ii = U_TYPED_CALLOC(struct ipc_client_instance);
+	ii->base.is_system_available = ipc_client_instance_is_system_available;
 	ii->base.create_system = ipc_client_instance_create_system;
 	ii->base.get_prober = ipc_client_instance_get_prober;
 	ii->base.destroy = ipc_client_instance_destroy;

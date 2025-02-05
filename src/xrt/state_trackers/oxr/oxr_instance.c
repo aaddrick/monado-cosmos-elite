@@ -479,6 +479,21 @@ oxr_instance_init_system_locked(struct oxr_logger *log, struct oxr_instance *ins
 	xrt_result_t xret;
 	XrResult ret;
 
+	bool available = false;
+	xret = xrt_instance_is_system_available(inst->xinst, &available);
+	if (xret != XRT_SUCCESS) {
+		struct u_pp_sink_stack_only sink;
+		u_pp_delegate_t dg = u_pp_sink_stack_only_init(&sink);
+		u_pp(dg, "Call to xrt_instance_is_system_available failed: ");
+		u_pp_xrt_result(dg, xret);
+		ret = oxr_error(log, xret == XRT_ERROR_IPC_FAILURE ? XR_ERROR_INSTANCE_LOST : XR_ERROR_RUNTIME_FAILURE,
+		                "%s", sink.buffer);
+		return ret;
+	}
+	if (!available) {
+		return XR_ERROR_FORM_FACTOR_UNAVAILABLE;
+	}
+
 	// Create the compositor if we are not headless, currently always create it.
 	bool should_create_compositor = true /* !inst->extensions.MND_headless */;
 

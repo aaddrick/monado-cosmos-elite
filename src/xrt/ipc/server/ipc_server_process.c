@@ -279,18 +279,32 @@ handle_binding(struct ipc_shared_memory *ism,
 }
 
 XRT_CHECK_RESULT static xrt_result_t
-init_shm(struct ipc_server *s, volatile struct ipc_client_state *cs)
+init_shm_and_instance_state(struct ipc_server *s, volatile struct ipc_client_state *ics)
 {
 	const size_t size = sizeof(struct ipc_shared_memory);
 	xrt_shmem_handle_t handle;
 
-	xrt_result_t xret = ipc_shmem_create(size, &handle, (void **)&s->isms[cs->server_thread_index]);
+	xrt_result_t xret = ipc_shmem_create(size, &handle, (void **)&s->isms[ics->server_thread_index]);
 	IPC_CHK_AND_RET(s, xret, "ipc_shmem_create");
 
 	// we have a filehandle, we will pass this to our client
-	cs->ism_handle = handle;
+	ics->ism_handle = handle;
 
+	// Convenience
+	struct ipc_shared_memory *ism = s->isms[ics->server_thread_index];
 
+	// Clients expect git version info and timestamp available upon connect.
+	snprintf(ism->u_git_tag, IPC_VERSION_NAME_LEN, "%s", u_git_tag);
+
+	// Used to synchronize all client's xrt_instance::startup_timestamp.
+	ism->startup_timestamp = os_monotonic_get_ns();
+
+	return XRT_SUCCESS;
+}
+
+static void
+init_system_shm_state(struct ipc_server *s, volatile struct ipc_client_state *cs)
+{
 	/*
 	 *
 	 * Setup the shared memory state.
@@ -299,8 +313,6 @@ init_shm(struct ipc_server *s, volatile struct ipc_client_state *cs)
 
 	uint32_t count = 0;
 	struct ipc_shared_memory *ism = s->isms[cs->server_thread_index];
-
-	ism->startup_timestamp = os_monotonic_get_ns();
 
 	// Setup the tracking origins.
 	count = 0;
@@ -423,17 +435,13 @@ init_shm(struct ipc_server *s, volatile struct ipc_client_state *cs)
 	ism->roles.eyes = find_xdev_index(s, s->xsysd->static_roles.eyes);
 	ism->roles.face = find_xdev_index(s, s->xsysd->static_roles.face);
 	ism->roles.body = find_xdev_index(s, s->xsysd->static_roles.body);
+
 #define SET_HT_ROLE(SRC)                                                                                               \
 	ism->roles.hand_tracking.SRC.left = find_xdev_index(s, s->xsysd->static_roles.hand_tracking.SRC.left);         \
 	ism->roles.hand_tracking.SRC.right = find_xdev_index(s, s->xsysd->static_roles.hand_tracking.SRC.right);
 	SET_HT_ROLE(unobstructed)
 	SET_HT_ROLE(conforming)
 #undef SET_HT_ROLE
-
-	// Fill out git version info.
-	snprintf(ism->u_git_tag, IPC_VERSION_NAME_LEN, "%s", u_git_tag);
-
-	return XRT_SUCCESS;
 }
 
 static void
@@ -487,13 +495,6 @@ init_all(struct ipc_server *s, enum u_logging_level log_level, bool exit_on_disc
 
 	xret = xrt_instance_create(NULL, &s->xinst);
 	IPC_CHK_WITH_GOTO(s, xret, "xrt_instance_create", error);
-
-	xret = xrt_instance_create_system(s->xinst, &s->xsys, &s->xsysd, &s->xso, &s->xsysc);
-	IPC_CHK_WITH_GOTO(s, xret, "xrt_instance_create_system", error);
-
-	// Always succeeds.
-	init_idevs(s);
-	init_tracking_origins(s);
 
 	ret = ipc_server_mainloop_init(&s->ml);
 	if (ret < 0) {
@@ -806,6 +807,46 @@ allocate_id_locked(struct ipc_server *s)
  */
 
 xrt_result_t
+ipc_server_init_system_if_available_locked(struct ipc_server *s,
+                                           volatile struct ipc_client_state *ics,
+                                           bool *out_available)
+{
+	xrt_result_t xret = XRT_SUCCESS;
+
+	bool available = false;
+
+	if (s->xsys) {
+		available = true;
+	} else {
+		xret = xrt_instance_is_system_available(s->xinst, &available);
+		IPC_CHK_WITH_GOTO(s, xret, "xrt_instance_is_system_available", error);
+
+		if (available) {
+			xret = xrt_instance_create_system(s->xinst, &s->xsys, &s->xsysd, &s->xso, &s->xsysc);
+			IPC_CHK_WITH_GOTO(s, xret, "xrt_instance_create_system", error);
+
+			// Always succeeds.
+			init_idevs(s);
+			init_tracking_origins(s);
+		}
+	}
+
+	if (available && ics != NULL && !ics->has_init_shm_system) {
+		init_system_shm_state(s, ics);
+		ics->has_init_shm_system = true;
+	}
+
+	if (out_available) {
+		*out_available = available;
+	}
+
+	return XRT_SUCCESS;
+
+error:
+	return xret;
+}
+
+xrt_result_t
 ipc_server_get_client_app_state(struct ipc_server *s, uint32_t client_id, struct ipc_app_state *out_ias)
 {
 	os_mutex_lock(&s->global_state.lock);
@@ -982,7 +1023,7 @@ ipc_server_handle_client_connected(struct ipc_server *vs, xrt_ipc_handle_t ipc_h
 	ics->plane_detection_ids = NULL;
 	ics->plane_detection_xdev = NULL;
 
-	xrt_result_t xret = init_shm(vs, ics);
+	xrt_result_t xret = init_shm_and_instance_state(vs, ics);
 	if (xret != XRT_SUCCESS) {
 
 		// Unlock when we are done.
@@ -1048,6 +1089,15 @@ ipc_server_main_common(const struct ipc_server_main_info *ismi,
 
 	// Tell the callbacks we are entering the main-loop.
 	callbacks->mainloop_entering(s, s->xinst, data);
+
+	// Early init the system. If not available now, will try again per client request.
+	xret = ipc_server_init_system_if_available_locked( //
+	    s,                                             //
+	    NULL,                                          // optional - ics
+	    NULL);                                         // optional - out_available
+	if (xret != XRT_SUCCESS) {
+		U_LOG_CHK_ONLY_PRINT(log_level, xret, "ipc_server_init_system_if_available_locked");
+	}
 
 	// Main loop.
 	ret = main_loop(s);

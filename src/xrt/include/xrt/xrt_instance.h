@@ -1,4 +1,5 @@
 // Copyright 2020-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -126,6 +127,11 @@ struct xrt_instance
 	 */
 
 	/*!
+	 * Checks if the system can be created with create_system().
+	 */
+	xrt_result_t (*is_system_available)(struct xrt_instance *xinst, bool *out_available);
+
+	/*!
 	 * Creates all of the system resources like the devices and system
 	 * compositor. The system compositor is optional.
 	 *
@@ -198,6 +204,20 @@ struct xrt_instance
 	 */
 	struct xrt_instance_android *android_instance;
 };
+
+
+/*!
+ * @copydoc xrt_instance::create_system
+ *
+ * Helper for calling through the function pointer.
+ *
+ * @public @memberof xrt_instance
+ */
+static inline xrt_result_t
+xrt_instance_is_system_available(struct xrt_instance *xinst, bool *out_available)
+{
+	return xinst->is_system_available(xinst, out_available);
+}
 
 /*!
  * @copydoc xrt_instance::create_system

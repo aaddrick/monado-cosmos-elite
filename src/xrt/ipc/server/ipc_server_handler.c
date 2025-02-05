@@ -400,6 +400,25 @@ ipc_handle_instance_describe_client(volatile struct ipc_client_state *ics,
 }
 
 xrt_result_t
+ipc_handle_instance_is_system_available(volatile struct ipc_client_state *ics, bool *out_available)
+{
+	IPC_TRACE_MARKER();
+
+	xrt_result_t xret = XRT_SUCCESS;
+
+	struct ipc_server *s = ics->server;
+
+	os_mutex_lock(&s->global_state.lock);
+
+	xret = ipc_server_init_system_if_available_locked(s, ics, out_available);
+	IPC_CHK_WITH_GOTO(s, xret, "ipc_server_init_system_if_available_locked", cleanup);
+
+cleanup:
+	os_mutex_unlock(&s->global_state.lock);
+	return xret;
+}
+
+xrt_result_t
 ipc_handle_system_compositor_get_info(volatile struct ipc_client_state *ics,
                                       struct xrt_system_compositor_info *out_info)
 {

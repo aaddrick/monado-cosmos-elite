@@ -1,4 +1,5 @@
 // Copyright 2020-2023, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -89,6 +90,9 @@ struct ipc_client_state
 {
 	//! Link back to the main server.
 	struct ipc_server *server;
+
+	//! Has the system part of the shm initialized.
+	bool has_init_shm_system;
 
 	//! Session for this client.
 	struct xrt_session *xs;
@@ -409,6 +413,15 @@ struct ipc_server
 	} global_state;
 };
 
+/*!
+ * Finish setting up the server by creating the system, compositor and devices.
+ *
+ * @ingroup ipc_server
+ */
+xrt_result_t
+ipc_server_init_system_if_available_locked(struct ipc_server *s,
+                                           volatile struct ipc_client_state *ics,
+                                           bool *out_available);
 
 /*!
  * Get the current state of a client.
