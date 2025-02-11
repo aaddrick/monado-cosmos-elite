@@ -970,6 +970,7 @@ ipc_server_handle_client_connected(struct ipc_server *vs, xrt_ipc_handle_t ipc_h
 	U_ZERO((struct ipc_client_state *)ics);
 
 	// Set state.
+	ics->local_space_overseer_index = UINT32_MAX;
 	ics->client_state.id = id;
 	ics->imc.ipc_handle = ipc_handle;
 	ics->server = vs;
