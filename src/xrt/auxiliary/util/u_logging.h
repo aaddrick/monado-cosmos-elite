@@ -70,6 +70,17 @@ typedef void (*u_log_sink_func_t)(const char *file,
                                   void *data);
 
 /*!
+ * Function typedef for filtering log messages.
+ *
+ * @param file   Source file name associated with a message.
+ * @param line   Source file line associated with a message.
+ * @param func   Function name associated with a message.
+ * @param level  Message level: used for formatting or forwarding to native log functions.
+ * @return true if message should be logged, false to filter it out.
+ */
+typedef bool (*u_log_filter_func_t)(const char *file, int line, const char *func, enum u_logging_level level);
+
+/*!
  * For places where you really want printf, prints a new-line.
  */
 #define U_LOG_RAW(...)                                                                                                 \
@@ -377,6 +388,14 @@ u_log_print_result(enum u_logging_level cond_level,
                    const char *calling_fn,
                    xrt_result_t xret,
                    const char *called_fn);
+
+/*!
+ * @brief Add function to set the filter
+ *
+ * @param filter Filter function to set
+ */
+void
+u_log_set_filter(u_log_filter_func_t filter);
 
 /*!
  * @}

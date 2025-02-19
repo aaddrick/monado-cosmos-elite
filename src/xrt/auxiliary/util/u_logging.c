@@ -454,10 +454,23 @@ u_log_print_result(enum u_logging_level cond_level,
 	u_log(file, line, calling_fn, level, "%s", sink.buffer);
 }
 
+static u_log_filter_func_t g_filter = NULL;
+
+void
+u_log_set_filter(u_log_filter_func_t filter)
+{
+	g_filter = filter;
+}
+
 void
 u_log(const char *file, int line, const char *func, enum u_logging_level level, const char *format, ...)
 {
 	va_list args;
+	// Check filter first
+	if (g_filter != NULL && !g_filter(file, line, func, level)) {
+		return; // Skip this message
+	}
+
 	va_start(args, format);
 	DISPATCH_SINK(file, line, func, level, format, args);
 	do_print(file, line, func, level, format, args);
@@ -474,6 +487,10 @@ u_log_xdev(const char *file,
            ...)
 {
 	va_list args;
+	// Check filter first
+	if (g_filter != NULL && !g_filter(file, line, func, level)) {
+		return; // Skip this message
+	}
 	va_start(args, format);
 	DISPATCH_SINK(file, line, func, level, format, args);
 	do_print(file, line, func, level, format, args);
