@@ -254,6 +254,17 @@ struct oxr_subaction_paths;
 		}                                                                                                      \
 	} while (false)
 
+#define OXR_VERIFY_FORM_FACTOR(log, form_factor)                                                                       \
+	do {                                                                                                           \
+		XrFormFactor _form_factor = (form_factor);                                                             \
+		if (_form_factor != XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY &&                                             \
+		    _form_factor != XR_FORM_FACTOR_HANDHELD_DISPLAY) {                                                 \
+                                                                                                                       \
+			return oxr_error(log, XR_ERROR_FORM_FACTOR_UNSUPPORTED,                                        \
+			                 "(" #form_factor " == 0x%08x) is not a valid form factor", _form_factor);     \
+		}                                                                                                      \
+	} while (false)
+
 #define OXR_VERIFY_VIEW_CONFIG_TYPE(log, inst, view_conf)                                                              \
 	do {                                                                                                           \
 		XrResult verify_ret = oxr_verify_view_config_type(log, inst, view_conf, #view_conf);                   \
@@ -324,17 +335,6 @@ struct oxr_subaction_paths;
 				                 "style next structure chain contains duplicate items");               \
 			duplicate_check |= next->type;                                                                 \
 			next = (const XrPassthroughStyleFB *)next->next;                                               \
-		}                                                                                                      \
-	} while (false)
-
-#define OXR_VERIFY_FORM_FACTOR(log, form_factor)                                                                       \
-	do {                                                                                                           \
-		XrFormFactor _form_factor = (form_factor);                                                             \
-		if (_form_factor != XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY &&                                             \
-		    _form_factor != XR_FORM_FACTOR_HANDHELD_DISPLAY) {                                                 \
-                                                                                                                       \
-			return oxr_error(log, XR_ERROR_FORM_FACTOR_UNSUPPORTED,                                        \
-			                 "(" #form_factor " == 0x%08x) is not a valid form factor", _form_factor);     \
 		}                                                                                                      \
 	} while (false)
 
