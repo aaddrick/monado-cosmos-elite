@@ -1,4 +1,5 @@
 // Copyright 2019-2024, Collabora, Ltd.
+// Copyright 2024-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -254,6 +255,7 @@ enum u_var_kind
 	U_VAR_KIND_GUI_HEADER,
 	U_VAR_KIND_GUI_HEADER_BEGIN,
 	U_VAR_KIND_GUI_HEADER_END,
+	U_VAR_KIND_GUI_SAMELINE,
 	U_VAR_KIND_BUTTON,
 	U_VAR_KIND_COMBO,
 	U_VAR_KIND_HISTOGRAM_F32,
@@ -414,6 +416,7 @@ u_var_force_on(void);
 	ADD_FUNC(gui_header, bool, GUI_HEADER)                                                                         \
 	ADD_FUNC(gui_header_begin, bool, GUI_HEADER_BEGIN)                                                             \
 	ADD_FUNC(gui_header_end, bool, GUI_HEADER_END)                                                                 \
+	ADD_FUNC(gui_sameline, void, GUI_SAMELINE)                                                                     \
 	ADD_FUNC(button, struct u_var_button, BUTTON)                                                                  \
 	ADD_FUNC(combo, struct u_var_combo, COMBO)                                                                     \
 	ADD_FUNC(draggable_f32, struct u_var_draggable_f32, DRAGGABLE_F32)                                             \
