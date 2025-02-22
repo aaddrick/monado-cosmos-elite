@@ -714,6 +714,7 @@ on_elem(struct u_var_info *info, void *priv)
 	case U_VAR_KIND_GUI_HEADER: assert(false && "Should be handled before this"); break;
 	case U_VAR_KIND_GUI_HEADER_BEGIN: on_gui_header_begin(name, state); break;
 	case U_VAR_KIND_GUI_HEADER_END: on_gui_header_end(); break;
+	case U_VAR_KIND_GUI_SAMELINE: igSameLine(0.0, 4.0f); break;
 	case U_VAR_KIND_SINK_DEBUG: on_sink_debug_var(name, ptr, state); break;
 	case U_VAR_KIND_NATIVE_IMAGES_DEBUG: on_native_images_debug_var(name, ptr, state); break;
 	case U_VAR_KIND_DRAGGABLE_F32: on_draggable_f32_var(name, ptr); break;
