@@ -1,4 +1,5 @@
 // Copyright 2018-2020,2023 Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -462,13 +463,33 @@ oxr_get_profile_for_device_name(struct oxr_logger *log,
 	if (name == XRT_DEVICE_INVALID) {
 		return false;
 	}
+
 	/*
 	 * Map xrt_device_name to an interaction profile XrPath.
-	 * Set *out_p to an oxr_interaction_profile if bindings for that interaction profile XrPath have been suggested.
+	 *
+	 * There might be multiple OpenXR interaction profiles that maps to a
+	 * a single @ref xrt_device_name, so we can't just grab the first one
+	 * that we find and assume that wasn't bound then there isn't an OpenXR
+	 * interaction profile bound for that device name. So we will need to
+	 * keep looping until we find an OpenXR interaction profile, or we run
+	 * out of interaction profiles that the app has suggested.
+	 *
+	 * For XRT_DEVICE_HAND_INTERACTION both the OpenXR hand-interaction
+	 * profiles maps to it, but the app might only provide binding for one.
+	 *
+	 * Set *out_p to an oxr_interaction_profile if bindings for that
+	 * interaction profile XrPath have been suggested.
 	 */
 	for (uint32_t i = 0; i < ARRAY_SIZE(profile_templates); i++) {
 		if (name == profile_templates[i].name) {
-			if (interaction_profile_find_in_session(log, sess, profile_templates[i].path_cache, out_p)) {
+			interaction_profile_find_in_session(log, sess, profile_templates[i].path_cache, out_p);
+
+			/*
+			 * Keep looping even if the current matching OpenXR
+			 * interaction profile wasn't suggested by the app.
+			 * See comment above.
+			 */
+			if (*out_p != NULL) {
 				return true;
 			}
 		}
