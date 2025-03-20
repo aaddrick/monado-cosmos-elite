@@ -43,11 +43,11 @@ get_vk(struct sdl_compositor *c)
 	return &c->base.vk;
 }
 
-#define SC_TRACE(c, ...) U_LOG_IFL_T(c->base.vk.log_level, __VA_ARGS__);
-#define SC_DEBUG(c, ...) U_LOG_IFL_D(c->base.vk.log_level, __VA_ARGS__);
-#define SC_INFO(c, ...) U_LOG_IFL_I(c->base.vk.log_level, __VA_ARGS__);
-#define SC_WARN(c, ...) U_LOG_IFL_W(c->base.vk.log_level, __VA_ARGS__);
-#define SC_ERROR(c, ...) U_LOG_IFL_E(c->base.vk.log_level, __VA_ARGS__);
+#define SC_TRACE(c, ...) U_LOG_IFL_T(get_vk(c)->log_level, __VA_ARGS__);
+#define SC_DEBUG(c, ...) U_LOG_IFL_D(get_vk(c)->log_level, __VA_ARGS__);
+#define SC_INFO(c, ...) U_LOG_IFL_I(get_vk(c)->log_level, __VA_ARGS__);
+#define SC_WARN(c, ...) U_LOG_IFL_W(get_vk(c)->log_level, __VA_ARGS__);
+#define SC_ERROR(c, ...) U_LOG_IFL_E(get_vk(c)->log_level, __VA_ARGS__);
 
 
 /*
@@ -246,7 +246,7 @@ compositor_init_info(struct sdl_compositor *c)
 	struct comp_vulkan_formats formats = {0};
 	comp_vulkan_formats_check(vk, &formats);
 	comp_vulkan_formats_copy_to_info(&formats, info);
-	comp_vulkan_formats_log(c->base.vk.log_level, &formats);
+	comp_vulkan_formats_log(vk->log_level, &formats);
 
 	return true;
 }
