@@ -14,7 +14,7 @@ endif()
 function(spirv_shaders ret)
 	set(options)
 	set(oneValueArgs SPIRV_VERSION)
-	set(multiValueArgs SOURCES)
+	set(multiValueArgs SOURCES DEPENDS)
 	cmake_parse_arguments(_spirvshaders "${options}" "${oneValueArgs}"
 	                      "${multiValueArgs}" ${ARGN})
 
@@ -30,7 +30,7 @@ function(spirv_shaders ret)
 		add_custom_command(
 			OUTPUT ${HEADER}
 			COMMAND ${GLSLANGVALIDATOR_COMMAND} -V --target-env spirv${_spirvshaders_SPIRV_VERSION} ${GLSL} --vn ${IDENTIFIER} -o ${HEADER}
-			DEPENDS ${GLSL})
+			DEPENDS ${GLSL} ${_spirvshaders_DEPENDS})
 		list(APPEND HEADERS ${HEADER})
 	endforeach()
 
