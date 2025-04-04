@@ -73,6 +73,24 @@ struct ipc_server_callbacks
 	 * @param[in] data  User data given passed into the main function.
 	 */
 	void (*mainloop_leaving)(struct ipc_server *s, struct xrt_instance *xinst, void *data);
+
+	/*!
+	 * A new client has connected to the IPC server.
+	 *
+	 * param s     The IPC server.
+	 * param client_id The ID of the newly connected client.
+	 * param data  User data given passed into the main function.
+	 */
+	void (*client_connected)(struct ipc_server *s, uint32_t client_id, void *data);
+
+	/*!
+	 * A client has disconnected from the IPC server.
+	 *
+	 * param s     The IPC server.
+	 * param client_id The ID of the newly connected client.
+	 * param data  User data given passed into the main function.
+	 */
+	void (*client_disconnected)(struct ipc_server *s, uint32_t client_id, void *data);
 };
 
 /*!

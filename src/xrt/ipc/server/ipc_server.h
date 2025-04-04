@@ -24,6 +24,8 @@
 #include "shared/ipc_protocol.h"
 #include "shared/ipc_message_channel.h"
 
+#include "ipc_server_interface.h"
+
 #include <stdio.h>
 
 
@@ -411,6 +413,16 @@ struct ipc_server
 
 		struct os_mutex lock;
 	} global_state;
+
+	/*!
+	 * Callbacks for server events.
+	 */
+	const struct ipc_server_callbacks *callbacks;
+
+	/*!
+	 * User data passed to callbacks.
+	 */
+	void *callback_data;
 };
 
 /*!

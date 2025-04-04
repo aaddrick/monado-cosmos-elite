@@ -1,4 +1,5 @@
 // Copyright 2020-2023, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -200,7 +201,11 @@ client_loop(volatile struct ipc_client_state *ics)
 {
 	U_TRACE_SET_THREAD_NAME("IPC Client");
 
-	IPC_INFO(ics->server, "Client %u connected", ics->client_state.id);
+	// Call the client connected callback.
+	ics->server->callbacks->client_connected( //
+	    ics->server,                          //
+	    ics->client_state.id,                 //
+	    ics->server->callback_data);          //
 
 	// Claim the client fd.
 	int epoll_fd = setup_epoll(ics);
@@ -231,7 +236,6 @@ client_loop(volatile struct ipc_client_state *ics)
 
 		// Detect clients disconnecting gracefully.
 		if (ret > 0 && (event.events & EPOLLHUP) != 0) {
-			IPC_INFO(ics->server, "Client disconnected.");
 			break;
 		}
 
@@ -274,6 +278,12 @@ client_loop(volatile struct ipc_client_state *ics)
 	close(epoll_fd);
 	epoll_fd = -1;
 
+	// Call the client disconnected callback.
+	ics->server->callbacks->client_disconnected( //
+	    ics->server,                             //
+	    ics->client_state.id,                    //
+	    ics->server->callback_data);             //
+
 	// Following code is same for all platforms.
 	common_shutdown(ics);
 }
@@ -297,7 +307,11 @@ client_loop(volatile struct ipc_client_state *ics)
 {
 	U_TRACE_SET_THREAD_NAME("IPC Client");
 
-	IPC_INFO(ics->server, "Client connected");
+	// Call the client connected callback.
+	ics->server->callbacks->client_connected( //
+	    ics->server,                          //
+	    ics->client_state.id,                 //
+	    ics->server->callback_data);          //
 
 	while (ics->server->running) {
 		uint8_t buf[IPC_BUF_SIZE] = {0};
@@ -353,6 +367,12 @@ client_loop(volatile struct ipc_client_state *ics)
 			break;
 		}
 	}
+
+	// Call the client disconnected callback.
+	ics->server->callbacks->client_disconnected( //
+	    ics->server,                             //
+	    ics->client_state.id,                    //
+	    ics->server->callback_data);             //
 
 	// Following code is same for all platforms.
 	common_shutdown(ics);

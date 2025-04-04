@@ -462,13 +462,21 @@ init_server_state(struct ipc_server *s)
 }
 
 static xrt_result_t
-init_all(struct ipc_server *s, enum u_logging_level log_level, bool exit_on_disconnect)
+init_all(struct ipc_server *s,
+         enum u_logging_level log_level,
+         const struct ipc_server_callbacks *callbacks,
+         void *callback_data,
+         bool exit_on_disconnect)
 {
 	xrt_result_t xret = XRT_SUCCESS;
 	int ret;
 
 	// First order of business set the log level.
 	s->log_level = log_level;
+
+	// Store callbacks and data
+	s->callbacks = callbacks;
+	s->callback_data = callback_data;
 
 	// This should never fail.
 	ret = os_mutex_init(&s->global_state.lock);
@@ -1074,7 +1082,7 @@ ipc_server_main_common(const struct ipc_server_main_info *ismi,
 	 */
 	u_debug_gui_create(&ismi->udgci, &s->debug_gui);
 
-	xret = init_all(s, log_level, ismi->exit_on_disconnect);
+	xret = init_all(s, log_level, callbacks, data, ismi->exit_on_disconnect);
 	U_LOG_CHK_ONLY_PRINT(log_level, xret, "init_all");
 	if (xret != XRT_SUCCESS) {
 		// Propegate the failure.
@@ -1148,6 +1156,18 @@ mainloop_leaving(struct ipc_server *s, struct xrt_instance *xinst, void *data)
 	// No-op
 }
 
+void
+client_connected(struct ipc_server *s, uint32_t client_id, void *data)
+{
+	IPC_INFO(s, "Client %u connected", client_id);
+}
+
+void
+client_disconnected(struct ipc_server *s, uint32_t client_id, void *data)
+{
+	IPC_INFO(s, "Client %u disconnected", client_id);
+}
+
 int
 ipc_server_main(int argc, char **argv, const struct ipc_server_main_info *ismi)
 {
@@ -1155,6 +1175,8 @@ ipc_server_main(int argc, char **argv, const struct ipc_server_main_info *ismi)
 	    .init_failed = init_failed,
 	    .mainloop_entering = mainloop_entering,
 	    .mainloop_leaving = mainloop_leaving,
+	    .client_connected = client_connected,
+	    .client_disconnected = client_disconnected,
 	};
 
 	return ipc_server_main_common(ismi, &callbacks, NULL);

@@ -78,6 +78,18 @@ public:
 		// No-op
 	}
 
+	static void
+	signalClientConnectedTrampoline(struct ipc_server *s, uint32_t client_id, void *data)
+	{
+		// No-op
+	}
+
+	static void
+	signalClientDisconnectedTrampoline(struct ipc_server *s, uint32_t client_id, void *data)
+	{
+		// No-op
+	}
+
 	int32_t
 	addClient(int fd)
 	{
@@ -140,6 +152,8 @@ private:
 	    .init_failed = signalInitFailed,
 	    .mainloop_entering = signalStartupCompleteTrampoline,
 	    .mainloop_leaving = signalShuttingDownTrampoline,
+	    .client_connected = signalClientConnectedTrampoline,
+	    .client_disconnected = signalClientDisconnectedTrampoline,
 	};
 
 	//! Reference to the ipc_server, managed by ipc_server_process
