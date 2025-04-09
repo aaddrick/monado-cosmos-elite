@@ -1129,6 +1129,12 @@ ipc_server_main_common(const struct ipc_server_main_info *ismi,
 	return ret;
 }
 
+int
+ipc_server_stop(struct ipc_server *s)
+{
+	s->running = false;
+	return 0;
+}
 
 #ifndef XRT_OS_ANDROID
 

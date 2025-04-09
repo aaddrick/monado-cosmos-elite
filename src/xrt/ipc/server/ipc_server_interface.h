@@ -101,6 +101,14 @@ struct ipc_server_callbacks
 int
 ipc_server_main_common(const struct ipc_server_main_info *ismi, const struct ipc_server_callbacks *iscb, void *data);
 
+/*!
+ * Asks the server to shut down, this call is asynchronous and will return
+ * immediately. Use callbacks to be notified when the server stops.
+ *
+ * @memberof ipc_server
+ */
+int
+ipc_server_stop(struct ipc_server *s);
 
 #ifndef XRT_OS_ANDROID
 
