@@ -1,5 +1,5 @@
 // Copyright 2019-2023, Collabora, Ltd.
-// Copyright 2023, NVIDIA CORPORATION.
+// Copyright 2023-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -238,7 +238,11 @@ oxr_xrSuggestInteractionProfileBindings(XrInstance instance,
 	path_verify_fn_t dpad_path_fn = NULL;
 	path_verify_fn_t dpad_emulator_fn = NULL;
 	ext_verify_fn_t ext_verify_fn = NULL;
-	bool has_dpad = inst->extensions.EXT_dpad_binding;
+#ifdef OXR_HAVE_EXT_dpad_binding
+	const bool has_dpad = inst->extensions.EXT_dpad_binding;
+#else
+	const bool has_dpad = false;
+#endif
 
 	struct profile_template *interaction_profile_template = NULL;
 	for (uint32_t i = 0; i < ARRAY_SIZE(profile_templates); i++) {

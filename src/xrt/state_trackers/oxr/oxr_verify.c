@@ -1,4 +1,5 @@
 // Copyright 2018-2022, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -424,10 +425,12 @@ oxr_verify_extensions(struct oxr_logger *log, const struct oxr_extension_status 
 	}
 #endif
 
+#ifdef OXR_HAVE_EXT_dpad_binding
 	if (extensions->EXT_dpad_binding && !extensions->KHR_binding_modification) {
 		return oxr_error(log, XR_ERROR_VALIDATION_FAILURE,
 		                 "XR_EXT_dpad_binding requires XR_KHR_binding_modification");
 	}
+#endif
 
 	return XR_SUCCESS;
 }
