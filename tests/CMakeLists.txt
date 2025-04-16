@@ -52,6 +52,7 @@ foreach(testname ${tests})
 	target_link_libraries(${testname} PRIVATE xrt-external-catch2)
 	target_link_libraries(${testname} PRIVATE aux_util)
 	add_test(NAME ${testname} COMMAND ${testname} --success --allow-running-no-tests)
+	set_target_properties(${testname} PROPERTIES FOLDER monado_tests)
 endforeach()
 
 # For tests that require more than just aux_util, link those other libs down here.
