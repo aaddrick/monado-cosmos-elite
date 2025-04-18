@@ -39,6 +39,9 @@ struct ipc_server_main_info
 
 	//! Flag whether runtime should exit on app disconnect.
 	bool exit_on_disconnect;
+
+	//! Disable listening on stdin for server stop.
+	bool no_stdin;
 };
 
 /*!

@@ -61,6 +61,15 @@ DEBUG_GET_ONCE_BOOL_OPTION(exit_when_idle, "IPC_EXIT_WHEN_IDLE", false)
 DEBUG_GET_ONCE_NUM_OPTION(exit_when_idle_delay_ms, "IPC_EXIT_WHEN_IDLE_DELAY_MS", 5000)
 DEBUG_GET_ONCE_LOG_OPTION(ipc_log, "IPC_LOG", U_LOGGING_INFO)
 
+/*
+ * "XRT_NO_STDIN" option disables stdin and prevents monado-service from terminating.
+ * This could be useful for situations where there is no proper or in a non-interactive shell.
+ * Two example scenarios are:
+ *    * IDE terminals,
+ *    * Some scripting environments where monado-service is spawned in the background
+ */
+DEBUG_GET_ONCE_BOOL_OPTION(no_stdin, "XRT_NO_STDIN", false)
+
 
 /*
  *
@@ -504,7 +513,7 @@ init_all(struct ipc_server *s,
 	xret = xrt_instance_create(NULL, &s->xinst);
 	IPC_CHK_WITH_GOTO(s, xret, "xrt_instance_create", error);
 
-	ret = ipc_server_mainloop_init(&s->ml);
+	ret = ipc_server_mainloop_init(&s->ml, s->no_stdin);
 	if (ret < 0) {
 		xret = XRT_ERROR_IPC_MAINLOOP_FAILED_TO_INIT;
 	}
@@ -1070,6 +1079,9 @@ ipc_server_main_common(const struct ipc_server_main_info *ismi,
 
 	// Allocate the server itself.
 	struct ipc_server *s = U_TYPED_CALLOC(struct ipc_server);
+
+	// Can be set by either.
+	s->no_stdin = ismi->no_stdin || debug_get_bool_option_no_stdin();
 
 #ifdef XRT_OS_WINDOWS
 	timeBeginPeriod(1);

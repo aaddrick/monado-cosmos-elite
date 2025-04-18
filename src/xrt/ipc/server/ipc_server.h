@@ -335,7 +335,7 @@ ipc_server_mainloop_deinit(struct ipc_server_mainloop *ml);
  * @public @memberof ipc_server_mainloop
  */
 int
-ipc_server_mainloop_init(struct ipc_server_mainloop *ml);
+ipc_server_mainloop_init(struct ipc_server_mainloop *ml, bool no_stdin);
 
 /*!
  * @brief Poll the mainloop.
@@ -423,6 +423,9 @@ struct ipc_server
 	 * User data passed to callbacks.
 	 */
 	void *callback_data;
+
+	//! Disable listening on stdin for server stop.
+	bool no_stdin;
 };
 
 /*!

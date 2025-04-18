@@ -1,4 +1,5 @@
 // Copyright 2020-2021, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -46,14 +47,6 @@
 #include <systemd/sd-daemon.h>
 #endif
 
-/*
- * "XRT_NO_STDIN" option disables stdin and prevents monado-service from terminating.
- * This could be useful for situations where there is no proper or in a non-interactive shell.
- * Two example scenarios are:
- *    * IDE terminals,
- *    * Some scripting environments where monado-service is spawned in the background
- */
-DEBUG_GET_ONCE_BOOL_OPTION(skip_stdin, "XRT_NO_STDIN", false)
 
 /*
  *
@@ -175,7 +168,7 @@ init_listen_socket(struct ipc_server_mainloop *ml)
 }
 
 static int
-init_epoll(struct ipc_server_mainloop *ml)
+init_epoll(struct ipc_server_mainloop *ml, bool no_stdin)
 {
 	int ret = epoll_create1(EPOLL_CLOEXEC);
 	if (ret < 0) {
@@ -186,7 +179,7 @@ init_epoll(struct ipc_server_mainloop *ml)
 
 	struct epoll_event ev = {0};
 
-	if (!ml->launched_by_socket && !debug_get_bool_option_skip_stdin()) {
+	if (!ml->launched_by_socket && !no_stdin) {
 		// Can't do this when launched by systemd socket activation by
 		// default.
 		// This polls stdin.
@@ -265,7 +258,7 @@ ipc_server_mainloop_poll(struct ipc_server *vs, struct ipc_server_mainloop *ml)
 }
 
 int
-ipc_server_mainloop_init(struct ipc_server_mainloop *ml)
+ipc_server_mainloop_init(struct ipc_server_mainloop *ml, bool no_stdin)
 {
 	IPC_TRACE_MARKER();
 
@@ -275,7 +268,7 @@ ipc_server_mainloop_init(struct ipc_server_mainloop *ml)
 		return ret;
 	}
 
-	ret = init_epoll(ml);
+	ret = init_epoll(ml, no_stdin);
 	if (ret < 0) {
 		ipc_server_mainloop_deinit(ml);
 		return ret;
