@@ -521,6 +521,13 @@ on_button_var(const char *name, void *ptr)
 		igPopItemFlag();
 		igPopStyleVar(1);
 	}
+
+	// Checking for downed.
+	if (disabled) {
+		btn->downed = false;
+	} else {
+		btn->downed = igIsItemHovered(ImGuiHoveredFlags_RectOnly) && igIsMouseDown_Nil(ImGuiMouseButton_Left);
+	}
 }
 
 static void

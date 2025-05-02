@@ -83,6 +83,13 @@ struct u_var_button
 	//! Pointer that will be passed to the function as its only argument
 	void *ptr;
 
+	/*!
+	 * Is the pointer pressing down on the button curruently, this is not
+	 * edge triggered like the callback. For a mouse this means that the
+	 * pointer is hovering the button and the left is held down.
+	 */
+	xrt_atomic_s32_t downed;
+
 	//! Button text, use var `name` if zeroed
 	char label[64];
 
