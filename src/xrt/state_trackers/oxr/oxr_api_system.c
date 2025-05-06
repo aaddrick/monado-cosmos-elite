@@ -147,6 +147,7 @@ oxr_xrGetViewConfigurationProperties(XrInstance instance,
 	OXR_VERIFY_INSTANCE_AND_INIT_LOG(&log, instance, inst, "xrGetViewConfigurationProperties");
 	OXR_VERIFY_ARG_TYPE_AND_NOT_NULL(&log, configurationProperties, XR_TYPE_VIEW_CONFIGURATION_PROPERTIES);
 	OXR_VERIFY_SYSTEM_AND_GET(&log, inst, systemId, sys);
+	OXR_VERIFY_VIEW_CONFIG_TYPE(&log, inst, viewConfigurationType);
 
 	return oxr_system_get_view_conf_properties(&log, sys, viewConfigurationType, configurationProperties);
 }
