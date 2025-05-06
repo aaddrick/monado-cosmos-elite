@@ -345,7 +345,7 @@ swapchain_server_import(struct ipc_client_compositor *icc,
 	    handles,                      // handles
 	    image_count,                  // handles
 	    &id);                         // out
-	IPC_CHK_AND_RET(icc->ipc_c, xret, "ipc_call_swapchain_create");
+	IPC_CHK_AND_RET(icc->ipc_c, xret, "ipc_call_swapchain_import");
 
 	struct ipc_client_swapchain *ics = U_TYPED_CALLOC(struct ipc_client_swapchain);
 	ics->base.base.image_count = image_count;
