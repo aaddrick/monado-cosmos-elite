@@ -975,7 +975,7 @@ should_skip_optional_device_ext(struct vk_bundle *vk,
 	return false;
 }
 
-static bool
+static VkResult
 build_device_extensions(struct vk_bundle *vk,
                         VkPhysicalDevice physical_device,
                         struct u_string_list *required_device_ext_list,
@@ -992,10 +992,7 @@ build_device_extensions(struct vk_bundle *vk,
 	    NULL,                                                // layer_name
 	    &prop_count,                                         // out_prop_count
 	    &props);                                             // out_props
-	if (ret != VK_SUCCESS) {
-		VK_ERROR(vk, "vk_enumerate_physical_device_extension_properties: %s", vk_result_string(ret));
-		return false;
-	}
+	VK_CHK_AND_RET(ret, "vk_enumerate_physical_device_extension_properties");
 
 	uint32_t required_device_ext_count = u_string_list_get_size(required_device_ext_list);
 	const char *const *required_device_exts = u_string_list_get_data(required_device_ext_list);
@@ -1004,9 +1001,9 @@ build_device_extensions(struct vk_bundle *vk,
 	for (uint32_t i = 0; i < required_device_ext_count; i++) {
 		const char *ext = required_device_exts[i];
 		if (!check_extension(vk, props, prop_count, ext)) {
-			VK_DEBUG(vk, "VkPhysicalDevice does not support required extension %s", ext);
+			VK_ERROR(vk, "VkPhysicalDevice does not support required extension %s", ext);
 			free(props);
-			return false;
+			return VK_ERROR_EXTENSION_NOT_PRESENT;
 		}
 		VK_DEBUG(vk, "Using required device ext %s", ext);
 	}
@@ -1042,8 +1039,7 @@ build_device_extensions(struct vk_bundle *vk,
 
 	free(props);
 
-
-	return true;
+	return VK_SUCCESS;
 }
 
 /*!
@@ -1325,18 +1321,19 @@ vk_create_device(struct vk_bundle *vk,
                  struct u_string_list *optional_device_ext_list,
                  const struct vk_device_features *optional_device_features)
 {
+	struct u_string_list *device_ext_list = NULL;
 	VkResult ret;
 
 	ret = select_physical_device(vk, forced_index);
-	if (ret != VK_SUCCESS) {
-		return ret;
-	}
+	VK_CHK_WITH_GOTO(ret, "select_physical_device", err_destroy);
 
-	struct u_string_list *device_ext_list = NULL;
-	if (!build_device_extensions(vk, vk->physical_device, required_device_ext_list, optional_device_ext_list,
-	                             &device_ext_list)) {
-		return VK_ERROR_EXTENSION_NOT_PRESENT;
-	}
+	ret = build_device_extensions( //
+	    vk,                        //
+	    vk->physical_device,       //
+	    required_device_ext_list,  //
+	    optional_device_ext_list,  //
+	    &device_ext_list);         //
+	VK_CHK_WITH_GOTO(ret, "build_device_extensions", err_destroy);
 
 
 	/*
@@ -1359,7 +1356,8 @@ vk_create_device(struct vk_bundle *vk,
 	if (!vk->has_EXT_global_priority && //
 	    !vk->has_KHR_global_priority && //
 	    global_priority != VK_QUEUE_GLOBAL_PRIORITY_MEDIUM_EXT) {
-		return VK_ERROR_NOT_PERMITTED_EXT;
+		ret = VK_ERROR_NOT_PERMITTED_EXT;
+		goto err_destroy;
 	}
 
 	vk_reset_queues(vk);
@@ -1367,12 +1365,10 @@ vk_create_device(struct vk_bundle *vk,
 	struct vk_queue_family main_queue_family = {0};
 	if (only_compute) {
 		ret = find_queue_family(vk, VK_QUEUE_COMPUTE_BIT, &main_queue_family);
+		VK_CHK_WITH_GOTO(ret, "find_queue_family", err_destroy);
 	} else {
 		ret = find_graphics_queue_family(vk, &main_queue_family);
-	}
-
-	if (ret != VK_SUCCESS) {
-		return ret;
+		VK_CHK_WITH_GOTO(ret, "find_graphics_queue_family", err_destroy);
 	}
 
 	assert(main_queue_family.queue_family.queueCount > 0);
@@ -1576,15 +1572,15 @@ vk_create_device(struct vk_bundle *vk,
 
 	ret = vk->vkCreateDevice(vk->physical_device, &device_create_info, NULL, &vk->device);
 
+	// Destroy the list now.
 	u_string_list_destroy(&device_ext_list);
 
-	if (ret != VK_SUCCESS) {
-		VK_DEBUG(vk, "vkCreateDevice: %s (%d)", vk_result_string(ret), ret);
-		if (ret == VK_ERROR_NOT_PERMITTED_EXT) {
-			VK_DEBUG(vk, "Is CAP_SYS_NICE set? Try: sudo setcap cap_sys_nice+ep monado-service");
-		}
-		return ret;
+	if (ret == VK_ERROR_NOT_PERMITTED_EXT) {
+		// Don't spam the not permitted returns as we try all of the different priorities.
+		VK_DEBUG(vk, "Is CAP_SYS_NICE set? Try: sudo setcap cap_sys_nice+ep monado-service");
+		goto err_destroy;
 	}
+	VK_CHK_WITH_GOTO(ret, "vkCreateDevice", err_destroy);
 
 	// Fill in the device features we are interested in.
 	fill_in_device_features(vk, main_queue.family_index);
@@ -1594,12 +1590,11 @@ vk_create_device(struct vk_bundle *vk,
 
 	// Now setup all of the device specific functions.
 	ret = vk_get_device_functions(vk);
-	if (ret != VK_SUCCESS) {
-		goto err_destroy;
-	}
+	VK_CHK_WITH_GOTO(ret, "vk_get_device_functions", err_destroy);
 
 	vk->main_queue = vk_insert_get_queue(vk, &main_queue);
 	assert(vk->main_queue != NULL);
+
 #if defined(VK_KHR_video_encode_queue)
 	vk->encode_queue = vk_insert_get_queue(vk, &encode_queue);
 #endif
@@ -1611,8 +1606,13 @@ vk_create_device(struct vk_bundle *vk,
 	return ret;
 
 err_destroy:
-	vk->vkDestroyDevice(vk->device, NULL);
-	vk->device = NULL;
+	if (vk->device != VK_NULL_HANDLE) {
+		vk->vkDestroyDevice(vk->device, NULL);
+		vk->device = VK_NULL_HANDLE;
+	}
+
+	// Safe to call even if null.
+	u_string_list_destroy(&device_ext_list);
 
 	return ret;
 }

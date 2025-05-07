@@ -1078,6 +1078,9 @@ struct vk_device_features
 /*!
  * Creates a VkDevice and initialises the VkQueue.
  *
+ * The @p vk_bundle must have been zero initialized, have the instance functions
+ * loaded and a valid instance.
+ *
  * @ingroup aux_vk
  */
 XRT_CHECK_RESULT VkResult
