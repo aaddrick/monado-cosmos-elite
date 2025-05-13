@@ -526,7 +526,8 @@ on_button_var(const char *name, void *ptr)
 	if (disabled) {
 		btn->downed = false;
 	} else {
-		btn->downed = igIsItemHovered(ImGuiHoveredFlags_RectOnly) && igIsMouseDown_Nil(ImGuiMouseButton_Left);
+		btn->downed = igIsItemHovered(ImGuiHoveredFlags_RectOnly) && igIsMouseDown_Nil(ImGuiMouseButton_Left) &&
+		              igIsItemActive();
 	}
 }
 
