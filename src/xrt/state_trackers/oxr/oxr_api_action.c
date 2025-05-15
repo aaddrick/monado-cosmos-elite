@@ -156,13 +156,9 @@ oxr_xrSyncActions(XrSession session, const XrActionsSyncInfo *syncInfo)
 		os_mutex_unlock(&sess->sys->sync_actions_mutex);
 	}
 
-	if (syncInfo->countActiveActionSets == 0) {
-		// nothing to do
-		return XR_SUCCESS;
-	}
-
 	for (uint32_t i = 0; i < syncInfo->countActiveActionSets; i++) {
 		struct oxr_action_set *act_set = NULL;
+
 		OXR_VERIFY_ACTIONSET_NOT_NULL(&log, syncInfo->activeActionSets[i].actionSet, act_set);
 
 		XrResult res = oxr_verify_subaction_path_sync(&log, sess->sys->inst, act_set,

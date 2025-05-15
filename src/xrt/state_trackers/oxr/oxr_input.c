@@ -1,5 +1,5 @@
 // Copyright 2018-2024, Collabora, Ltd.
-// Copyright 2023, NVIDIA CORPORATION.
+// Copyright 2023-2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -1862,6 +1862,11 @@ oxr_action_sync_data(struct oxr_logger *log,
 	struct oxr_action_set *act_set = NULL;
 	struct oxr_action_set_attachment *act_set_attached = NULL;
 
+	/*
+	 * No side-effects allowed in this section as we are still
+	 * validating and checking for errors at this point.
+	 */
+
 	// Check that all action sets has been attached.
 	for (uint32_t i = 0; i < countActionSets; i++) {
 		oxr_session_get_action_set_attachment(sess, actionSets[i].actionSet, &act_set_attached, &act_set);
@@ -1871,6 +1876,24 @@ oxr_action_sync_data(struct oxr_logger *log,
 			                 "not been attached to this session",
 			                 i, act_set != NULL ? act_set->data->name : "NULL");
 		}
+	}
+
+	/*
+	 * Can only call this function if the session state is focused. This is
+	 * not an error and has to be checked after all validation, but before
+	 * any side-effects happens.
+	 */
+	if (sess->state != XR_SESSION_STATE_FOCUSED) {
+		return XR_SESSION_NOT_FOCUSED;
+	}
+
+	/*
+	 * Side-effects allowed below, but not validation.
+	 */
+
+	if (countActionSets == 0) {
+		// Nothing to do.
+		return XR_SUCCESS;
 	}
 
 	// Synchronize outputs to this time.
@@ -1922,6 +1945,8 @@ oxr_action_sync_data(struct oxr_logger *log,
 			OXR_FOR_EACH_SUBACTION_PATH(ACCUMULATE_REQUESTED)
 #undef ACCUMULATE_REQUESTED
 		}
+
+		//! @TODO This validation is not allowed here, must done above.
 		if (!any_action_with_subactionpath) {
 			return oxr_error(log, XR_ERROR_PATH_UNSUPPORTED,
 			                 "No action with specified subactionpath in actionset");
