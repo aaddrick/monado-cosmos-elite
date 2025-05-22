@@ -134,13 +134,7 @@ oxr_xrEnumerateEnvironmentBlendModes(XrInstance instance,
 	OXR_VERIFY_INSTANCE_AND_INIT_LOG(&log, instance, inst, "xrEnumerateEnvironmentBlendModes");
 	OXR_VERIFY_SYSTEM_AND_GET(&log, inst, systemId, sys);
 	OXR_VERIFY_VIEW_CONFIG_TYPE(&log, inst, viewConfigurationType);
-
-	if (viewConfigurationType != sys->view_config_type) {
-		return oxr_error(&log, XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED,
-		                 "(viewConfigurationType == 0x%08x) "
-		                 "unsupported view configuration type",
-		                 viewConfigurationType);
-	}
+	OXR_VERIFY_VIEW_CONFIG_TYPE_SUPPORTED(&log, sys, viewConfigurationType);
 
 	return oxr_system_enumerate_blend_modes(&log, sys, viewConfigurationType, environmentBlendModeCapacityInput,
 	                                        environmentBlendModeCountOutput, environmentBlendModes);
@@ -160,6 +154,7 @@ oxr_xrGetViewConfigurationProperties(XrInstance instance,
 	OXR_VERIFY_ARG_TYPE_AND_NOT_NULL(&log, configurationProperties, XR_TYPE_VIEW_CONFIGURATION_PROPERTIES);
 	OXR_VERIFY_SYSTEM_AND_GET(&log, inst, systemId, sys);
 	OXR_VERIFY_VIEW_CONFIG_TYPE(&log, inst, viewConfigurationType);
+	OXR_VERIFY_VIEW_CONFIG_TYPE_SUPPORTED(&log, sys, viewConfigurationType);
 
 	return oxr_system_get_view_conf_properties(&log, sys, viewConfigurationType, configurationProperties);
 }
@@ -178,6 +173,8 @@ oxr_xrEnumerateViewConfigurationViews(XrInstance instance,
 	struct oxr_logger log;
 	OXR_VERIFY_INSTANCE_AND_INIT_LOG(&log, instance, inst, "xrEnumerateViewConfigurationViews");
 	OXR_VERIFY_SYSTEM_AND_GET(&log, inst, systemId, sys);
+	OXR_VERIFY_VIEW_CONFIG_TYPE(&log, inst, viewConfigurationType);
+	OXR_VERIFY_VIEW_CONFIG_TYPE_SUPPORTED(&log, sys, viewConfigurationType);
 
 	for (uint32_t i = 0; i < viewCapacityInput; i++) {
 		OXR_VERIFY_ARG_ARRAY_ELEMENT_TYPE(&log, views, i, XR_TYPE_VIEW_CONFIGURATION_VIEW);

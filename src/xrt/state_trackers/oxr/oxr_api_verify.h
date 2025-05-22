@@ -1,4 +1,5 @@
 // Copyright 2018-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -273,6 +274,14 @@ struct oxr_subaction_paths;
 		}                                                                                                      \
 	} while (false)
 
+#define OXR_VERIFY_VIEW_CONFIG_TYPE_SUPPORTED(log, sys, view_conf)                                                     \
+	do {                                                                                                           \
+		XrResult verify_ret = oxr_verify_view_config_type_supported(log, sys, view_conf, #view_conf);          \
+		if (verify_ret != XR_SUCCESS) {                                                                        \
+			return verify_ret;                                                                             \
+		}                                                                                                      \
+	} while (false)
+
 #define OXR_VERIFY_VIEW_INDEX(log, index)                                                                              \
 	do {                                                                                                           \
 		if (index > 2) {                                                                                       \
@@ -435,6 +444,12 @@ oxr_verify_view_config_type(struct oxr_logger *log,
                             struct oxr_instance *inst,
                             XrViewConfigurationType view_conf,
                             const char *view_conf_name);
+
+XrResult
+oxr_verify_view_config_type_supported(struct oxr_logger *log,
+                                      struct oxr_system *sys,
+                                      XrViewConfigurationType view_conf,
+                                      const char *view_conf_name);
 
 XrResult
 oxr_verify_XrSessionCreateInfo(struct oxr_logger * /*log*/,

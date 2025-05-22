@@ -1,4 +1,5 @@
 // Copyright 2019-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -99,6 +100,7 @@ oxr_xrBeginSession(XrSession session, const XrSessionBeginInfo *beginInfo)
 	// in a headless session there is no compositor and primaryViewConfigurationType must be ignored
 	if (sess->compositor != NULL) {
 		OXR_VERIFY_VIEW_CONFIG_TYPE(&log, sess->sys->inst, beginInfo->primaryViewConfigurationType);
+		OXR_VERIFY_VIEW_CONFIG_TYPE_SUPPORTED(&log, sess->sys, beginInfo->primaryViewConfigurationType);
 	}
 
 	// Going to effectively double check this, but this gives us an early out.
@@ -239,6 +241,7 @@ oxr_xrLocateViews(XrSession session,
 	OXR_VERIFY_SPACE_NOT_NULL(&log, viewLocateInfo->space, spc);
 	OXR_VERIFY_ARG_TYPE_AND_NOT_NULL(&log, viewState, XR_TYPE_VIEW_STATE);
 	OXR_VERIFY_VIEW_CONFIG_TYPE(&log, sess->sys->inst, viewLocateInfo->viewConfigurationType);
+	OXR_VERIFY_VIEW_CONFIG_TYPE_SUPPORTED(&log, sess->sys, viewLocateInfo->viewConfigurationType);
 
 	if (viewCapacityInput == 0) {
 		OXR_VERIFY_ARG_NOT_NULL(&log, viewCountOutput);
@@ -253,13 +256,6 @@ oxr_xrLocateViews(XrSession session,
 	if (viewLocateInfo->displayTime <= (XrTime)0) {
 		return oxr_error(&log, XR_ERROR_TIME_INVALID, "(time == %" PRIi64 ") is not a valid time.",
 		                 viewLocateInfo->displayTime);
-	}
-
-	if (viewLocateInfo->viewConfigurationType != sess->sys->view_config_type) {
-		return oxr_error(&log, XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED,
-		                 "(viewConfigurationType == 0x%08x) "
-		                 "unsupported view configuration type",
-		                 viewLocateInfo->viewConfigurationType);
 	}
 
 	return oxr_session_locate_views( //
@@ -300,11 +296,7 @@ oxr_xrGetVisibilityMaskKHR(XrSession session,
 	visibilityMask->indexCountOutput = 0;
 
 	OXR_VERIFY_VIEW_CONFIG_TYPE(&log, sess->sys->inst, viewConfigurationType);
-	if (viewConfigurationType != sess->sys->view_config_type) {
-		return oxr_error(&log, XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED,
-		                 "(viewConfigurationType == 0x%08x) unsupported view configuration type",
-		                 viewConfigurationType);
-	}
+	OXR_VERIFY_VIEW_CONFIG_TYPE_SUPPORTED(&log, sess->sys, viewConfigurationType);
 
 	OXR_VERIFY_VIEW_INDEX(&log, viewIndex);
 

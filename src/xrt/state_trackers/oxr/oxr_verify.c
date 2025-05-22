@@ -459,6 +459,21 @@ oxr_verify_view_config_type(struct oxr_logger *log,
 }
 
 XrResult
+oxr_verify_view_config_type_supported(struct oxr_logger *log,
+                                      struct oxr_system *sys,
+                                      XrViewConfigurationType view_conf,
+                                      const char *view_conf_name)
+{
+	if (sys->view_config_type == view_conf) {
+		return XR_SUCCESS;
+	}
+
+	return oxr_error(log, XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED,
+	                 "(%s == 0x%08x) unsupported view configuration type by system %zu", view_conf_name, view_conf,
+	                 sys->systemId);
+}
+
+XrResult
 oxr_verify_XrSessionCreateInfo(struct oxr_logger *log,
                                const struct oxr_instance *inst,
                                const XrSessionCreateInfo *createInfo)

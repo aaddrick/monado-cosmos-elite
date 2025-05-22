@@ -283,18 +283,6 @@ oxr_session_begin(struct oxr_logger *log, struct oxr_session *sess, const XrSess
 
 	struct xrt_compositor *xc = sess->compositor;
 	if (xc != NULL) {
-		XrViewConfigurationType view_type = beginInfo->primaryViewConfigurationType;
-
-		// in a headless session there is no compositor and primaryViewConfigurationType must be ignored
-		if (sess->compositor != NULL && view_type != sess->sys->view_config_type) {
-			/*! @todo we only support a single view config type per
-			 * system right now */
-			return oxr_error(log, XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED,
-			                 "(beginInfo->primaryViewConfigurationType == "
-			                 "0x%08x) view configuration type not supported",
-			                 view_type);
-		}
-
 		const struct oxr_extension_status *extensions = &sess->sys->inst->extensions;
 
 		const struct xrt_begin_session_info begin_session_info = {
