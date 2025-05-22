@@ -1849,6 +1849,13 @@ struct oxr_session
 	XrSessionState state;
 
 	/*!
+	 * This is set in xrBeginSession and is the primaryViewConfiguration
+	 * argument, this is then used in xrEndFrame to know which view
+	 * configuration the application is submitting it's frame in.
+	 */
+	XrViewConfigurationType current_view_config_type;
+
+	/*!
 	 * There is a extra state between xrBeginSession has been called and
 	 * the first xrEndFrame has been called. These are to track this.
 	 */

@@ -347,6 +347,9 @@ oxr_session_begin(struct oxr_logger *log, struct oxr_session *sess, const XrSess
 		                 "Frame sync object refused to let us begin session, probably already running");
 	}
 
+	// Set the current view configuration type, used in xrEndFrame.
+	sess->current_view_config_type = beginInfo->primaryViewConfigurationType;
+
 	return oxr_session_success_result(sess);
 }
 
@@ -412,6 +415,9 @@ oxr_session_end(struct oxr_logger *log, struct oxr_session *sess)
 		return oxr_error(log, ret, "Frame sync object refused to let us end session, probably not running");
 	}
 	sess->has_ended_once = false;
+
+	// Unset the current view configuration type here.
+	sess->current_view_config_type = XR_VIEW_CONFIGURATION_TYPE_MAX_ENUM;
 
 	return oxr_session_success_result(sess);
 }
@@ -1071,6 +1077,9 @@ oxr_session_allocate_and_init(struct oxr_logger *log,
 	// Action system hashmaps.
 	u_hashmap_int_create(&sess->act_sets_attachments_by_key);
 	u_hashmap_int_create(&sess->act_attachments_by_key);
+
+	// This is set to something valid in begin session, used in xrEndFrame.
+	sess->current_view_config_type = XR_VIEW_CONFIGURATION_TYPE_MAX_ENUM;
 
 	// Done with basic init, set out variable.
 	*out_session = sess;

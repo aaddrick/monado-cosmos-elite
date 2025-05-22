@@ -595,7 +595,7 @@ verify_projection_layer(struct oxr_session *sess,
 		return ret;
 	}
 
-	switch (sess->sys->view_config_type) {
+	switch (sess->current_view_config_type) {
 	case XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO:
 		if (proj->viewCount != 1) {
 			return oxr_error(log, XR_ERROR_VALIDATION_FAILURE,
@@ -631,7 +631,7 @@ verify_projection_layer(struct oxr_session *sess,
 	default:
 		assert(false && "view type validation unimplemented");
 		return oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "view type %d not supported",
-		                 sess->sys->view_config_type);
+		                 sess->current_view_config_type);
 		break;
 	}
 
