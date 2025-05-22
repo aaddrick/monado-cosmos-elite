@@ -26,6 +26,12 @@
 #include "oxr_conversions.h"
 
 
+/*
+ *
+ * General helpers
+ *
+ */
+
 DEBUG_GET_ONCE_NUM_OPTION(scale_percentage, "OXR_VIEWPORT_SCALE_PERCENTAGE", 100)
 
 
@@ -35,6 +41,53 @@ oxr_system_matches(struct oxr_logger *log, struct oxr_system *sys, XrFormFactor 
 {
 	return xr_form_factor_to_xrt(form_factor) == sys->xsys->properties.form_factor;
 }
+
+static bool
+oxr_system_get_body_tracking_support(struct oxr_logger *log,
+                                     struct oxr_instance *inst,
+                                     const enum xrt_input_name body_tracking_name)
+{
+	struct oxr_system *sys = &inst->system;
+	const struct xrt_device *body = GET_XDEV_BY_ROLE(sys, body);
+	if (body == NULL || !body->supported.body_tracking || body->inputs == NULL) {
+		return false;
+	}
+
+	for (size_t input_idx = 0; input_idx < body->input_count; ++input_idx) {
+		const struct xrt_input *input = &body->inputs[input_idx];
+		if (input->name == body_tracking_name) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+/*
+ *
+ * Two-call helpers.
+ *
+ */
+
+static void
+view_configuration_view_fill_in(XrViewConfigurationView *target_view, XrViewConfigurationView *source_view)
+{
+	// clang-format off
+	target_view->recommendedImageRectWidth       = source_view->recommendedImageRectWidth;
+	target_view->maxImageRectWidth               = source_view->maxImageRectWidth;
+	target_view->recommendedImageRectHeight      = source_view->recommendedImageRectHeight;
+	target_view->maxImageRectHeight              = source_view->maxImageRectHeight;
+	target_view->recommendedSwapchainSampleCount = source_view->recommendedSwapchainSampleCount;
+	target_view->maxSwapchainSampleCount         = source_view->maxSwapchainSampleCount;
+	// clang-format on
+}
+
+
+/*
+ *
+ * 'Exported' functions.
+ *
+ */
 
 XrResult
 oxr_system_select(struct oxr_logger *log,
@@ -97,8 +150,6 @@ oxr_system_get_by_id(struct oxr_logger *log, struct oxr_instance *inst, XrSystem
 
 	return XR_SUCCESS;
 }
-
-
 
 XrResult
 oxr_system_fill_in(
@@ -350,26 +401,6 @@ oxr_system_get_face_tracking2_fb_support(struct oxr_logger *log,
 		}
 	}
 	return;
-}
-
-static bool
-oxr_system_get_body_tracking_support(struct oxr_logger *log,
-                                     struct oxr_instance *inst,
-                                     const enum xrt_input_name body_tracking_name)
-{
-	struct oxr_system *sys = &inst->system;
-	const struct xrt_device *body = GET_XDEV_BY_ROLE(sys, body);
-	if (body == NULL || !body->supported.body_tracking || body->inputs == NULL) {
-		return false;
-	}
-
-	for (size_t input_idx = 0; input_idx < body->input_count; ++input_idx) {
-		const struct xrt_input *input = &body->inputs[input_idx];
-		if (input->name == body_tracking_name) {
-			return true;
-		}
-	}
-	return false;
 }
 
 bool
@@ -627,19 +658,6 @@ oxr_system_get_view_conf_properties(struct oxr_logger *log,
 	configurationProperties->fovMutable = sys->xsysc->info.supports_fov_mutable;
 
 	return XR_SUCCESS;
-}
-
-static void
-view_configuration_view_fill_in(XrViewConfigurationView *target_view, XrViewConfigurationView *source_view)
-{
-	// clang-format off
-	target_view->recommendedImageRectWidth       = source_view->recommendedImageRectWidth;
-	target_view->maxImageRectWidth               = source_view->maxImageRectWidth;
-	target_view->recommendedImageRectHeight      = source_view->recommendedImageRectHeight;
-	target_view->maxImageRectHeight              = source_view->maxImageRectHeight;
-	target_view->recommendedSwapchainSampleCount = source_view->recommendedSwapchainSampleCount;
-	target_view->maxSwapchainSampleCount         = source_view->maxSwapchainSampleCount;
-	// clang-format on
 }
 
 XrResult
