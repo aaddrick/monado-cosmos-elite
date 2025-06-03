@@ -612,6 +612,7 @@ verify_projection_layer(struct oxr_session *sess,
 			                 layer_index, proj->viewCount);
 		}
 		break;
+	// This also includes XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO_WITH_FOVEATED_INSET as both values are the same
 	case XR_VIEW_CONFIGURATION_TYPE_PRIMARY_QUAD_VARJO:
 		if (proj->viewCount != 4) {
 			return oxr_error(log, XR_ERROR_VALIDATION_FAILURE,
