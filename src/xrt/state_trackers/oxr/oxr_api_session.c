@@ -243,6 +243,13 @@ oxr_xrLocateViews(XrSession session,
 	OXR_VERIFY_VIEW_CONFIG_TYPE(&log, sess->sys->inst, viewLocateInfo->viewConfigurationType);
 	OXR_VERIFY_VIEW_CONFIG_TYPE_SUPPORTED(&log, sess->sys, viewLocateInfo->viewConfigurationType);
 
+	if (viewLocateInfo->viewConfigurationType != sess->current_view_config_type) {
+		return oxr_error(&log, XR_ERROR_VALIDATION_FAILURE,
+		                 "(viewLocateInfo->viewConfigurationType == 0x%" PRIx32
+		                 ") is not view configuration passed into xrBeginSession(0x%" PRIx32 ")",
+		                 viewLocateInfo->viewConfigurationType, sess->current_view_config_type);
+	}
+
 	if (viewCapacityInput == 0) {
 		OXR_VERIFY_ARG_NOT_NULL(&log, viewCountOutput);
 	} else {
