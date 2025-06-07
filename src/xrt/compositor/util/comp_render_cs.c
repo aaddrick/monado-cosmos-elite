@@ -26,6 +26,8 @@
 
 #include "render/render_interface.h"
 
+#include "shaders/layer_defines.inc.glsl"
+
 #include "util/comp_render.h"
 #include "util/comp_render_helpers.h"
 #include "util/comp_base.h"
@@ -33,7 +35,7 @@
 
 /*
  *
- * Compute layer data builders.
+ * Helpers
  *
  */
 
@@ -53,6 +55,27 @@ get_layer_depth_image(const struct comp_layer *layer, uint32_t swapchain_index, 
 	    (struct comp_swapchain *)(comp_layer_get_depth_swapchain(layer, swapchain_index));
 	return &sc->images[image_index];
 }
+
+
+static inline uint32_t
+xrt_layer_to_cs_layer_type(const struct xrt_layer_data *data)
+{
+	switch (data->type) {
+	case XRT_LAYER_QUAD: return LAYER_COMP_TYPE_QUAD;
+	case XRT_LAYER_CYLINDER: return LAYER_COMP_TYPE_CYLINDER;
+	case XRT_LAYER_EQUIRECT2: return LAYER_COMP_TYPE_EQUIRECT2;
+	case XRT_LAYER_PROJECTION:
+	case XRT_LAYER_PROJECTION_DEPTH: return LAYER_COMP_TYPE_PROJECTION;
+	default: U_LOG_E("Invalid layer type! %u", data->type); return LAYER_COMP_TYPE_NOOP;
+	}
+}
+
+
+/*
+ *
+ * Compute layer data builders.
+ *
+ */
 
 /// Data setup for a cylinder layer
 static inline void
@@ -660,7 +683,7 @@ comp_render_cs_layer(struct render_compute *render,
 			continue;
 		}
 
-		ubo_data->layer_type[cur_layer].val = data->type;
+		ubo_data->layer_type[cur_layer].val = xrt_layer_to_cs_layer_type(data);
 		ubo_data->layer_type[cur_layer].unpremultiplied = is_layer_unpremultiplied(data);
 
 		// Finally okay to increment the current layer.
@@ -671,7 +694,7 @@ comp_render_cs_layer(struct render_compute *render,
 	ubo_data->layer_count.value = cur_layer;
 
 	for (uint32_t i = cur_layer; i < RENDER_MAX_LAYERS; i++) {
-		ubo_data->layer_type[i].val = UINT32_MAX;
+		ubo_data->layer_type[i].val = LAYER_COMP_TYPE_NOOP; // Explicit no-op.
 	}
 
 	//! @todo: If Vulkan 1.2, use VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT and skip this
