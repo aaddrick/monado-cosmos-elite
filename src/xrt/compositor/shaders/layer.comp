@@ -11,6 +11,27 @@
 #include "layer_defines.inc.glsl"
 
 
+struct layer_data
+{
+	uint layer_type;
+	uint unpremultiplied_alpha;
+
+	// This struct is used in an array, gets padded to vec4.
+	uint _padding0;
+	uint _padding1;
+};
+
+struct image_info
+{
+	uint color_image_index;
+	uint depth_image_index;
+
+	// This struct is used in an array, gets padded to vec4.
+	uint _padding0;
+	uint _padding1;
+};
+
+
 const float PI = acos(-1);
 
 // Should we do timewarp.
@@ -34,11 +55,11 @@ layout(set = 0, binding = 3, std140) uniform restrict Config
 	vec4 pre_transform;
 	vec4 post_transform[RENDER_MAX_LAYERS];
 
-	// corresponds to enum xrt_layer_type
-	uvec2 layer_type_and_unpremultiplied[RENDER_MAX_LAYERS];
+	// Per-layer data.
+	layer_data layer_data[RENDER_MAX_LAYERS];
 
 	// which image/sampler(s) correspond to each layer
-	ivec2 images_samplers[RENDER_MAX_LAYERS];
+	image_info image_info[RENDER_MAX_LAYERS];
 
 	// shared between cylinder and equirect2
 	mat4 mv_inverse[RENDER_MAX_LAYERS];
@@ -220,7 +241,7 @@ vec4 do_cylinder(vec2 view_uv, uint layer)
 
 		vec2 uv_sub = fma(sample_point, ubo.post_transform[layer].zw, ubo.post_transform[layer].xy);
 
-		uint index = ubo.images_samplers[layer].x;
+		uint index = ubo.image_info[layer].color_image_index;
 #ifdef DEBUG
 		out_color += texture(source[index], uv_sub) / 2.f;
 #else
@@ -319,7 +340,7 @@ vec4 do_equirect2(vec2 view_uv, uint layer)
 
 		vec2 uv_sub = fma(sample_point, ubo.post_transform[layer].zw, ubo.post_transform[layer].xy);
 
-		uint index = ubo.images_samplers[layer].x;
+		uint index = ubo.image_info[layer].color_image_index;
 #ifdef DEBUG
 		out_color += texture(source[index], uv_sub) / 2.0;
 #else
@@ -335,7 +356,7 @@ vec4 do_equirect2(vec2 view_uv, uint layer)
 
 vec4 do_projection(vec2 view_uv, uint layer)
 {
-	uint source_image_index = ubo.images_samplers[layer].x;
+	uint source_image_index = ubo.image_info[layer].color_image_index;
 
 	// Do any transformation needed.
 	vec2 uv = transform_uv(view_uv, layer);
@@ -367,7 +388,7 @@ vec3 get_direction(vec2 uv)
 
 vec4 do_quad(vec2 view_uv, uint layer)
 {
-	uint source_image_index = ubo.images_samplers[layer].x;
+	uint source_image_index = ubo.image_info[layer].color_image_index;
 
 	// center point of the plane in view space.
 	vec3 quad_position = ubo.quad_position[layer].xyz;
@@ -453,7 +474,7 @@ vec4 do_layers(vec2 view_uv)
 	for (uint layer = 0; layer < layer_count; layer++) {
 		vec4 rgba = vec4(0, 0, 0, 0);
 
-		switch (ubo.layer_type_and_unpremultiplied[layer].x) {
+		switch (ubo.layer_data[layer].layer_type) {
 		case LAYER_COMP_TYPE_QUAD:
 			rgba = do_quad(view_uv, layer);
 			break;
@@ -469,7 +490,7 @@ vec4 do_layers(vec2 view_uv)
 		default: break;
 		}
 
-		if (ubo.layer_type_and_unpremultiplied[layer].y != 0) {
+		if (ubo.layer_data[layer].unpremultiplied_alpha != 0) {
 			// Unpremultipled blend factor of src.a.
 			accum.rgb = mix(accum.rgb, rgba.rgb, rgba.a);
 		} else {

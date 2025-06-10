@@ -136,7 +136,7 @@ do_cs_cylinder_layer(const struct comp_layer *layer,
 	ubo_data->cylinder_data[cur_layer].central_angle = c->central_angle;
 	ubo_data->cylinder_data[cur_layer].aspect_ratio = c->aspect_ratio;
 
-	ubo_data->images_samplers[cur_layer].images[0] = cur_image;
+	ubo_data->image_info[cur_layer].color_image_index = cur_image;
 	cur_image++;
 
 	*out_cur_image = cur_image;
@@ -199,7 +199,7 @@ do_cs_equirect2_layer(const struct comp_layer *layer,
 	ubo_data->eq2_data[cur_layer].upper_vertical_angle = eq2->upper_vertical_angle;
 	ubo_data->eq2_data[cur_layer].lower_vertical_angle = eq2->lower_vertical_angle;
 
-	ubo_data->images_samplers[cur_layer].images[0] = cur_image;
+	ubo_data->image_info[cur_layer].color_image_index = cur_image;
 	cur_image++;
 
 	*out_cur_image = cur_image;
@@ -237,7 +237,7 @@ do_cs_projection_layer(const struct comp_layer *layer,
 	// Color
 	src_samplers[cur_image] = clamp_to_border_black;
 	src_image_views[cur_image] = get_image_view(image, layer_data->flags, array_index);
-	ubo_data->images_samplers[cur_layer + 0].images[0] = cur_image++;
+	ubo_data->image_info[cur_layer + 0].color_image_index = cur_image++;
 
 	// Depth
 	if (layer_data->type == XRT_LAYER_PROJECTION_DEPTH) {
@@ -247,7 +247,7 @@ do_cs_projection_layer(const struct comp_layer *layer,
 
 		src_samplers[cur_image] = clamp_to_edge; // Edge to keep depth stable at edges.
 		src_image_views[cur_image] = get_image_view(d_image, layer_data->flags, d_array_index);
-		ubo_data->images_samplers[cur_layer + 0].images[1] = cur_image++;
+		ubo_data->image_info[cur_layer + 0].depth_image_index = cur_image++;
 	}
 
 	set_post_transform_rect(                    //
@@ -346,7 +346,7 @@ do_cs_quad_layer(const struct comp_layer *layer,
 	ubo_data->quad_position[cur_layer].val = quad_position;
 	ubo_data->quad_normal[cur_layer].val = normal_view_space;
 	ubo_data->inverse_quad_transform[cur_layer] = inverse_quad_transform;
-	ubo_data->images_samplers[cur_layer].images[0] = cur_image;
+	ubo_data->image_info[cur_layer].color_image_index = cur_image;
 	cur_image++;
 
 	*out_cur_image = cur_image;
@@ -683,8 +683,8 @@ comp_render_cs_layer(struct render_compute *render,
 			continue;
 		}
 
-		ubo_data->layer_type[cur_layer].val = xrt_layer_to_cs_layer_type(data);
-		ubo_data->layer_type[cur_layer].unpremultiplied = is_layer_unpremultiplied(data);
+		ubo_data->layer_data[cur_layer].layer_type = xrt_layer_to_cs_layer_type(data);
+		ubo_data->layer_data[cur_layer].unpremultiplied_alpha = is_layer_unpremultiplied(data);
 
 		// Finally okay to increment the current layer.
 		cur_layer++;
@@ -694,7 +694,7 @@ comp_render_cs_layer(struct render_compute *render,
 	ubo_data->layer_count.value = cur_layer;
 
 	for (uint32_t i = cur_layer; i < RENDER_MAX_LAYERS; i++) {
-		ubo_data->layer_type[i].val = LAYER_COMP_TYPE_NOOP; // Explicit no-op.
+		ubo_data->layer_data[i].layer_type = LAYER_COMP_TYPE_NOOP; // Explicit no-op.
 	}
 
 	//! @todo: If Vulkan 1.2, use VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT and skip this

@@ -1,4 +1,5 @@
 // Copyright 2019-2023, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -1207,27 +1208,39 @@ struct render_compute_layer_ubo_data
 	struct
 	{
 		uint32_t value;
-		uint32_t padding[3];
+		uint32_t padding[3]; // Padding up to a vec4.
 	} layer_count;
 
 	struct xrt_normalized_rect pre_transform;
 	struct xrt_normalized_rect post_transforms[RENDER_MAX_LAYERS];
 
-	//! std140 uvec2, corresponds to enum xrt_layer_type and unpremultiplied alpha.
+	/*!
+	 * Corresponds to enum xrt_layer_type and unpremultiplied alpha.
+	 *
+	 * std140 uvec2, because it is an array it gets padded to vec4.
+	 */
 	struct
 	{
-		uint32_t val;
-		uint32_t unpremultiplied;
-		uint32_t padding[XRT_MAX_VIEWS];
-	} layer_type[RENDER_MAX_LAYERS];
+		uint32_t layer_type;
+		uint32_t unpremultiplied_alpha;
+		uint32_t _padding0;
+		uint32_t _padding1;
+	} layer_data[RENDER_MAX_LAYERS];
 
-	//! Which image/sampler(s) correspond to each layer.
+	/*!
+	 * Which image/sampler(s) correspond to each layer.
+	 *
+	 * std140 uvec2, because it is an array it gets padded to vec4.
+	 */
 	struct
 	{
-		uint32_t images[XRT_MAX_VIEWS];
+		uint32_t color_image_index;
+		uint32_t depth_image_index;
+
 		//! @todo Implement separated samplers and images (and change to samplers[2])
-		uint32_t padding[XRT_MAX_VIEWS];
-	} images_samplers[RENDER_MAX_LAYERS];
+		uint32_t _padding0;
+		uint32_t _padding1;
+	} image_info[RENDER_MAX_LAYERS];
 
 	//! Shared between cylinder and equirect2.
 	struct xrt_matrix_4x4 mv_inverse[RENDER_MAX_LAYERS];
