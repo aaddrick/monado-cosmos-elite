@@ -605,6 +605,7 @@ HmdDevice::SetDisplayEyeToHead(uint32_t unWhichDevice,
 xrt_result_t
 HmdDevice::get_view_poses(const xrt_vec3 *default_eye_relation,
                           uint64_t at_timestamp_ns,
+                          xrt_view_type view_type,
                           uint32_t view_count,
                           xrt_space_relation *out_head_relation,
                           xrt_fov *out_fovs,
@@ -617,6 +618,7 @@ HmdDevice::get_view_poses(const xrt_vec3 *default_eye_relation,
 	    this,                                    //
 	    &eye_relation,                           //
 	    at_timestamp_ns,                         //
+	    view_type,                               //
 	    view_count,                              //
 	    out_head_relation,                       //
 	    out_fovs,                                //

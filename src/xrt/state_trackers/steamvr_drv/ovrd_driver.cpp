@@ -1108,7 +1108,8 @@ public:
 
 		//! @todo more than 2 views
 		struct xrt_space_relation head_relation;
-		xrt_device_get_view_poses(xdev, &ipd_vec, now_ns, 2, &head_relation, m_fovs, m_view_pose);
+		xrt_device_get_view_poses(xdev, &ipd_vec, now_ns, XRT_VIEW_TYPE_STEREO, 2, &head_relation, m_fovs,
+		                          m_view_pose);
 
 		//! @todo more versatile IPD calculation
 		float actual_ipd = -m_view_pose[0].position.x + m_view_pose[1].position.x;

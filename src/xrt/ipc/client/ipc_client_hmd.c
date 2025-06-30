@@ -66,6 +66,7 @@ static xrt_result_t
 call_get_view_poses_raw(ipc_client_hmd_t *ich,
                         const struct xrt_vec3 *default_eye_relation,
                         int64_t at_timestamp_ns,
+                        enum xrt_view_type view_type,
                         uint32_t view_count,
                         struct xrt_space_relation *out_head_relation,
                         struct xrt_fov *out_fovs,
@@ -82,6 +83,7 @@ call_get_view_poses_raw(ipc_client_hmd_t *ich,
 	    ich->device_id,                           //
 	    default_eye_relation,                     //
 	    at_timestamp_ns,                          //
+	    view_type,                                //
 	    view_count);                              //
 	IPC_CHK_WITH_GOTO(ich->ipc_c, xret, "ipc_send_device_get_view_poses_locked", out);
 
@@ -131,6 +133,7 @@ static xrt_result_t
 ipc_client_hmd_get_view_poses(struct xrt_device *xdev,
                               const struct xrt_vec3 *default_eye_relation,
                               int64_t at_timestamp_ns,
+                              enum xrt_view_type view_type,
                               uint32_t view_count,
                               struct xrt_space_relation *out_head_relation,
                               struct xrt_fov *out_fovs,
@@ -148,6 +151,7 @@ ipc_client_hmd_get_view_poses(struct xrt_device *xdev,
 		    ich->device_id,                      //
 		    default_eye_relation,                //
 		    at_timestamp_ns,                     //
+		    view_type,                           //
 		    view_count,                          //
 		    &info);                              //
 		IPC_CHK_AND_RET(ich->ipc_c, xret, "ipc_call_device_get_view_poses_2");
@@ -164,6 +168,7 @@ ipc_client_hmd_get_view_poses(struct xrt_device *xdev,
 		    ich,                        //
 		    default_eye_relation,       //
 		    at_timestamp_ns,            //
+		    view_type,                  //
 		    view_count,                 //
 		    out_head_relation,          //
 		    out_fovs,                   //

@@ -858,15 +858,6 @@ xrt_compositor_semaphore_wait(struct xrt_compositor_semaphore *xcsem, uint64_t v
  *
  */
 
-/*!
- * View type to be rendered to by the compositor.
- */
-enum xrt_view_type
-{
-	XRT_VIEW_TYPE_MONO = 1,
-	XRT_VIEW_TYPE_STEREO = 2,
-};
-
 enum xrt_compositor_frame_point
 {
 	XRT_COMPOSITOR_FRAME_POINT_WOKE, //!< The client woke up after waiting.

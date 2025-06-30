@@ -2045,6 +2045,7 @@ ipc_handle_device_get_view_poses(volatile struct ipc_client_state *ics,
                                  uint32_t id,
                                  const struct xrt_vec3 *fallback_eye_relation,
                                  int64_t at_timestamp_ns,
+                                 enum xrt_view_type view_type,
                                  uint32_t view_count)
 {
 	struct ipc_message_channel *imc = (struct ipc_message_channel *)&ics->imc;
@@ -2074,6 +2075,7 @@ ipc_handle_device_get_view_poses(volatile struct ipc_client_state *ics,
 	    xdev,                                 //
 	    fallback_eye_relation,                //
 	    at_timestamp_ns,                      //
+	    view_type,                            //
 	    view_count,                           //
 	    &reply.head_relation,                 //
 	    fovs,                                 //
@@ -2119,6 +2121,7 @@ ipc_handle_device_get_view_poses_2(volatile struct ipc_client_state *ics,
                                    uint32_t id,
                                    const struct xrt_vec3 *default_eye_relation,
                                    int64_t at_timestamp_ns,
+                                   enum xrt_view_type view_type,
                                    uint32_t view_count,
                                    struct ipc_info_get_view_poses_2 *out_info)
 {
@@ -2126,10 +2129,12 @@ ipc_handle_device_get_view_poses_2(volatile struct ipc_client_state *ics,
 	uint32_t device_id = id;
 	struct xrt_device *xdev = NULL;
 	GET_XDEV_OR_RETURN(ics, device_id, xdev);
+
 	return xrt_device_get_view_poses( //
 	    xdev,                         //
 	    default_eye_relation,         //
 	    at_timestamp_ns,              //
+	    view_type,                    //
 	    view_count,                   //
 	    &out_info->head_relation,     //
 	    out_info->fovs,               //

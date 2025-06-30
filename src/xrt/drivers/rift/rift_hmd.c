@@ -230,6 +230,7 @@ static xrt_result_t
 rift_hmd_get_view_poses(struct xrt_device *xdev,
                         const struct xrt_vec3 *default_eye_relation,
                         int64_t at_timestamp_ns,
+                        enum xrt_view_type view_type,
                         uint32_t view_count,
                         struct xrt_space_relation *out_head_relation,
                         struct xrt_fov *out_fovs,
@@ -237,13 +238,15 @@ rift_hmd_get_view_poses(struct xrt_device *xdev,
 {
 	struct rift_hmd *hmd = rift_hmd(xdev);
 
-	return u_device_get_view_poses(xdev,                                                        //
-	                               &(struct xrt_vec3){hmd->extra_display_info.icd, 0.0f, 0.0f}, //
-	                               at_timestamp_ns,                                             //
-	                               view_count,                                                  //
-	                               out_head_relation,                                           //
-	                               out_fovs,                                                    //
-	                               out_poses);
+	return u_device_get_view_poses(                                  //
+	    xdev,                                                        //
+	    &(struct xrt_vec3){hmd->extra_display_info.icd, 0.0f, 0.0f}, //
+	    at_timestamp_ns,                                             //
+	    view_type,                                                   //
+	    view_count,                                                  //
+	    out_head_relation,                                           //
+	    out_fovs,                                                    //
+	    out_poses);
 }
 
 static xrt_result_t

@@ -690,10 +690,13 @@ oxr_session_locate_views(struct oxr_logger *log,
 	struct xrt_fov fovs[XRT_MAX_VIEWS] = {0};
 	struct xrt_pose poses[XRT_MAX_VIEWS] = {0};
 
+	enum xrt_view_type view_type = view_count == 1 ? XRT_VIEW_TYPE_MONO : XRT_VIEW_TYPE_STEREO;
+
 	xrt_result_t xret = xrt_device_get_view_poses( //
 	    xdev,                                      //
 	    &default_eye_relation,                     //
 	    xdisplay_time,                             //
+	    view_type,                                 //
 	    view_count,                                //
 	    &T_xdev_head,                              //
 	    fovs,                                      //

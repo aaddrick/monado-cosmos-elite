@@ -2119,6 +2119,15 @@ enum xrt_form_factor
 };
 
 /*!
+ * View type to be rendered to by the compositor.
+ */
+enum xrt_view_type
+{
+	XRT_VIEW_TYPE_MONO = 1,
+	XRT_VIEW_TYPE_STEREO = 2,
+};
+
+/*!
  * Domain type.
  * Use for performance level setting
  * Which hardware should be boost/decrease

@@ -550,6 +550,7 @@ struct xrt_device
 	 *                         input.
 	 * @param[in] at_timestamp_ns This is when the caller wants the poses and FOVs to be from.
 	 * @param[in] view_count   Number of views.
+	 * @param[in] view_type    Type of view configuration (mono or stereo).
 	 * @param[out] out_head_relation
 	 *                         The head pose in the device tracking space.
 	 *                         Combine with @p out_poses to get the views in
@@ -567,6 +568,7 @@ struct xrt_device
 	xrt_result_t (*get_view_poses)(struct xrt_device *xdev,
 	                               const struct xrt_vec3 *default_eye_relation,
 	                               int64_t at_timestamp_ns,
+	                               enum xrt_view_type view_type,
 	                               uint32_t view_count,
 	                               struct xrt_space_relation *out_head_relation,
 	                               struct xrt_fov *out_fovs,
@@ -918,13 +920,21 @@ static inline xrt_result_t
 xrt_device_get_view_poses(struct xrt_device *xdev,
                           const struct xrt_vec3 *default_eye_relation,
                           int64_t at_timestamp_ns,
+                          enum xrt_view_type view_type,
                           uint32_t view_count,
                           struct xrt_space_relation *out_head_relation,
                           struct xrt_fov *out_fovs,
                           struct xrt_pose *out_poses)
 {
-	return xdev->get_view_poses(xdev, default_eye_relation, at_timestamp_ns, view_count, out_head_relation,
-	                            out_fovs, out_poses);
+	return xdev->get_view_poses( //
+	    xdev,                    //
+	    default_eye_relation,    //
+	    at_timestamp_ns,         //
+	    view_type,               //
+	    view_count,              //
+	    out_head_relation,       //
+	    out_fovs,                //
+	    out_poses);              //
 }
 
 /*!

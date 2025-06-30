@@ -259,6 +259,9 @@ calc_pose_data(struct comp_renderer *r,
 	struct xrt_fov xdev_fovs[XRT_MAX_VIEWS] = XRT_STRUCT_INIT;
 	struct xrt_pose xdev_poses[2][XRT_MAX_VIEWS] = XRT_STRUCT_INIT;
 
+	// Determine view type based on view count
+	enum xrt_view_type view_type = (view_count == 1) ? XRT_VIEW_TYPE_MONO : XRT_VIEW_TYPE_STEREO;
+
 	int64_t scanout_time_ns = 0;
 	if (r->c->xdev->hmd->screens[0].scanout_direction == XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM) {
 		scanout_time_ns = r->c->xdev->hmd->screens[0].scanout_time_ns;
@@ -274,10 +277,11 @@ calc_pose_data(struct comp_renderer *r,
 	    r->c->xdev,                                //
 	    &default_eye_relation,                     //
 	    begin_timestamp_ns,                        // at_timestamp_ns
+	    view_type,                                 //
 	    view_count,                                //
 	    &head_relation[0],                         // out_head_relation
 	    xdev_fovs,                                 // out_fovs
-	    xdev_poses[0]);
+	    xdev_poses[0]);                            //
 	if (xret != XRT_SUCCESS) {
 		struct u_pp_sink_stack_only sink;
 		u_pp_delegate_t dg = u_pp_sink_stack_only_init(&sink);
@@ -292,6 +296,7 @@ calc_pose_data(struct comp_renderer *r,
 		    r->c->xdev,                   //
 		    &default_eye_relation,        //
 		    end_timestamp_ns,             // at_timestamp_ns
+		    view_type,                    //
 		    view_count,                   //
 		    &head_relation[1],            // out_head_relation
 		    xdev_fovs,                    // out_fovs
