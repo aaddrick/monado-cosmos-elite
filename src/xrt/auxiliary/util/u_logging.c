@@ -1,4 +1,5 @@
 // Copyright 2019-2025, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -69,6 +70,38 @@ enum u_logging_level
 u_log_get_global_level(void)
 {
 	return debug_get_log_option_global_log();
+}
+
+
+/*
+ *
+ * Logging file code.
+ *
+ */
+
+static FILE *g_log_file = NULL;
+
+void
+u_log_set_output_file(const char *filename)
+{
+	// While not thread safe, this function is externally synchronized.
+	if (g_log_file != NULL) {
+		FILE *tmp = g_log_file;
+		g_log_file = NULL;
+
+		fflush(tmp);
+		fclose(tmp);
+		tmp = NULL;
+	}
+
+	if (filename == NULL) {
+		return; // Turning off file logging.
+	}
+
+	g_log_file = fopen(filename, "w");
+	if (g_log_file == NULL) {
+		U_LOG_E("Failed to open '%s'", filename);
+	}
 }
 
 
@@ -294,7 +327,7 @@ print_prefix(const char *func, enum u_logging_level level, char *buf, int remain
 	int ret = 0;
 
 #ifdef XRT_FEATURE_COLOR_LOG
-	if (isatty(STDERR_FILENO)) {
+	if (g_log_file == NULL && isatty(STDERR_FILENO)) {
 		ret = print_prefix_color(func, level, buf, remaining);
 	} else {
 		ret = print_prefix_mono(func, level, buf, remaining);
@@ -407,7 +440,8 @@ do_print(const char *file, int line, const char *func, enum u_logging_level leve
 	OutputDebugStringA(storage);
 #endif
 
-	fwrite(storage, printed, 1, stderr);
+	FILE *output = g_log_file != NULL ? g_log_file : stderr;
+	fwrite(storage, printed, 1, output);
 
 #else
 #error "Port needed for logging function"

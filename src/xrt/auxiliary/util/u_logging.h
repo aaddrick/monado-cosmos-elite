@@ -1,4 +1,5 @@
 // Copyright 2020-2025, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -279,6 +280,18 @@ typedef bool (*u_log_filter_func_t)(const char *file, int line, const char *func
  */
 enum u_logging_level
 u_log_get_global_level(void);
+
+/*!
+ * Sets the output file for the logging instead of stderr, this function is
+ * externally synchronized with ALL other logging functions. Which means do not
+ * call any other logging function from different threads during a call to this
+ * function. Also to avoid leaks call this function with NULL to close the
+ * internally managed FILE object.
+ *
+ * WANRING THIS FUNCTION IS EXTERNALLY SYNCHRONIZED WITH ALL OTHER FUNCTIONS.
+ */
+void
+u_log_set_output_file(const char *filename);
 
 /*!
  * @brief Main non-device-related log implementation function: do not call directly, use a macro that wraps it.
