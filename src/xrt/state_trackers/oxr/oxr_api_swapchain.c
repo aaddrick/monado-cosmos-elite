@@ -165,7 +165,9 @@ oxr_xrCreateSwapchain(XrSession session, const XrSwapchainCreateInfo *createInfo
 	}
 
 	// TODO Find the max of the views[0].max.sample_count limits.
-	uint32_t max_sample_count = xsysc_info->views[0].max.sample_count;
+	assert(xsysc_info->view_config_count > 0);
+	assert(xsysc_info->view_configs[0].view_count > 0);
+	uint32_t max_sample_count = xsysc_info->view_configs[0].views[0].max.sample_count;
 
 	if (createInfo->sampleCount > max_sample_count) {
 		return oxr_error(&log, XR_ERROR_VALIDATION_FAILURE,

@@ -277,19 +277,22 @@ compositor_init_sys_info(struct sdl_compositor *c, struct sdl_program *sp, struc
 	}
 
 	// clang-format off
-	sys_info->views[0].recommended.width_pixels  = w;
-	sys_info->views[0].recommended.height_pixels = h;
-	sys_info->views[0].recommended.sample_count  = 1;
-	sys_info->views[0].max.width_pixels          = max;
-	sys_info->views[0].max.height_pixels         = max;
-	sys_info->views[0].max.sample_count          = 1;
+	sys_info->view_configs[0].view_type = XRT_VIEW_TYPE_STEREO;
+	sys_info->view_configs[0].view_count = 2;
 
-	sys_info->views[1].recommended.width_pixels  = min; // Second view is minimum
-	sys_info->views[1].recommended.height_pixels = min; // Second view is minimum
-	sys_info->views[1].recommended.sample_count  = 1;
-	sys_info->views[1].max.width_pixels          = max;
-	sys_info->views[1].max.height_pixels         = max;
-	sys_info->views[1].max.sample_count          = 1;
+	sys_info->view_configs[0].views[0].recommended.width_pixels  = w;
+	sys_info->view_configs[0].views[0].recommended.height_pixels = h;
+	sys_info->view_configs[0].views[0].recommended.sample_count  = 1;
+	sys_info->view_configs[0].views[0].max.width_pixels          = max;
+	sys_info->view_configs[0].views[0].max.height_pixels         = max;
+	sys_info->view_configs[0].views[0].max.sample_count          = 1;
+
+	sys_info->view_configs[0].views[1].recommended.width_pixels  = min; // Second view is minimum
+	sys_info->view_configs[0].views[1].recommended.height_pixels = min; // Second view is minimum
+	sys_info->view_configs[0].views[1].recommended.sample_count  = 1;
+	sys_info->view_configs[0].views[1].max.width_pixels          = max;
+	sys_info->view_configs[0].views[1].max.height_pixels         = max;
+	sys_info->view_configs[0].views[1].max.sample_count          = 1;
 	// clang-format on
 
 	// Copy the list directly.

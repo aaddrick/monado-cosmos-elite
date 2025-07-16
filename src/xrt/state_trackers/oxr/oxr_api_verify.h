@@ -23,6 +23,7 @@ extern "C" {
 struct oxr_action_set;
 struct oxr_extension_status;
 struct oxr_instance;
+struct oxr_system;
 struct oxr_logger;
 struct oxr_subaction_paths;
 

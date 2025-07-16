@@ -271,22 +271,36 @@ compositor_init_sys_info(struct null_compositor *c, struct xrt_device *xdev)
 	// Required by OpenXR spec.
 	sys_info->max_layers = XRT_MAX_LAYERS;
 
+	uint32_t view_count = xdev->hmd->view_count;
+	enum xrt_view_type view_type = 0; // Invalid
+
+	switch (view_count) {
+	case 0: U_LOG_E("Bug detected: HMD \"%s\" xdev->hmd.view_count must be > 0!", xdev->str); return false;
+	case 1: view_type = XRT_VIEW_TYPE_MONO; break;
+	case 2: view_type = XRT_VIEW_TYPE_STEREO; break;
+	default:
+		U_LOG_E("Bug detected: HMD \"%s\" xdev->hmd.view_count must be 1 or 2, not %u!", xdev->str, view_count);
+		return false;
+	}
+
 	// UUIDs and LUID already set in vk init.
 	(void)sys_info->compositor_vk_deviceUUID;
 	(void)sys_info->client_vk_deviceUUID;
 	(void)sys_info->client_d3d_deviceLUID;
 	(void)sys_info->client_d3d_deviceLUID_valid;
-	uint32_t view_count = xdev->hmd->view_count;
 	// clang-format off
 	for (uint32_t i = 0; i < view_count; ++i) {
-		sys_info->views[i].recommended.width_pixels  = RECOMMENDED_VIEW_WIDTH;
-		sys_info->views[i].recommended.height_pixels = RECOMMENDED_VIEW_HEIGHT;
-		sys_info->views[i].recommended.sample_count  = 1;
-		sys_info->views[i].max.width_pixels  = MAX_VIEW_WIDTH;
-		sys_info->views[i].max.height_pixels = MAX_VIEW_HEIGHT;
-		sys_info->views[i].max.sample_count  = 1;
+		sys_info->view_configs[0].views[i].recommended.width_pixels  = RECOMMENDED_VIEW_WIDTH;
+		sys_info->view_configs[0].views[i].recommended.height_pixels = RECOMMENDED_VIEW_HEIGHT;
+		sys_info->view_configs[0].views[i].recommended.sample_count  = 1;
+		sys_info->view_configs[0].views[i].max.width_pixels  = MAX_VIEW_WIDTH;
+		sys_info->view_configs[0].views[i].max.height_pixels = MAX_VIEW_HEIGHT;
+		sys_info->view_configs[0].views[i].max.sample_count  = 1;
 	}
 	// clang-format on
+	sys_info->view_configs[0].view_type = view_type;
+	sys_info->view_configs[0].view_count = view_count;
+	sys_info->view_config_count = 1; // Only one view config type supported.
 
 	// Copy the list directly.
 	assert(xdev->hmd->blend_mode_count <= XRT_MAX_DEVICE_BLEND_MODES);

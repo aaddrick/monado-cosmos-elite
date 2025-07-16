@@ -1,4 +1,5 @@
 // Copyright 2019-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -2282,6 +2283,38 @@ xrt_comp_native_destroy(struct xrt_compositor_native **xcn_ptr)
 	*xcn_ptr = NULL;
 }
 
+/*!
+ * Holds information about the view configuration properties for a view in a system compositor.
+ */
+struct xrt_view_config_properties
+{
+	struct
+	{
+		uint32_t width_pixels;
+		uint32_t height_pixels;
+		uint32_t sample_count;
+	} recommended; //!< Recommended for this view.
+
+	struct
+	{
+		uint32_t width_pixels;
+		uint32_t height_pixels;
+		uint32_t sample_count;
+	} max; //!< Maximums for this view.
+};
+
+struct xrt_view_config
+{
+	//! Which view type this is for, mono, stereo, quad_with_inset, etc...
+	enum xrt_view_type view_type;
+
+	//! Must match the view_type, in the future view_types might have variable views.
+	uint32_t view_count;
+
+	//! The per view information.
+	struct xrt_view_config_properties views[XRT_MAX_COMPOSITOR_VIEW_CONFIGS_VIEW_COUNT];
+};
+
 
 /*
  *
@@ -2295,22 +2328,8 @@ xrt_comp_native_destroy(struct xrt_compositor_native **xcn_ptr)
  */
 struct xrt_system_compositor_info
 {
-	struct
-	{
-		struct
-		{
-			uint32_t width_pixels;
-			uint32_t height_pixels;
-			uint32_t sample_count;
-		} recommended; //!< Recommended for this view.
-
-		struct
-		{
-			uint32_t width_pixels;
-			uint32_t height_pixels;
-			uint32_t sample_count;
-		} max;          //!< Maximums for this view.
-	} views[XRT_MAX_VIEWS]; //!< View configuration information.
+	uint32_t view_config_count;
+	struct xrt_view_config view_configs[XRT_MAX_COMPOSITOR_VIEW_CONFIGS_COUNT];
 
 	//! Maximum number of composition layers supported, never changes.
 	uint32_t max_layers;

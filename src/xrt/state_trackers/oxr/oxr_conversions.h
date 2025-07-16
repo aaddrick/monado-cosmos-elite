@@ -16,6 +16,8 @@
 #include "xrt/xrt_vulkan_includes.h"
 #include "xrt/xrt_openxr_includes.h"
 
+#include "oxr_defines.h"
+
 
 /*
  *
@@ -343,4 +345,24 @@ xrt_pose_to_xr(const struct xrt_pose *q)
 	    .orientation = xrt_quat_to_xr(&q->orientation),
 	    .position = xrt_vec3_to_xr(&q->position),
 	};
+}
+
+
+/*
+ *
+ * View things
+ *
+ */
+
+static inline XrViewConfigurationType
+xrt_view_type_to_xr(enum xrt_view_type view_type)
+{
+	switch (view_type) {
+	case XRT_VIEW_TYPE_MONO: return XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO;
+	case XRT_VIEW_TYPE_STEREO: return XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+	}
+
+	// Used as default, to get warnings.
+	assert(false && "Invalid view type");
+	return XR_VIEW_CONFIGURATION_TYPE_MAX_ENUM;
 }

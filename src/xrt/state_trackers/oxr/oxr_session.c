@@ -558,8 +558,15 @@ oxr_session_poll(struct oxr_logger *log, struct oxr_session *sess)
 			break;
 		case XRT_SESSION_EVENT_VISIBILITY_MASK_CHANGE:
 #ifdef OXR_HAVE_KHR_visibility_mask
-			oxr_event_push_XrEventDataVisibilityMaskChangedKHR(log, sess, sess->sys->view_config_type,
-			                                                   xse.mask_change.view_index);
+			// Assume mask changed for all view configuration types.
+			for (uint32_t i = 0; i < sess->sys->view_config_count; i++) {
+				struct oxr_view_config_properties *props = &sess->sys->view_configs[i];
+				oxr_event_push_XrEventDataVisibilityMaskChangedKHR( //
+				    log,                                            //
+				    sess,                                           //
+				    props->view_config_type,                        //
+				    xse.mask_change.view_index);                    //
+			}
 			break;
 #endif // OXR_HAVE_KHR_visibility_mask
 		case XRT_SESSION_EVENT_USER_PRESENCE_CHANGE:

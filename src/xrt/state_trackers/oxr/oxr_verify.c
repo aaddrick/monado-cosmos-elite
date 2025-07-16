@@ -464,8 +464,11 @@ oxr_verify_view_config_type_supported(struct oxr_logger *log,
                                       XrViewConfigurationType view_conf,
                                       const char *view_conf_name)
 {
-	if (sys->view_config_type == view_conf) {
-		return XR_SUCCESS;
+	for (uint32_t i = 0; i < sys->view_config_count; i++) {
+		struct oxr_view_config_properties *props = &sys->view_configs[i];
+		if (props->view_config_type == view_conf) {
+			return XR_SUCCESS;
+		}
 	}
 
 	return oxr_error(log, XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED,

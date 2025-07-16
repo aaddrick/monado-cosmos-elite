@@ -1,4 +1,5 @@
 // Copyright 2019-2022, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -20,6 +21,16 @@
  * Max number of views supported by a compositor, artificial limit.
  */
 #define XRT_MAX_VIEWS 2
+
+/*
+ * System needs to support at least 4 views for stereo with foveated inset.
+ */
+#define XRT_MAX_COMPOSITOR_VIEW_CONFIGS_VIEW_COUNT (XRT_MAX_VIEWS > 4 ? XRT_MAX_VIEWS : 4)
+
+/*
+ * Max number of view configurations a system compositor can support simultaneously.
+ */
+#define XRT_MAX_COMPOSITOR_VIEW_CONFIGS_COUNT 2
 
 /*!
  * Maximum number of handles sent in one call.

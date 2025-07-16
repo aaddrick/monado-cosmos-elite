@@ -18,12 +18,12 @@
 #include "util/u_debug.h"
 #include "util/u_verify.h"
 
+#include "oxr_api_verify.h"
+#include "oxr_chain.h"
+#include "oxr_conversions.h"
 #include "oxr_objects.h"
 #include "oxr_logger.h"
 #include "oxr_two_call.h"
-#include "oxr_chain.h"
-#include "oxr_api_verify.h"
-#include "oxr_conversions.h"
 
 
 /*
@@ -35,6 +35,92 @@
 DEBUG_GET_ONCE_NUM_OPTION(scale_percentage, "OXR_VIEWPORT_SCALE_PERCENTAGE", 100)
 
 
+
+static struct oxr_view_config_properties *
+get_view_config_properties(struct oxr_system *sys, XrViewConfigurationType view_config_type)
+{
+	for (uint32_t i = 0; i < sys->view_config_count; i++) {
+		if (sys->view_configs[i].view_config_type == view_config_type) {
+			return &sys->view_configs[i];
+		}
+	}
+
+	return NULL;
+}
+
+static void
+fill_in_view_config_properties_blend_modes(struct oxr_view_config_properties *props,
+                                           const struct xrt_system_compositor_info *info)
+{
+	// Headless path.
+	if (info == NULL) {
+		props->blend_modes[0] = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+		props->blend_mode_count = 1;
+		return;
+	}
+
+	assert(info->supported_blend_mode_count <= ARRAY_SIZE(props->blend_modes));
+	assert(info->supported_blend_mode_count != 0);
+
+	for (uint8_t i = 0; i < info->supported_blend_mode_count; i++) {
+		assert(u_verify_blend_mode_valid(info->supported_blend_modes[i]));
+		props->blend_modes[i] = (XrEnvironmentBlendMode)info->supported_blend_modes[i];
+	}
+	props->blend_mode_count = (uint32_t)info->supported_blend_mode_count;
+}
+
+static void
+fill_in_view_config_properties_view_config_type(struct oxr_view_config_properties *props, enum xrt_view_type view_type)
+{
+	props->view_config_type = xrt_view_type_to_xr(view_type);
+	U_LOG_D("props->view_config_type = %d", props->view_config_type);
+}
+
+static void
+fill_in_view_config_properties_views(struct oxr_logger *log,
+                                     XrViewConfigurationView *xr_views,
+                                     const struct xrt_view_config *view_config)
+{
+	assert(view_config->view_count <= XRT_MAX_COMPOSITOR_VIEW_CONFIGS_VIEW_COUNT);
+
+	double scale = debug_get_num_option_scale_percentage() / 100.0;
+	if (scale > 2.0) {
+		scale = 2.0;
+		oxr_log(log, "Clamped scale to 200%%\n");
+	}
+
+#define imin(a, b) (a < b ? a : b)
+	for (uint32_t i = 0; i < view_config->view_count; ++i) {
+		uint32_t w = (uint32_t)(view_config->views[i].recommended.width_pixels * scale);
+		uint32_t h = (uint32_t)(view_config->views[i].recommended.height_pixels * scale);
+		uint32_t w_2 = view_config->views[i].max.width_pixels;
+		uint32_t h_2 = view_config->views[i].max.height_pixels;
+
+		w = imin(w, w_2);
+		h = imin(h, h_2);
+
+		xr_views[i].type = XR_TYPE_VIEW_CONFIGURATION_VIEW;
+		xr_views[i].recommendedImageRectWidth = w;
+		xr_views[i].maxImageRectWidth = w_2;
+		xr_views[i].recommendedImageRectHeight = h;
+		xr_views[i].maxImageRectHeight = h_2;
+		xr_views[i].recommendedSwapchainSampleCount = view_config->views[i].recommended.sample_count;
+		xr_views[i].maxSwapchainSampleCount = view_config->views[i].max.sample_count;
+	}
+#undef imin
+}
+
+static void
+fill_in_view_config_properties(struct oxr_logger *log,
+                               struct oxr_view_config_properties *props,
+                               const struct xrt_system_compositor_info *info,
+                               const struct xrt_view_config *view_config)
+{
+	fill_in_view_config_properties_blend_modes(props, info);
+	fill_in_view_config_properties_view_config_type(props, view_config->view_type);
+	fill_in_view_config_properties_views(log, props->views, view_config);
+	props->view_count = view_config->view_count;
+}
 
 static bool
 oxr_system_matches(struct oxr_logger *log, struct oxr_system *sys, XrFormFactor form_factor)
@@ -68,6 +154,12 @@ oxr_system_get_body_tracking_support(struct oxr_logger *log,
  * Two-call helpers.
  *
  */
+
+static void
+view_configuration_type_fill_in(XrViewConfigurationType *target, struct oxr_view_config_properties *source)
+{
+	*target = source->view_config_type;
+}
 
 static void
 view_configuration_view_fill_in(XrViewConfigurationView *target_view, XrViewConfigurationView *source_view)
@@ -159,14 +251,6 @@ oxr_system_fill_in(
 
 	sys->inst = inst;
 	sys->systemId = systemId;
-	if (view_count == 1) {
-		sys->view_config_type = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO;
-	} else if (view_count == 2) {
-		sys->view_config_type = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-	} else {
-		assert(false && "view_count must be 1 or 2");
-	}
-	U_LOG_D("sys->view_config_type = %d", sys->view_config_type);
 	sys->dynamic_roles_cache = (struct xrt_system_roles)XRT_SYSTEM_ROLES_INIT;
 
 #ifdef XR_USE_GRAPHICS_API_VULKAN
@@ -179,54 +263,31 @@ oxr_system_fill_in(
 	sys->suggested_d3d_luid_valid = false;
 #endif
 
-	// Headless.
-	if (sys->xsysc == NULL) {
-		sys->blend_modes[0] = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
-		sys->blend_mode_count = 1;
-		return XR_SUCCESS;
+	if (sys->xsysc != NULL) {
+		const struct xrt_system_compositor_info *info = &sys->xsysc->info;
+
+		for (uint32_t i = 0; i < info->view_config_count; i++) {
+			const struct xrt_view_config *view_config = &info->view_configs[i];
+
+			assert(sys->view_config_count < XRT_MAX_COMPOSITOR_VIEW_CONFIGS_COUNT);
+			fill_in_view_config_properties(                 //
+			    log,                                        //
+			    &sys->view_configs[sys->view_config_count], //
+			    info,                                       //
+			    view_config);                               //
+			sys->view_config_count++;
+		}
+	} else {
+		// Headless path, view configs contain no views but still need blend modes and view types.
+		assert(view_count == 1 || view_count == 2);
+
+		enum xrt_view_type view_type = view_count == 1 ? XRT_VIEW_TYPE_MONO : XRT_VIEW_TYPE_STEREO;
+
+		// First headless config: regular mono or stereo
+		fill_in_view_config_properties_blend_modes(&sys->view_configs[0], NULL);
+		fill_in_view_config_properties_view_config_type(&sys->view_configs[0], view_type);
+		sys->view_config_count++;
 	}
-
-	double scale = debug_get_num_option_scale_percentage() / 100.0;
-	if (scale > 2.0) {
-		scale = 2.0;
-		oxr_log(log, "Clamped scale to 200%%\n");
-	}
-
-	struct xrt_system_compositor_info *info = &sys->xsysc->info;
-
-#define imin(a, b) (a < b ? a : b)
-	for (uint32_t i = 0; i < view_count; ++i) {
-		uint32_t w = (uint32_t)(info->views[i].recommended.width_pixels * scale);
-		uint32_t h = (uint32_t)(info->views[i].recommended.height_pixels * scale);
-		uint32_t w_2 = info->views[i].max.width_pixels;
-		uint32_t h_2 = info->views[i].max.height_pixels;
-
-		w = imin(w, w_2);
-		h = imin(h, h_2);
-
-		sys->views[i].recommendedImageRectWidth = w;
-		sys->views[i].maxImageRectWidth = w_2;
-		sys->views[i].recommendedImageRectHeight = h;
-		sys->views[i].maxImageRectHeight = h_2;
-		sys->views[i].recommendedSwapchainSampleCount = info->views[i].recommended.sample_count;
-		sys->views[i].maxSwapchainSampleCount = info->views[i].max.sample_count;
-	}
-
-#undef imin
-
-
-	/*
-	 * Blend mode support.
-	 */
-
-	assert(info->supported_blend_mode_count <= ARRAY_SIZE(sys->blend_modes));
-	assert(info->supported_blend_mode_count != 0);
-
-	for (uint8_t i = 0; i < info->supported_blend_mode_count; i++) {
-		assert(u_verify_blend_mode_valid(info->supported_blend_modes[i]));
-		sys->blend_modes[i] = (XrEnvironmentBlendMode)info->supported_blend_modes[i];
-	}
-	sys->blend_mode_count = (uint32_t)info->supported_blend_mode_count;
 
 
 	/*
@@ -627,8 +688,9 @@ oxr_system_enumerate_view_confs(struct oxr_logger *log,
                                 uint32_t *viewConfigurationTypeCountOutput,
                                 XrViewConfigurationType *viewConfigurationTypes)
 {
-	OXR_TWO_CALL_HELPER(log, viewConfigurationTypeCapacityInput, viewConfigurationTypeCountOutput,
-	                    viewConfigurationTypes, 1, &sys->view_config_type, XR_SUCCESS);
+	OXR_TWO_CALL_FILL_IN_HELPER(log, viewConfigurationTypeCapacityInput, viewConfigurationTypeCountOutput,
+	                            viewConfigurationTypes, sys->view_config_count, view_configuration_type_fill_in,
+	                            sys->view_configs, XR_SUCCESS);
 }
 
 XrResult
@@ -639,9 +701,13 @@ oxr_system_enumerate_blend_modes(struct oxr_logger *log,
                                  uint32_t *environmentBlendModeCountOutput,
                                  XrEnvironmentBlendMode *environmentBlendModes)
 {
-	//! @todo Take into account viewConfigurationType
+	struct oxr_view_config_properties *props = get_view_config_properties(sys, viewConfigurationType);
+	if (props == NULL) {
+		return oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Didn't find view configs");
+	}
+
 	OXR_TWO_CALL_HELPER(log, environmentBlendModeCapacityInput, environmentBlendModeCountOutput,
-	                    environmentBlendModes, sys->blend_mode_count, sys->blend_modes, XR_SUCCESS);
+	                    environmentBlendModes, props->blend_mode_count, props->blend_modes, XR_SUCCESS);
 }
 
 XrResult
@@ -650,11 +716,12 @@ oxr_system_get_view_conf_properties(struct oxr_logger *log,
                                     XrViewConfigurationType viewConfigurationType,
                                     XrViewConfigurationProperties *configurationProperties)
 {
-	if (viewConfigurationType != sys->view_config_type) {
-		return oxr_error(log, XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED, "Invalid view configuration type");
+	struct oxr_view_config_properties *props = get_view_config_properties(sys, viewConfigurationType);
+	if (props == NULL) {
+		return oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Didn't find view configs");
 	}
 
-	configurationProperties->viewConfigurationType = sys->view_config_type;
+	configurationProperties->viewConfigurationType = props->view_config_type;
 	configurationProperties->fovMutable = sys->xsysc->info.supports_fov_mutable;
 
 	return XR_SUCCESS;
@@ -668,14 +735,11 @@ oxr_system_enumerate_view_conf_views(struct oxr_logger *log,
                                      uint32_t *viewCountOutput,
                                      XrViewConfigurationView *views)
 {
-	if (viewConfigurationType != sys->view_config_type) {
-		return oxr_error(log, XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED, "Invalid view configuration type");
+	struct oxr_view_config_properties *props = get_view_config_properties(sys, viewConfigurationType);
+	if (props == NULL) {
+		return oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Didn't find view configs");
 	}
-	if (sys->view_config_type == XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO) {
-		OXR_TWO_CALL_FILL_IN_HELPER(log, viewCapacityInput, viewCountOutput, views, 1,
-		                            view_configuration_view_fill_in, sys->views, XR_SUCCESS);
-	} else {
-		OXR_TWO_CALL_FILL_IN_HELPER(log, viewCapacityInput, viewCountOutput, views, 2,
-		                            view_configuration_view_fill_in, sys->views, XR_SUCCESS);
-	}
+
+	OXR_TWO_CALL_FILL_IN_HELPER(log, viewCapacityInput, viewCountOutput, views, props->view_count,
+	                            view_configuration_view_fill_in, props->views, XR_SUCCESS);
 }

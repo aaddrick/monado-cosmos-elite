@@ -1031,9 +1031,20 @@ comp_main_create_system_compositor(struct xrt_device *xdev,
 
 	COMP_DEBUG(c, "Doing init %p", (void *)c);
 
-	if (xdev->hmd->view_count == 0) {
-		U_LOG_E("Bug detected: HMD \"%s\" does not set xdev->hmd.view_count. Value must be > 0!", xdev->str);
+	uint32_t view_count = xdev->hmd->view_count;
+	enum xrt_view_type view_type = 0; // Invalid
+
+	switch (view_count) {
+	case 0:
+		U_LOG_E("Bug detected: HMD \"%s\" xdev->hmd.view_count must be > 0!", xdev->str);
 		assert(xdev->hmd->view_count > 0);
+		break;
+	case 1: view_type = XRT_VIEW_TYPE_MONO; break;
+	case 2: view_type = XRT_VIEW_TYPE_STEREO; break;
+	default:
+		U_LOG_E("Bug detected: HMD \"%s\" xdev->hmd.view_count must be 1 or 2, not %u!", xdev->str, view_count);
+		assert(view_count == 1 && view_count == 2);
+		break;
 	}
 
 	// Do this as early as possible.
@@ -1131,21 +1142,23 @@ comp_main_create_system_compositor(struct xrt_device *xdev,
 	sys_info->supports_fov_mutable = true;
 
 	// clang-format off
-	uint32_t view_count = xdev->hmd->view_count;
 	for (uint32_t i = 0; i < view_count; ++i) {
 		uint32_t w = (uint32_t)(xdev->hmd->views[i].display.w_pixels * scale);
 		uint32_t h = (uint32_t)(xdev->hmd->views[i].display.h_pixels * scale);
 		uint32_t w_2 = xdev->hmd->views[i].display.w_pixels * 2;
 		uint32_t h_2 = xdev->hmd->views[i].display.h_pixels * 2;
 
-		sys_info->views[i].recommended.width_pixels  = w;
-		sys_info->views[i].recommended.height_pixels = h;
-		sys_info->views[i].recommended.sample_count  = 1;
-		sys_info->views[i].max.width_pixels          = w_2;
-		sys_info->views[i].max.height_pixels         = h_2;
-		sys_info->views[i].max.sample_count          = 1;
+		sys_info->view_configs[0].views[i].recommended.width_pixels  = w;
+		sys_info->view_configs[0].views[i].recommended.height_pixels = h;
+		sys_info->view_configs[0].views[i].recommended.sample_count  = 1;
+		sys_info->view_configs[0].views[i].max.width_pixels          = w_2;
+		sys_info->view_configs[0].views[i].max.height_pixels         = h_2;
+		sys_info->view_configs[0].views[i].max.sample_count          = 1;
 	}
 	// clang-format on
+	sys_info->view_configs[0].view_type = view_type;
+	sys_info->view_configs[0].view_count = view_count;
+	sys_info->view_config_count = 1; // Only one view config for now.
 
 	// If we can add e.g. video pass-through capabilities, we may need to change (augment) this list.
 	// Just copying it directly right now.

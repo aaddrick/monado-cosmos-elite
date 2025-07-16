@@ -1482,6 +1482,22 @@ struct oxr_handle_base
 };
 
 /*!
+ * Holds the properties that a system supports for a view configuration type.
+ *
+ * @relates oxr_system
+ */
+struct oxr_view_config_properties
+{
+	XrViewConfigurationType view_config_type;
+
+	uint32_t view_count;
+	XrViewConfigurationView views[XRT_MAX_COMPOSITOR_VIEW_CONFIGS_VIEW_COUNT];
+
+	uint32_t blend_mode_count;
+	XrEnvironmentBlendMode blend_modes[3];
+};
+
+/*!
  * Single or multiple devices grouped together to form a system that sessions
  * can be created from. Might need to open devices to get all
  * properties from it, but shouldn't.
@@ -1513,10 +1529,8 @@ struct oxr_system
 	//! Have the client application called the gfx api requirements func?
 	bool gotten_requirements;
 
-	XrViewConfigurationType view_config_type;
-	XrViewConfigurationView views[2];
-	uint32_t blend_mode_count;
-	XrEnvironmentBlendMode blend_modes[3];
+	uint32_t view_config_count;
+	struct oxr_view_config_properties view_configs[XRT_MAX_COMPOSITOR_VIEW_CONFIGS_COUNT];
 
 	XrReferenceSpaceType reference_spaces[5];
 	uint32_t reference_space_count;
