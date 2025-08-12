@@ -39,6 +39,11 @@ typedef enum xrt_result
 	XRT_SPACE_BOUNDS_UNAVAILABLE = 3,
 
 	/*!
+	 * An (asynchronous) operation has been cancelled.
+	 */
+	XRT_OPERATION_CANCELLED = 4,
+
+	/*!
 	 * A problem occurred either with the IPC transport itself, with invalid commands from the client, or with
 	 * invalid responses from the server.
 	 */
@@ -231,4 +236,19 @@ typedef enum xrt_result
 	 * The IPC server couldn't starts it mainloop.
 	 */
 	XRT_ERROR_IPC_MAINLOOP_FAILED_TO_INIT = -38,
+
+	/*!
+	 * Invalid function arguments passed in, e.g. null or out-of-range values.
+	 */
+	XRT_ERROR_INVALID_ARGUMENT = -39,
+
+	/*!
+	 * Querying result of a future before it is ready.
+	 */
+	XRT_ERROR_FUTURE_RESULT_NOT_READY = -40,
+
+	/*!
+	 * Invoking complete on an already completed future
+	 */
+	XRT_ERROR_FUTURE_ALREADY_COMPLETE = -41,
 } xrt_result_t;
