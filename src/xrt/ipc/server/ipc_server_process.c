@@ -771,6 +771,34 @@ toggle_io_client_locked(struct ipc_server *s, uint32_t client_id)
 	return XRT_SUCCESS;
 }
 
+static uint32_t
+allocate_id_locked(struct ipc_server *s)
+{
+	uint32_t id = 0;
+	while (id == 0) {
+		// Allocate a new one.
+		id = ++s->id_generator;
+
+		for (uint32_t i = 0; i < IPC_MAX_CLIENTS; i++) {
+			volatile struct ipc_client_state *ics = &s->threads[i].ics;
+
+			// If we find the ID, get a new one by setting to zero.
+			if (ics->client_state.id == id) {
+				id = 0;
+				break;
+			}
+		}
+	}
+
+	// Paranoia.
+	if (id == 0) {
+		U_LOG_E("Got app(client) id 0, not allowed!");
+		assert(id > 0);
+	}
+
+	return id;
+}
+
 
 /*
  *
@@ -937,8 +965,7 @@ ipc_server_handle_client_connected(struct ipc_server *vs, xrt_ipc_handle_t ipc_h
 	it->state = IPC_THREAD_STARTING;
 
 	// Allocate a new ID, avoid zero.
-	//! @todo validate ID.
-	uint32_t id = ++vs->id_generator;
+	uint32_t id = allocate_id_locked(vs);
 
 	// Reset everything.
 	U_ZERO((struct ipc_client_state *)ics);
