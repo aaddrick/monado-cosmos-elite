@@ -407,7 +407,7 @@ timing_ui_setup(TrackerSlam &t)
 {
 	t.timing.enabled = false;
 
-	u_var_add_ro_ftext(&t, "\n%s", "Tracker timing");
+	u_var_add_ro_raw_text(&t, "\nTracker timing", "Tracker timing");
 
 	// Setup toggle button
 	static const char *msg[2] = {"[OFF] Enable timing", "[ON] Disable timing"};
@@ -527,7 +527,7 @@ features_ui_setup(TrackerSlam &t)
 {
 	t.features.enabled = false;
 
-	u_var_add_ro_ftext(&t, "\n%s", "Tracker features");
+	u_var_add_ro_raw_text(&t, "\nTracker features", "Tracker features");
 
 	// Setup toggle button
 	static const char *msg[2] = {"[OFF] Enable features info", "[ON] Disable features info"};
@@ -695,7 +695,7 @@ gt2xr_pose(const xrt_pose &gt_origin, const xrt_pose &gt_pose)
 static void
 gt_ui_setup(TrackerSlam &t)
 {
-	u_var_add_ro_ftext(&t, "\n%s", "Tracker groundtruth");
+	u_var_add_ro_raw_text(&t, "\nTracker groundtruth", "Tracker groundtruth");
 	t.gt.diff_ui.values.data = t.gt.diffs_mm;
 	t.gt.diff_ui.values.length = UI_GTDIFF_POSE_COUNT;
 	t.gt.diff_ui.values.index_ptr = &t.gt.diff_idx;
@@ -1081,7 +1081,7 @@ setup_ui(TrackerSlam &t)
 	}
 
 	u_var_add_gui_header(&t, NULL, "Stats");
-	u_var_add_ro_ftext(&t, "\n%s", "Record to CSV files");
+	u_var_add_ro_raw_text(&t, "\nRecord to CSV files", "Record to CSV files");
 	u_var_add_bool(&t, &t.slam_traj_writer->enabled, "Record tracked trajectory");
 	u_var_add_bool(&t, &t.pred_traj_writer->enabled, "Record predicted trajectory");
 	u_var_add_bool(&t, &t.filt_traj_writer->enabled, "Record filtered trajectory");
