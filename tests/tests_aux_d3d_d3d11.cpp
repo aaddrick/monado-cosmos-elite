@@ -104,6 +104,7 @@ tryImport(struct vk_bundle *vk, std::vector<HANDLE> const &handles, const struct
 		xin.handle = h.get();
 		xin.size = 0;
 		xin.use_dedicated_allocation = use_dedicated_allocation;
+		xin.is_dxgi_handle = true;
 
 		handlesForImport.emplace_back(std::move(h));
 		xins.emplace_back(xin);
