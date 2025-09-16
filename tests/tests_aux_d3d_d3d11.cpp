@@ -93,13 +93,19 @@ tryImport(struct vk_bundle *vk, std::vector<HANDLE> const &handles, const struct
 	handlesForImport.reserve(image_count);
 
 	for (HANDLE handle : handles) {
-		wil::unique_handle duped{u_graphics_buffer_ref(handle)};
+		/*!
+		 * If shared resources have been allocated without using NT handles we can't use DuplicateHandle
+		 * (like u_graphics_buffer_ref does internally).
+		 * More info:
+		 * https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiresource-getsharedhandle#remarks
+		 */
+		wil::unique_handle h{handle};
 		xrt_image_native xin;
-		xin.handle = duped.get();
+		xin.handle = h.get();
 		xin.size = 0;
 		xin.use_dedicated_allocation = use_dedicated_allocation;
 
-		handlesForImport.emplace_back(std::move(duped));
+		handlesForImport.emplace_back(std::move(h));
 		xins.emplace_back(xin);
 	}
 
