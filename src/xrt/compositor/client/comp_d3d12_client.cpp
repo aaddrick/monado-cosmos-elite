@@ -1,4 +1,5 @@
 // Copyright 2019-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -801,6 +802,10 @@ client_d3d12_compositor_layer_projection(struct xrt_compositor *xc,
 	}
 	struct xrt_layer_data d = *data;
 
+	// Scale to compensate for power-of-two texture sizes.
+	for (uint32_t i = 0; i < data->view_count; ++i) {
+		client_d3d12_swapchain_scale_rect(xsc[i], &d.proj.v[i].sub.norm_rect);
+	}
 	// No flip required: D3D12 swapchain image convention matches Vulkan.
 	return xrt_comp_layer_projection(&c->xcn->base, xdev, xscn, &d);
 }
