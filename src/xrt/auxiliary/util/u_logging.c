@@ -443,6 +443,14 @@ do_print(const char *file, int line, const char *func, enum u_logging_level leve
 	FILE *output = g_log_file != NULL ? g_log_file : stderr;
 	fwrite(storage, printed, 1, output);
 
+#if defined(XRT_OS_WINDOWS)
+	/*
+	 * Windows like to buffer messages, call flush here to make sure all
+	 * logs gets written out in case of sudden exits and crashes.
+	 */
+	fflush(output);
+#endif
+
 #else
 #error "Port needed for logging function"
 #endif
