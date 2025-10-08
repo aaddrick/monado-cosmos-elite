@@ -867,6 +867,26 @@ HmdDevice::set_nominal_frame_interval(uint64_t interval_ns)
 	}
 }
 
+void
+HmdDevice::set_scanout_type(xrt_scanout_direction direction, uint64_t time_ns)
+{
+	auto set = [this, direction, time_ns] {
+		hmd_parts->base.screens[0].scanout_direction = direction;
+		hmd_parts->base.screens[0].scanout_time_ns = time_ns;
+	};
+
+	if (hmd_parts) {
+		set();
+	} else {
+		std::thread t([this, set] {
+			std::unique_lock lk(hmd_parts_mut);
+			hmd_parts_cv.wait(lk, [this] { return hmd_parts != nullptr; });
+			set();
+		});
+		t.detach();
+	}
+}
+
 namespace {
 // From openvr driver documentation
 // (https://github.com/ValveSoftware/openvr/blob/master/docs/Driver_API_Documentation.md#Input-Profiles):
@@ -1027,7 +1047,13 @@ HmdDevice::handle_property_write(const vr::PropertyWrite_t &prop)
 	case vr::Prop_DisplayFrequency_Float: {
 		assert(prop.unBufferSize == sizeof(float));
 		float freq = *static_cast<float *>(prop.pvBuffer);
-		set_nominal_frame_interval((1.f / freq) * 1e9f);
+		uint64_t interval_ns = (1.f / freq) * 1e9f;
+		set_nominal_frame_interval(interval_ns);
+		if (variant == VIVE_VARIANT_PRO) {
+			set_scanout_type(XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM, interval_ns * 1600.0 / 1624.0);
+		} else {
+			set_scanout_type(XRT_SCANOUT_DIRECTION_NONE, 0);
+		}
 		break;
 	}
 	case vr::Prop_UserIpdMeters_Float: {

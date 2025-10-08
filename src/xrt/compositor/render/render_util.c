@@ -124,6 +124,17 @@ render_calc_time_warp_matrix(const struct xrt_pose *src_pose,
 }
 
 void
+render_calc_time_warp_projection(const struct xrt_fov *fov, struct xrt_matrix_4x4 *result)
+{
+	struct xrt_matrix_4x4_f64 tmp;
+	calc_projection(fov, &tmp);
+
+	for (int i = 0; i < 16; i++) {
+		result->v[i] = (float)tmp.v[i];
+	}
+}
+
+void
 render_calc_uv_to_tangent_lengths_rect(const struct xrt_fov *fov, struct xrt_normalized_rect *out_rect)
 {
 	const struct xrt_fov copy = *fov;

@@ -172,6 +172,20 @@ enum xrt_distortion_model
 };
 
 /*!
+ * Screen scanout direction
+ */
+enum xrt_scanout_direction
+{
+	// clang-format off
+	XRT_SCANOUT_DIRECTION_NONE = 0,
+	XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM,
+	XRT_SCANOUT_DIRECTION_BOTTOM_TO_TOP,
+	XRT_SCANOUT_DIRECTION_LEFT_TO_RIGHT,
+	XRT_SCANOUT_DIRECTION_RIGHT_TO_LEFT,
+	// clang-format on
+};
+
+/*!
  * Common formats, use `u_format_*` functions to reason about them.
  */
 enum xrt_format

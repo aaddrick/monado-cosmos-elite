@@ -207,6 +207,8 @@ sample_hmd_create(void)
 	// Set up display details
 	// refresh rate
 	hmd->base.hmd->screens[0].nominal_frame_interval_ns = time_s_to_ns(1.0f / 90.0f);
+	hmd->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
+	hmd->base.hmd->screens[0].scanout_time_ns = 0;
 
 	const double hFOV = 90 * (M_PI / 180.0);
 	const double vFOV = 96.73 * (M_PI / 180.0);

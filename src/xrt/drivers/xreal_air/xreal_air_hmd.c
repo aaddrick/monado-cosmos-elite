@@ -1198,6 +1198,7 @@ xreal_air_hmd_create_device(struct os_hid_device *sensor_device,
 
 	// Set up display details refresh rate
 	hmd->base.hmd->screens[0].nominal_frame_interval_ns = time_s_to_ns(1.0f / 60.0f);
+	hmd->base.hmd->screens[0].scanout_time_ns = 0;
 
 	// Distortion information, fills in xdev->compute_distortion().
 	u_distortion_mesh_set_none(&hmd->base);

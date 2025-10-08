@@ -95,6 +95,12 @@ extern "C" {
  */
 
 /*!
+ * Create a simplified projection matrix for timewarp.
+ */
+void
+render_calc_time_warp_projection(const struct xrt_fov *fov, struct xrt_matrix_4x4 *result);
+
+/*!
  * Calculates a timewarp matrix which takes in NDC coords and gives out results
  * in [-1, 1] space that needs a perspective divide.
  */
@@ -1256,8 +1262,7 @@ struct render_compute_layer_ubo_data
 	 */
 
 	//! Timewarp matrices
-	struct xrt_matrix_4x4 transforms[RENDER_MAX_LAYERS];
-
+	struct xrt_matrix_4x4 transforms_timewarp[RENDER_MAX_LAYERS];
 
 	/*!
 	 * For quad layers
@@ -1294,7 +1299,8 @@ struct render_compute_distortion_ubo_data
 	struct render_viewport_data views[XRT_MAX_VIEWS];
 	struct xrt_normalized_rect pre_transforms[XRT_MAX_VIEWS];
 	struct xrt_normalized_rect post_transforms[XRT_MAX_VIEWS];
-	struct xrt_matrix_4x4 transforms[XRT_MAX_VIEWS];
+	struct xrt_matrix_4x4 transform_timewarp_scanout_begin[XRT_MAX_VIEWS];
+	struct xrt_matrix_4x4 transform_timewarp_scanout_end[XRT_MAX_VIEWS];
 };
 
 /*!
@@ -1364,7 +1370,8 @@ render_compute_projection_timewarp(struct render_compute *render,
                                    const struct xrt_normalized_rect src_rects[XRT_MAX_VIEWS],
                                    const struct xrt_pose src_poses[XRT_MAX_VIEWS],
                                    const struct xrt_fov src_fovs[XRT_MAX_VIEWS],
-                                   const struct xrt_pose new_poses[XRT_MAX_VIEWS],
+                                   const struct xrt_pose new_poses_scanout_begin[XRT_MAX_VIEWS],
+                                   const struct xrt_pose new_poses_scanout_end[XRT_MAX_VIEWS],
                                    VkImage target_image,
                                    VkImageView target_image_view,
                                    const struct render_viewport_data views[XRT_MAX_VIEWS]);
@@ -1373,13 +1380,28 @@ render_compute_projection_timewarp(struct render_compute *render,
  * @public @memberof render_compute
  */
 void
-render_compute_projection(struct render_compute *render,
-                          VkSampler src_samplers[XRT_MAX_VIEWS],
-                          VkImageView src_image_views[XRT_MAX_VIEWS],
-                          const struct xrt_normalized_rect src_rects[XRT_MAX_VIEWS],
-                          VkImage target_image,
-                          VkImageView target_image_view,
-                          const struct render_viewport_data views[XRT_MAX_VIEWS]);
+render_compute_projection_scanout_compensation(struct render_compute *render,
+                                               VkSampler src_samplers[XRT_MAX_VIEWS],
+                                               VkImageView src_image_views[XRT_MAX_VIEWS],
+                                               const struct xrt_normalized_rect src_rects[XRT_MAX_VIEWS],
+                                               const struct xrt_fov src_fovs[XRT_MAX_VIEWS],
+                                               const struct xrt_pose new_poses_scanout_begin[XRT_MAX_VIEWS],
+                                               const struct xrt_pose new_poses_scanout_end[XRT_MAX_VIEWS],
+                                               VkImage target_image,
+                                               VkImageView target_image_view,
+                                               const struct render_viewport_data views[XRT_MAX_VIEWS]);
+
+/*!
+ * @public @memberof render_compute
+ */
+void
+render_compute_projection_no_timewarp(struct render_compute *render,
+                                      VkSampler src_samplers[XRT_MAX_VIEWS],
+                                      VkImageView src_image_views[XRT_MAX_VIEWS],
+                                      const struct xrt_normalized_rect src_rects[XRT_MAX_VIEWS],
+                                      VkImage target_image,
+                                      VkImageView target_image_view,
+                                      const struct render_viewport_data views[XRT_MAX_VIEWS]);
 
 /*!
  * @public @memberof render_compute

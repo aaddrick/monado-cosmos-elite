@@ -102,6 +102,8 @@ struct xrt_hmd_parts
 		int h_pixels;
 		//! Nominal frame interval
 		uint64_t nominal_frame_interval_ns;
+		enum xrt_scanout_direction scanout_direction;
+		uint64_t scanout_time_ns;
 	} screens[1];
 
 	/*!

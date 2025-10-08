@@ -531,11 +531,11 @@ crg_distortion_common(struct render_gfx *render,
 		if (do_timewarp) {
 			data.pre_transform = d->views[i].pre_transform;
 
-			render_calc_time_warp_matrix( //
-			    &md->views[i].src_pose,   //
-			    &md->views[i].src_fov,    //
-			    &d->views[i].world_pose,  //
-			    &data.transform);         //
+			render_calc_time_warp_matrix(              //
+			    &md->views[i].src_pose,                //
+			    &md->views[i].src_fov,                 //
+			    &d->views[i].world_pose_scanout_begin, //
+			    &data.transform);                      //
 		}
 
 		ret = render_gfx_mesh_alloc_and_write( //
@@ -596,7 +596,7 @@ crg_distortion_after_squash(struct render_gfx *render, const struct comp_render_
 
 	struct gfx_mesh_data md = XRT_STRUCT_INIT;
 	for (uint32_t i = 0; i < d->target.view_count; i++) {
-		struct xrt_pose src_pose = d->views[i].world_pose;
+		struct xrt_pose src_pose = d->views[i].world_pose_scanout_begin;
 		struct xrt_fov src_fov = d->views[i].fov;
 		VkImageView src_image_view = d->views[i].squash_as_src.sample_view;
 		struct xrt_normalized_rect src_norm_rect = d->views[i].squash_as_src.norm_rect;
@@ -693,7 +693,7 @@ comp_render_gfx_layers(struct render_gfx *render,
 	for (uint32_t view = 0; view < d->squash_view_count; view++) {
 
 		// Data for this view, convenience.
-		const struct xrt_pose world_pose = d->views[view].world_pose;
+		const struct xrt_pose world_pose = d->views[view].world_pose_scanout_begin;
 		const struct xrt_pose eye_pose = d->views[view].eye_pose;
 		const struct xrt_fov new_fov = d->views[view].fov;
 

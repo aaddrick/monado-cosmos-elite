@@ -1157,6 +1157,16 @@ vive_device_create(struct os_hid_device *mainboard_dev,
 		d->base.hmd->screens[0].nominal_frame_interval_ns = (uint64_t)time_s_to_ns(1.0f / 90.0f);
 	}
 
+	if (d->config.variant == VIVE_VARIANT_PRO) {
+		d->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM;
+		d->base.hmd->screens[0].scanout_time_ns = d->base.hmd->screens[0].nominal_frame_interval_ns;
+		// Compensate for the length of vblank.
+		d->base.hmd->screens[0].scanout_time_ns *= 1600.0 / 1624.0;
+	} else {
+		d->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
+		d->base.hmd->screens[0].scanout_time_ns = 0;
+	}
+
 	for (uint8_t eye = 0; eye < 2; eye++) {
 		struct xrt_view *v = &d->base.hmd->views[eye];
 		v->display.w_pixels = w_pixels;

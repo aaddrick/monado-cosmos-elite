@@ -185,7 +185,7 @@ do_cs_equirect2_layer(const struct comp_layer *layer,
 /// Data setup for a projection layer
 static inline void
 do_cs_projection_layer(const struct comp_layer *layer,
-                       const struct xrt_pose *world_pose,
+                       const struct xrt_pose *world_pose_scanout_begin,
                        uint32_t view_index,
                        uint32_t cur_layer,
                        uint32_t cur_image,
@@ -235,11 +235,11 @@ do_cs_projection_layer(const struct comp_layer *layer,
 
 	// unused if timewarp is off
 	if (do_timewarp) {
-		render_calc_time_warp_matrix(          //
-		    &vd->pose,                         //
-		    &vd->fov,                          //
-		    world_pose,                        //
-		    &ubo_data->transforms[cur_layer]); //
+		render_calc_time_warp_matrix(                   //
+		    &vd->pose,                                  //
+		    &vd->fov,                                   //
+		    world_pose_scanout_begin,                   //
+		    &ubo_data->transforms_timewarp[cur_layer]); //
 	}
 
 	*out_cur_image = cur_image;
@@ -373,6 +373,9 @@ crc_distortion_after_squash(struct render_compute *render, const struct comp_ren
 	VkSampler src_samplers[XRT_MAX_VIEWS];
 	struct render_viewport_data target_viewport_datas[XRT_MAX_VIEWS];
 	struct xrt_normalized_rect src_norm_rects[XRT_MAX_VIEWS];
+	struct xrt_fov src_fovs[XRT_MAX_VIEWS];
+	struct xrt_pose world_poses_scanout_begin[XRT_MAX_VIEWS];
+	struct xrt_pose world_poses_scanout_end[XRT_MAX_VIEWS];
 
 	for (uint32_t i = 0; i < d->target.view_count; i++) {
 		// Data to be filled in.
@@ -390,16 +393,36 @@ crc_distortion_after_squash(struct render_compute *render, const struct comp_ren
 		src_norm_rects[i] = src_norm_rect;
 		src_samplers[i] = clamp_to_border_black;
 		target_viewport_datas[i] = viewport_data;
+
+		if (d->do_timewarp) {
+			world_poses_scanout_begin[i] = d->views[i].world_pose_scanout_begin;
+			world_poses_scanout_end[i] = d->views[i].world_pose_scanout_end;
+			src_fovs[i] = d->views[i].fov;
+		}
 	}
 
-	render_compute_projection(     //
-	    render,                    //
-	    src_samplers,              //
-	    src_image_views,           //
-	    src_norm_rects,            //
-	    d->target.cs.image,        //
-	    d->target.cs.storage_view, // target_image_view
-	    target_viewport_datas);    // views
+	if (!d->do_timewarp) {
+		render_compute_projection_no_timewarp( //
+		    render,                            //
+		    src_samplers,                      //
+		    src_image_views,                   //
+		    src_norm_rects,                    //
+		    d->target.cs.image,                //
+		    d->target.cs.storage_view,         // target_image_view
+		    target_viewport_datas);            // views
+	} else {
+		render_compute_projection_scanout_compensation( //
+		    render,                                     //
+		    src_samplers,                               //
+		    src_image_views,                            //
+		    src_norm_rects,                             //
+		    src_fovs,                                   //
+		    world_poses_scanout_begin,                  //
+		    world_poses_scanout_end,                    //
+		    d->target.cs.image,                         //
+		    d->target.cs.storage_view,                  // target_image_view
+		    target_viewport_datas);                     // views
+	}
 }
 
 /// Fast path
@@ -427,7 +450,8 @@ crc_distortion_fast_path(struct render_compute *render,
 	struct xrt_normalized_rect src_norm_rects[XRT_MAX_VIEWS];
 	struct xrt_fov src_fovs[XRT_MAX_VIEWS];
 	struct xrt_pose src_poses[XRT_MAX_VIEWS];
-	struct xrt_pose world_poses[XRT_MAX_VIEWS];
+	struct xrt_pose world_poses_scanout_begin[XRT_MAX_VIEWS];
+	struct xrt_pose world_poses_scanout_end[XRT_MAX_VIEWS];
 
 	for (uint32_t i = 0; i < d->target.view_count; i++) {
 		// Data to be filled in.
@@ -436,7 +460,8 @@ crc_distortion_fast_path(struct render_compute *render,
 		struct xrt_normalized_rect src_norm_rect;
 		struct xrt_fov src_fov;
 		struct xrt_pose src_pose;
-		struct xrt_pose world_pose;
+		struct xrt_pose world_pose_scanout_begin;
+		struct xrt_pose world_pose_scanout_end;
 		uint32_t array_index = vds[i]->sub.array_index;
 		const struct comp_swapchain_image *image = get_layer_image(layer, i, vds[i]->sub.image_index);
 
@@ -446,7 +471,8 @@ crc_distortion_fast_path(struct render_compute *render,
 		viewport_data = d->views[i].target.viewport_data;
 		src_fov = vds[i]->fov;
 		src_pose = vds[i]->pose;
-		world_pose = d->views[i].world_pose;
+		world_pose_scanout_begin = d->views[i].world_pose_scanout_begin;
+		world_pose_scanout_end = d->views[i].world_pose_scanout_end;
 
 		// No layer squasher has handled this for us already
 		if (data->flip_y) {
@@ -461,18 +487,19 @@ crc_distortion_fast_path(struct render_compute *render,
 		target_viewport_datas[i] = viewport_data;
 		src_fovs[i] = src_fov;
 		src_poses[i] = src_pose;
-		world_poses[i] = world_pose;
+		world_poses_scanout_begin[i] = world_pose_scanout_begin;
+		world_poses_scanout_end[i] = world_pose_scanout_end;
 	}
 
 	if (!d->do_timewarp) {
-		render_compute_projection(     //
-		    render,                    //
-		    src_samplers,              //
-		    src_image_views,           //
-		    src_norm_rects,            //
-		    d->target.cs.image,        //
-		    d->target.cs.storage_view, //
-		    target_viewport_datas);    //
+		render_compute_projection_no_timewarp( //
+		    render,                            //
+		    src_samplers,                      //
+		    src_image_views,                   //
+		    src_norm_rects,                    //
+		    d->target.cs.image,                //
+		    d->target.cs.storage_view,         //
+		    target_viewport_datas);            //
 	} else {
 		render_compute_projection_timewarp( //
 		    render,                         //
@@ -481,7 +508,8 @@ crc_distortion_fast_path(struct render_compute *render,
 		    src_norm_rects,                 //
 		    src_poses,                      //
 		    src_fovs,                       //
-		    world_poses,                    //
+		    world_poses_scanout_begin,      //
+		    world_poses_scanout_end,        //
 		    d->target.cs.image,             //
 		    d->target.cs.storage_view,      //
 		    target_viewport_datas);         //
@@ -501,7 +529,8 @@ comp_render_cs_layer(struct render_compute *render,
                      const struct comp_layer *layers,
                      const uint32_t layer_count,
                      const struct xrt_normalized_rect *pre_transform,
-                     const struct xrt_pose *world_pose,
+                     const struct xrt_pose *world_pose_scanout_begin,
+                     const struct xrt_pose *world_pose_scanout_end,
                      const struct xrt_pose *eye_pose,
                      const VkImage target_image,
                      const VkImageView target_image_view,
@@ -512,9 +541,9 @@ comp_render_cs_layer(struct render_compute *render,
 	VkSampler clamp_to_border_black = render->r->samplers.clamp_to_border_black;
 
 	// Not the transform of the views, but the inverse: actual view matrices.
-	struct xrt_matrix_4x4 world_view_mat, eye_view_mat;
-	math_matrix_4x4_view_from_pose(world_pose, &world_view_mat);
-	math_matrix_4x4_view_from_pose(eye_pose, &eye_view_mat);
+	struct xrt_matrix_4x4 world_view_mat_scanout_begin, eye_view;
+	math_matrix_4x4_view_from_pose(world_pose_scanout_begin, &world_view_mat_scanout_begin);
+	math_matrix_4x4_view_from_pose(eye_pose, &eye_view);
 
 	struct render_buffer *ubo = &render->r->compute.layer.ubos[view_index];
 	struct render_compute_layer_ubo_data *ubo_data = ubo->mapped;
@@ -564,65 +593,65 @@ comp_render_cs_layer(struct render_compute *render,
 
 		switch (data->type) {
 		case XRT_LAYER_CYLINDER:
-			do_cs_cylinder_layer(      //
-			    layer,                 // layer
-			    &eye_view_mat,         // eye_view_mat
-			    &world_view_mat,       // world_view_mat
-			    view_index,            // view_index
-			    cur_layer,             // cur_layer
-			    cur_image,             // cur_image
-			    clamp_to_edge,         // clamp_to_edge
-			    clamp_to_border_black, // clamp_to_border_black
-			    src_samplers,          // src_samplers
-			    src_image_views,       // src_image_views
-			    ubo_data,              // ubo_data
-			    &cur_image);           // out_cur_image
+			do_cs_cylinder_layer(              //
+			    layer,                         // layer
+			    &eye_view,                     // eye_view_mat
+			    &world_view_mat_scanout_begin, // world_view_mat
+			    view_index,                    // view_index
+			    cur_layer,                     // cur_layer
+			    cur_image,                     // cur_image
+			    clamp_to_edge,                 // clamp_to_edge
+			    clamp_to_border_black,         // clamp_to_border_black
+			    src_samplers,                  // src_samplers
+			    src_image_views,               // src_image_views
+			    ubo_data,                      // ubo_data
+			    &cur_image);                   // out_cur_image
 			break;
 		case XRT_LAYER_EQUIRECT2:
-			do_cs_equirect2_layer(     //
-			    layer,                 // layer
-			    &eye_view_mat,         // eye_view_mat
-			    &world_view_mat,       // world_view_mat
-			    view_index,            // view_index
-			    cur_layer,             // cur_layer
-			    cur_image,             // cur_image
-			    clamp_to_edge,         // clamp_to_edge
-			    clamp_to_border_black, // clamp_to_border_black
-			    src_samplers,          // src_samplers
-			    src_image_views,       // src_image_views
-			    ubo_data,              // ubo_data
-			    &cur_image);           // out_cur_image
+			do_cs_equirect2_layer(             //
+			    layer,                         // layer
+			    &eye_view,                     // eye_view_mat
+			    &world_view_mat_scanout_begin, // world_view_mat
+			    view_index,                    // view_index
+			    cur_layer,                     // cur_layer
+			    cur_image,                     // cur_image
+			    clamp_to_edge,                 // clamp_to_edge
+			    clamp_to_border_black,         // clamp_to_border_black
+			    src_samplers,                  // src_samplers
+			    src_image_views,               // src_image_views
+			    ubo_data,                      // ubo_data
+			    &cur_image);                   // out_cur_image
 			break;
 		case XRT_LAYER_PROJECTION_DEPTH:
 		case XRT_LAYER_PROJECTION: {
-			do_cs_projection_layer(    //
-			    layer,                 // layer
-			    world_pose,            // world_pose
-			    view_index,            // view_index
-			    cur_layer,             // cur_layer
-			    cur_image,             // cur_image
-			    clamp_to_edge,         // clamp_to_edge
-			    clamp_to_border_black, // clamp_to_border_black
-			    src_samplers,          // src_samplers
-			    src_image_views,       // src_image_views
-			    ubo_data,              // ubo_data
-			    do_timewarp,           // do_timewarp
-			    &cur_image);           // out_cur_image
+			do_cs_projection_layer(       //
+			    layer,                    // layer
+			    world_pose_scanout_begin, // world_pose_scanout_begin
+			    view_index,               // view_index
+			    cur_layer,                // cur_layer
+			    cur_image,                // cur_image
+			    clamp_to_edge,            // clamp_to_edge
+			    clamp_to_border_black,    // clamp_to_border_black
+			    src_samplers,             // src_samplers
+			    src_image_views,          // src_image_views
+			    ubo_data,                 // ubo_data
+			    do_timewarp,              // do_timewarp
+			    &cur_image);              // out_cur_image
 		} break;
 		case XRT_LAYER_QUAD: {
-			do_cs_quad_layer(          //
-			    layer,                 // layer
-			    &eye_view_mat,         // eye_view_mat
-			    &world_view_mat,       // world_view_mat
-			    view_index,            // view_index
-			    cur_layer,             // cur_layer
-			    cur_image,             // cur_image
-			    clamp_to_edge,         // clamp_to_edge
-			    clamp_to_border_black, // clamp_to_border_black
-			    src_samplers,          // src_samplers
-			    src_image_views,       // src_image_views
-			    ubo_data,              // ubo_data
-			    &cur_image);           // out_cur_image
+			do_cs_quad_layer(                  //
+			    layer,                         // layer
+			    &eye_view,                     // eye_view_mat
+			    &world_view_mat_scanout_begin, // world_view_mat_scanout_begin
+			    view_index,                    // view_index
+			    cur_layer,                     // cur_layer
+			    cur_image,                     // cur_image
+			    clamp_to_edge,                 // clamp_to_edge
+			    clamp_to_border_black,         // clamp_to_border_black
+			    src_samplers,                  // src_samplers
+			    src_image_views,               // src_image_views
+			    ubo_data,                      // ubo_data
+			    &cur_image);                   // out_cur_image
 		} break;
 		default:
 			// Should not get here!
@@ -687,18 +716,19 @@ comp_render_cs_layers(struct render_compute *render,
 	for (uint32_t view_index = 0; view_index < d->squash_view_count; view_index++) {
 		const struct comp_render_view_data *view = &d->views[view_index];
 
-		comp_render_cs_layer(             //
-		    render,                       //
-		    view_index,                   //
-		    layers,                       //
-		    layer_count,                  //
-		    &view->pre_transform,         //
-		    &view->world_pose,            //
-		    &view->eye_pose,              //
-		    view->squash.image,           //
-		    view->squash.cs.storage_view, //
-		    &view->squash.viewport_data,  //
-		    d->do_timewarp);              //
+		comp_render_cs_layer(                //
+		    render,                          //
+		    view_index,                      //
+		    layers,                          //
+		    layer_count,                     //
+		    &view->pre_transform,            //
+		    &view->world_pose_scanout_begin, //
+		    &view->world_pose_scanout_end,   //
+		    &view->eye_pose,                 //
+		    view->squash.image,              //
+		    view->squash.cs.storage_view,    //
+		    &view->squash.viewport_data,     //
+		    d->do_timewarp);                 //
 	}
 
 	cmd_barrier_view_squash_images(            //

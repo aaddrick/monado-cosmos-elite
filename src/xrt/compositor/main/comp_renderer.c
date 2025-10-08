@@ -242,7 +242,8 @@ static void
 calc_pose_data(struct comp_renderer *r,
                enum comp_target_fov_source fov_source,
                struct xrt_fov out_fovs[XRT_MAX_VIEWS],
-               struct xrt_pose out_world[XRT_MAX_VIEWS],
+               struct xrt_pose out_world_scanout_begin[XRT_MAX_VIEWS],
+               struct xrt_pose out_world_scanout_end[XRT_MAX_VIEWS],
                struct xrt_pose out_eye[XRT_MAX_VIEWS],
                uint32_t view_count)
 {
@@ -254,24 +255,59 @@ calc_pose_data(struct comp_renderer *r,
 	    0.0f,
 	};
 
-	struct xrt_space_relation head_relation = XRT_SPACE_RELATION_ZERO;
+	struct xrt_space_relation head_relation[2] = XRT_SPACE_RELATION_ZERO;
 	struct xrt_fov xdev_fovs[XRT_MAX_VIEWS] = XRT_STRUCT_INIT;
-	struct xrt_pose xdev_poses[XRT_MAX_VIEWS] = XRT_STRUCT_INIT;
+	struct xrt_pose xdev_poses[2][XRT_MAX_VIEWS] = XRT_STRUCT_INIT;
 
-	xrt_result_t xret = xrt_device_get_view_poses(       //
-	    r->c->xdev,                                      //
-	    &default_eye_relation,                           //
-	    r->c->frame.rendering.predicted_display_time_ns, // at_timestamp_ns
-	    view_count,                                      //
-	    &head_relation,                                  // out_head_relation
-	    xdev_fovs,                                       // out_fovs
-	    xdev_poses);                                     // out_poses
+	uint64_t scanout_time_ns = 0;
+	if (r->c->xdev->hmd->screens[0].scanout_direction == XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM) {
+		scanout_time_ns = r->c->xdev->hmd->screens[0].scanout_time_ns;
+	} else if (r->c->xdev->hmd->screens[0].scanout_direction != XRT_SCANOUT_DIRECTION_NONE) {
+		COMP_SPEW(r->c, "Unable to apply scanout compensation as only DIRECTION_TOP_TO_BOTTOM is supported");
+	}
+
+	int64_t begin_timestamp_ns = r->c->frame.rendering.predicted_display_time_ns;
+	int64_t end_timestamp_ns = begin_timestamp_ns + scanout_time_ns;
+
+	// Pose at beginning of scanout
+	xrt_result_t xret = xrt_device_get_view_poses( //
+	    r->c->xdev,                                //
+	    &default_eye_relation,                     //
+	    begin_timestamp_ns,                        // at_timestamp_ns
+	    view_count,                                //
+	    &head_relation[0],                         // out_head_relation
+	    xdev_fovs,                                 // out_fovs
+	    xdev_poses[0]);
 	if (xret != XRT_SUCCESS) {
 		struct u_pp_sink_stack_only sink;
 		u_pp_delegate_t dg = u_pp_sink_stack_only_init(&sink);
 		u_pp_xrt_result(dg, xret);
 		U_LOG_E("xrt_device_get_view_poses failed: %s", sink.buffer);
 		return;
+	}
+
+	// Pose at end of scanout
+	if (scanout_time_ns != 0) {
+		xret = xrt_device_get_view_poses( //
+		    r->c->xdev,                   //
+		    &default_eye_relation,        //
+		    end_timestamp_ns,             // at_timestamp_ns
+		    view_count,                   //
+		    &head_relation[1],            // out_head_relation
+		    xdev_fovs,                    // out_fovs
+		    xdev_poses[1]);               // out_poses
+		if (xret != XRT_SUCCESS) {
+			struct u_pp_sink_stack_only sink;
+			u_pp_delegate_t dg = u_pp_sink_stack_only_init(&sink);
+			u_pp_xrt_result(dg, xret);
+			U_LOG_E("xrt_device_get_view_poses failed: %s", sink.buffer);
+			return;
+		}
+	} else {
+		for (size_t i = 0; i < XRT_MAX_VIEWS; ++i) {
+			xdev_poses[1][i] = xdev_poses[0][i];
+		}
+		head_relation[1] = head_relation[0];
 	}
 
 	struct xrt_fov dist_fov[XRT_MAX_VIEWS] = XRT_STRUCT_INIT;
@@ -288,22 +324,32 @@ calc_pose_data(struct comp_renderer *r,
 
 	for (uint32_t i = 0; i < view_count; i++) {
 		const struct xrt_fov fov = use_xdev ? xdev_fovs[i] : dist_fov[i];
-		const struct xrt_pose eye_pose = xdev_poses[i];
+		const struct xrt_pose eye_pose_scanout_start = xdev_poses[0][i];
+		const struct xrt_pose eye_pose_scanout_end = xdev_poses[1][i];
 
-		struct xrt_space_relation result = {0};
+		struct xrt_space_relation result_scanout_start = {0};
+		struct xrt_space_relation result_scanout_end = {0};
 		struct xrt_relation_chain xrc = {0};
-		m_relation_chain_push_pose_if_not_identity(&xrc, &eye_pose);
-		m_relation_chain_push_relation(&xrc, &head_relation);
-		m_relation_chain_resolve(&xrc, &result);
+
+		m_relation_chain_push_pose_if_not_identity(&xrc, &eye_pose_scanout_start);
+		m_relation_chain_push_relation(&xrc, &head_relation[0]);
+		m_relation_chain_resolve(&xrc, &result_scanout_start);
+
+		xrc = (struct xrt_relation_chain){0};
+
+		m_relation_chain_push_pose_if_not_identity(&xrc, &eye_pose_scanout_end);
+		m_relation_chain_push_relation(&xrc, &head_relation[1]);
+		m_relation_chain_resolve(&xrc, &result_scanout_end);
 
 		// Results to callers.
 		out_fovs[i] = fov;
-		out_world[i] = result.pose;
-		out_eye[i] = eye_pose;
+		out_world_scanout_begin[i] = result_scanout_start.pose;
+		out_world_scanout_end[i] = result_scanout_end.pose;
+		out_eye[i] = eye_pose_scanout_start;
 
 		// For remote rendering targets.
 		r->c->base.frame_params.fovs[i] = fov;
-		r->c->base.frame_params.poses[i] = result.pose;
+		r->c->base.frame_params.poses[i] = result_scanout_start.pose;
 	}
 }
 
@@ -866,15 +912,17 @@ dispatch_graphics(struct comp_renderer *r,
 
 	// Device view information.
 	struct xrt_fov fovs[XRT_MAX_VIEWS];
-	struct xrt_pose world_poses[XRT_MAX_VIEWS];
+	struct xrt_pose world_poses_scanout_begin[XRT_MAX_VIEWS];
+	struct xrt_pose world_poses_scanout_end[XRT_MAX_VIEWS];
 	struct xrt_pose eye_poses[XRT_MAX_VIEWS];
-	calc_pose_data(             //
-	    r,                      //
-	    fov_source,             //
-	    fovs,                   //
-	    world_poses,            //
-	    eye_poses,              //
-	    render->r->view_count); //
+	calc_pose_data(                //
+	    r,                         //
+	    fov_source,                //
+	    fovs,                      //
+	    world_poses_scanout_begin, //
+	    world_poses_scanout_end,   //
+	    eye_poses,                 //
+	    render->r->view_count);    //
 
 	// Does everything.
 	chl_frame_state_gfx_default_pipeline( //
@@ -882,7 +930,7 @@ dispatch_graphics(struct comp_renderer *r,
 	    render,                           //
 	    layers,                           //
 	    layer_count,                      //
-	    world_poses,                      //
+	    world_poses_scanout_begin,        //
 	    eye_poses,                        //
 	    fovs,                             //
 	    rtr,                              //
@@ -924,15 +972,17 @@ dispatch_compute(struct comp_renderer *r,
 
 	// Device view information.
 	struct xrt_fov fovs[XRT_MAX_VIEWS];
-	struct xrt_pose world_poses[XRT_MAX_VIEWS];
+	struct xrt_pose world_poses_scanout_begin[XRT_MAX_VIEWS];
+	struct xrt_pose world_poses_scanout_end[XRT_MAX_VIEWS];
 	struct xrt_pose eye_poses[XRT_MAX_VIEWS];
-	calc_pose_data(             //
-	    r,                      //
-	    fov_source,             //
-	    fovs,                   //
-	    world_poses,            //
-	    eye_poses,              //
-	    render->r->view_count); //
+	calc_pose_data(                //
+	    r,                         //
+	    fov_source,                //
+	    fovs,                      //
+	    world_poses_scanout_begin, //
+	    world_poses_scanout_end,   //
+	    eye_poses,                 //
+	    render->r->view_count);    //
 
 	// Target Vulkan resources..
 	VkImage target_image = r->c->target->images[r->acquired_buffer].handle;
@@ -948,7 +998,8 @@ dispatch_compute(struct comp_renderer *r,
 	    render,                          //
 	    layers,                          //
 	    layer_count,                     //
-	    world_poses,                     //
+	    world_poses_scanout_begin,       //
+	    world_poses_scanout_end,         //
 	    eye_poses,                       //
 	    fovs,                            //
 	    target_image,                    //

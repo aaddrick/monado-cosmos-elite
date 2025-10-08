@@ -392,6 +392,8 @@ android_device_create(void)
 	}
 
 	d->base.hmd->screens[0].nominal_frame_interval_ns = time_s_to_ns(1.0f / metrics.refresh_rate);
+	d->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
+	d->base.hmd->screens[0].scanout_time_ns = 0;
 
 	const uint32_t w_pixels = metrics.width_pixels;
 	const uint32_t h_pixels = metrics.height_pixels;

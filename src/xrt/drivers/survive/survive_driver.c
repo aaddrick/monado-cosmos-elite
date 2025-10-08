@@ -979,6 +979,16 @@ _create_hmd_device(struct survive_system *sys, const struct SurviveSimpleObject 
 		survive->base.hmd->screens[0].nominal_frame_interval_ns = (uint64_t)time_s_to_ns(1.0f / 90.0f);
 	}
 
+	if (survive->hmd.config.variant == VIVE_VARIANT_PRO) {
+		survive->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM;
+		survive->base.hmd->screens[0].scanout_time_ns = survive->base.hmd->screens[0].nominal_frame_interval_ns;
+		// Compensate for the length of vblank.
+		survive->base.hmd->screens[0].scanout_time_ns *= 1600.0 / 1624.0;
+	} else {
+		survive->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
+		survive->base.hmd->screens[0].scanout_time_ns = 0;
+	}
+
 	for (uint8_t eye = 0; eye < 2; eye++) {
 		struct xrt_view *v = &survive->base.hmd->views[eye];
 		v->display.w_pixels = w_pixels;
