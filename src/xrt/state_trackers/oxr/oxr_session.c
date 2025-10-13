@@ -1105,33 +1105,40 @@ oxr_session_allocate_and_init(struct oxr_logger *log,
 		}                                                                                                      \
 	} while (false)
 
-#define OXR_CREATE_XRT_SESSION_AND_NATIVE_COMPOSITOR(LOG, XSI, SESS)                                                   \
+#define OXR_CHECK_XR_SUCCESS(LOG, FUNC, MSG)                                                                           \
 	do {                                                                                                           \
-		if ((SESS)->sys->xsysc == NULL) {                                                                      \
-			return oxr_error((LOG), XR_ERROR_RUNTIME_FAILURE,                                              \
-			                 "The system compositor wasn't created, can't create native compositor!");     \
-		}                                                                                                      \
-		xrt_result_t xret = xrt_system_create_session((SESS)->sys->xsys, (XSI), &(SESS)->xs, &(SESS)->xcn);    \
-		if (xret == XRT_ERROR_MULTI_SESSION_NOT_IMPLEMENTED) {                                                 \
-			return oxr_error((LOG), XR_ERROR_LIMIT_REACHED, "Per instance multi-session not supported.");  \
-		}                                                                                                      \
-		if (xret != XRT_SUCCESS) {                                                                             \
-			return oxr_error((LOG), XR_ERROR_RUNTIME_FAILURE,                                              \
-			                 "Failed to create xrt_session and xrt_compositor_native! '%i'", xret);        \
-		}                                                                                                      \
-		if ((SESS)->sys->xsysc->xmcc != NULL) {                                                                \
-			xrt_syscomp_set_state((SESS)->sys->xsysc, &(SESS)->xcn->base, true, true);                     \
-			xrt_syscomp_set_z_order((SESS)->sys->xsysc, &(SESS)->xcn->base, 0);                            \
+		XrResult _xr_result = FUNC;                                                                            \
+		if (_xr_result != XR_SUCCESS) {                                                                        \
+			return oxr_error(LOG, _xr_result, MSG);                                                        \
 		}                                                                                                      \
 	} while (false)
 
-#define OXR_SESSION_ALLOCATE_AND_INIT(LOG, SYS, GFX_TYPE, OUT)                                                         \
-	do {                                                                                                           \
-		XrResult ret = oxr_session_allocate_and_init(LOG, SYS, GFX_TYPE, &OUT);                                \
-		if (ret != XR_SUCCESS) {                                                                               \
-			return ret;                                                                                    \
-		}                                                                                                      \
-	} while (0)
+
+
+static XrResult
+oxr_create_xrt_session_and_native_compositor(struct oxr_logger *log,
+                                             const struct xrt_session_info *xsi,
+                                             struct oxr_session *sess)
+{
+	if (sess->sys->xsysc == NULL) {
+		return oxr_error(log, XR_ERROR_RUNTIME_FAILURE,
+		                 "The system compositor wasn't created, can't create native compositor!");
+	}
+	xrt_result_t xret = xrt_system_create_session(sess->sys->xsys, xsi, &sess->xs, &sess->xcn);
+	if (xret == XRT_ERROR_MULTI_SESSION_NOT_IMPLEMENTED) {
+		return oxr_error(log, XR_ERROR_LIMIT_REACHED, "Per instance multi-session not supported.");
+	}
+	if (xret != XRT_SUCCESS) {
+		return oxr_error(log, XR_ERROR_RUNTIME_FAILURE,
+		                 "Failed to create xrt_session and xrt_compositor_native! '%i'", xret);
+	}
+	if (sess->sys->xsysc->xmcc != NULL) {
+		xrt_syscomp_set_state(sess->sys->xsysc, &sess->xcn->base, true, true);
+		xrt_syscomp_set_z_order(sess->sys->xsysc, &sess->xcn->base, 0);
+	}
+	return XR_SUCCESS;
+}
+
 
 
 /*
@@ -1145,6 +1152,8 @@ oxr_session_create_impl(struct oxr_logger *log,
                         const struct xrt_session_info *xsi,
                         struct oxr_session **out_session)
 {
+	XrResult ret = XR_SUCCESS;
+
 #if defined(XR_USE_PLATFORM_XLIB) && defined(XR_USE_GRAPHICS_API_OPENGL)
 	XrGraphicsBindingOpenGLXlibKHR const *opengl_xlib = OXR_GET_INPUT_FROM_CHAIN(
 	    createInfo, XR_TYPE_GRAPHICS_BINDING_OPENGL_XLIB_KHR, XrGraphicsBindingOpenGLXlibKHR);
@@ -1157,8 +1166,12 @@ oxr_session_create_impl(struct oxr_logger *log,
 			                 "xrGetOpenGL[ES]GraphicsRequirementsKHR");
 		}
 
-		OXR_SESSION_ALLOCATE_AND_INIT(log, sys, OXR_SESSION_GRAPHICS_EXT_XLIB_GL, *out_session);
-		OXR_CREATE_XRT_SESSION_AND_NATIVE_COMPOSITOR(log, xsi, *out_session);
+		ret = oxr_session_allocate_and_init(log, sys, OXR_SESSION_GRAPHICS_EXT_XLIB_GL, out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to allocate session");
+
+		ret = oxr_create_xrt_session_and_native_compositor(log, xsi, *out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to create session/compositor");
+
 		return oxr_session_populate_gl_xlib(log, sys, opengl_xlib, *out_session);
 	}
 #endif
@@ -1176,8 +1189,12 @@ oxr_session_create_impl(struct oxr_logger *log,
 			                 "xrGetOpenGLESGraphicsRequirementsKHR");
 		}
 
-		OXR_SESSION_ALLOCATE_AND_INIT(log, sys, OXR_SESSION_GRAPHICS_EXT_ANDROID_GLES, *out_session);
-		OXR_CREATE_XRT_SESSION_AND_NATIVE_COMPOSITOR(log, xsi, *out_session);
+		ret = oxr_session_allocate_and_init(log, sys, OXR_SESSION_GRAPHICS_EXT_ANDROID_GLES, out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to allocate session");
+
+		ret = oxr_create_xrt_session_and_native_compositor(log, xsi, *out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to create session/compositor");
+
 		return oxr_session_populate_gles_android(log, sys, opengles_android, *out_session);
 	}
 #endif
@@ -1193,8 +1210,12 @@ oxr_session_create_impl(struct oxr_logger *log,
 			                 "Has not called xrGetOpenGLGraphicsRequirementsKHR");
 		}
 
-		OXR_SESSION_ALLOCATE_AND_INIT(log, sys, OXR_SESSION_GRAPHICS_EXT_WIN32_GL, *out_session);
-		OXR_CREATE_XRT_SESSION_AND_NATIVE_COMPOSITOR(log, xsi, *out_session);
+		ret = oxr_session_allocate_and_init(log, sys, OXR_SESSION_GRAPHICS_EXT_WIN32_GL, out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to allocate session");
+
+		ret = oxr_create_xrt_session_and_native_compositor(log, xsi, *out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to create session/compositor");
+
 		return oxr_session_populate_gl_win32(log, sys, opengl_win32, *out_session);
 	}
 #endif
@@ -1232,8 +1253,12 @@ oxr_session_create_impl(struct oxr_logger *log,
 			    (void *)vulkan->physicalDevice, (void *)sys->suggested_vulkan_physical_device, fn);
 		}
 
-		OXR_SESSION_ALLOCATE_AND_INIT(log, sys, OXR_SESSION_GRAPHICS_EXT_VULKAN, *out_session);
-		OXR_CREATE_XRT_SESSION_AND_NATIVE_COMPOSITOR(log, xsi, *out_session);
+		ret = oxr_session_allocate_and_init(log, sys, OXR_SESSION_GRAPHICS_EXT_VULKAN, out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to allocate session");
+
+		ret = oxr_create_xrt_session_and_native_compositor(log, xsi, *out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to create session/compositor");
+
 		return oxr_session_populate_vk(log, sys, vulkan, *out_session);
 	}
 #endif
@@ -1250,8 +1275,12 @@ oxr_session_create_impl(struct oxr_logger *log,
 			                 "xrGetOpenGL[ES]GraphicsRequirementsKHR");
 		}
 
-		OXR_SESSION_ALLOCATE_AND_INIT(log, sys, OXR_SESSION_GRAPHICS_EXT_EGL, *out_session);
-		OXR_CREATE_XRT_SESSION_AND_NATIVE_COMPOSITOR(log, xsi, *out_session);
+		ret = oxr_session_allocate_and_init(log, sys, OXR_SESSION_GRAPHICS_EXT_EGL, out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to allocate session");
+
+		ret = oxr_create_xrt_session_and_native_compositor(log, xsi, *out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to create session/compositor");
+
 		return oxr_session_populate_egl(log, sys, egl, *out_session);
 	}
 #endif
@@ -1268,15 +1297,18 @@ oxr_session_create_impl(struct oxr_logger *log,
 			return oxr_error(log, XR_ERROR_GRAPHICS_REQUIREMENTS_CALL_MISSING,
 			                 "Has not called xrGetD3D11GraphicsRequirementsKHR");
 		}
-		XrResult result = oxr_d3d11_check_device(log, sys, d3d11->device);
+		ret = oxr_d3d11_check_device(log, sys, d3d11->device);
 
-		if (!XR_SUCCEEDED(result)) {
-			return result;
+		if (!XR_SUCCEEDED(ret)) {
+			return ret;
 		}
 
+		ret = oxr_session_allocate_and_init(log, sys, OXR_SESSION_GRAPHICS_EXT_D3D11, out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to allocate session");
 
-		OXR_SESSION_ALLOCATE_AND_INIT(log, sys, OXR_SESSION_GRAPHICS_EXT_D3D11, *out_session);
-		OXR_CREATE_XRT_SESSION_AND_NATIVE_COMPOSITOR(log, xsi, *out_session);
+		ret = oxr_create_xrt_session_and_native_compositor(log, xsi, *out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to create session/compositor");
+
 		return oxr_session_populate_d3d11(log, sys, d3d11, *out_session);
 	}
 #endif
@@ -1293,15 +1325,18 @@ oxr_session_create_impl(struct oxr_logger *log,
 			return oxr_error(log, XR_ERROR_GRAPHICS_REQUIREMENTS_CALL_MISSING,
 			                 "Has not called xrGetD3D12GraphicsRequirementsKHR");
 		}
-		XrResult result = oxr_d3d12_check_device(log, sys, d3d12->device);
+		ret = oxr_d3d12_check_device(log, sys, d3d12->device);
 
-		if (!XR_SUCCEEDED(result)) {
-			return result;
+		if (!XR_SUCCEEDED(ret)) {
+			return ret;
 		}
 
+		ret = oxr_session_allocate_and_init(log, sys, OXR_SESSION_GRAPHICS_EXT_D3D12, out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to allocate session");
 
-		OXR_SESSION_ALLOCATE_AND_INIT(log, sys, OXR_SESSION_GRAPHICS_EXT_D3D12, *out_session);
-		OXR_CREATE_XRT_SESSION_AND_NATIVE_COMPOSITOR(log, xsi, *out_session);
+		ret = oxr_create_xrt_session_and_native_compositor(log, xsi, *out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to create session/compositor");
+
 		return oxr_session_populate_d3d12(log, sys, d3d12, *out_session);
 	}
 #endif
@@ -1315,7 +1350,10 @@ oxr_session_create_impl(struct oxr_logger *log,
 
 #ifdef OXR_HAVE_MND_headless
 	if (sys->inst->extensions.MND_headless) {
-		OXR_SESSION_ALLOCATE_AND_INIT(log, sys, OXR_SESSION_GRAPHICS_EXT_HEADLESS, *out_session);
+
+		ret = oxr_session_allocate_and_init(log, sys, OXR_SESSION_GRAPHICS_EXT_HEADLESS, out_session);
+		OXR_CHECK_XR_SUCCESS(log, ret, "Failed to allocate session");
+
 		(*out_session)->compositor = NULL;
 		(*out_session)->create_swapchain = NULL;
 
