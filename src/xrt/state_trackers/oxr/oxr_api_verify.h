@@ -200,6 +200,25 @@ struct oxr_subaction_paths;
 		}                                                                                                      \
 	} while (false)
 
+#define OXR_VERIFY_TWO_CALL_ARRAY(log, inputCapacity, countOutput, array)                                              \
+	do {                                                                                                           \
+		OXR_VERIFY_ARG_NOT_NULL(log, countOutput);                                                             \
+		if (inputCapacity > 0) {                                                                               \
+			OXR_VERIFY_ARG_NOT_NULL(log, array);                                                           \
+		}                                                                                                      \
+	} while (false)
+
+#define OXR_VERIFY_TWO_CALL_ARRAY_AND_TYPE(log, inputCapacity, countOutput, array, type_enum)                          \
+	do {                                                                                                           \
+		OXR_VERIFY_ARG_NOT_NULL(log, countOutput);                                                             \
+		if (inputCapacity > 0) {                                                                               \
+			OXR_VERIFY_ARG_NOT_NULL(log, array);                                                           \
+			for (uint32_t i = 0; i < inputCapacity; ++i) {                                                 \
+				OXR_VERIFY_ARG_ARRAY_ELEMENT_TYPE(log, array, i, type_enum);                           \
+			}                                                                                              \
+		}                                                                                                      \
+	} while (false)
+
 #define OXR_VERIFY_SUBACTION_PATHS(log, count, paths)                                                                  \
 	do {                                                                                                           \
 		if (count > 0 && paths == NULL) {                                                                      \
