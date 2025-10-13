@@ -289,3 +289,58 @@ xrt_hand_tracking_data_source_to_xr(enum xrt_input_name ht_input_name)
 	default: assert(false); return XR_HAND_TRACKING_DATA_SOURCE_MAX_ENUM_EXT;
 	}
 }
+
+
+/*
+ *
+ * Basic types
+ *
+ */
+
+static inline XrExtent2Di
+xrt_size_to_xr(const struct xrt_size *x)
+{
+	return (XrExtent2Di){
+	    .width = x->w,
+	    .height = x->h,
+	};
+}
+
+static inline XrVector2f
+xrt_vec2_to_xr(const struct xrt_vec2 *v)
+{
+	return (XrVector2f){
+	    .x = v->x,
+	    .y = v->y,
+	};
+}
+
+static inline XrVector3f
+xrt_vec3_to_xr(const struct xrt_vec3 *v)
+{
+	return (XrVector3f){
+	    .x = v->x,
+	    .y = v->y,
+	    .z = v->z,
+	};
+}
+
+static inline XrQuaternionf
+xrt_quat_to_xr(const struct xrt_quat *q)
+{
+	return (XrQuaternionf){
+	    .x = q->x,
+	    .y = q->y,
+	    .z = q->z,
+	    .w = q->w,
+	};
+}
+
+static inline XrPosef
+xrt_pose_to_xr(const struct xrt_pose *q)
+{
+	return (XrPosef){
+	    .orientation = xrt_quat_to_xr(&q->orientation),
+	    .position = xrt_vec3_to_xr(&q->position),
+	};
+}
