@@ -1947,6 +1947,18 @@ wmr_hmd_create(enum wmr_headset_type hmd_type,
 	wh->base.compute_distortion = compute_distortion_wmr;
 	u_distortion_mesh_fill_in_compute(&wh->base);
 
+	// Set HMD Scanout direction and time
+	if (wh->hmd_desc->hmd_type == WMR_HEADSET_SAMSUNG_800ZAA ||
+	    wh->hmd_desc->hmd_type == WMR_HEADSET_SAMSUNG_XE700X3AI) {
+
+		wh->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM;
+		wh->base.hmd->screens[0].scanout_time_ns =
+		    wh->base.hmd->screens[0].nominal_frame_interval_ns * 1600.0 / 1624.0;
+	} else {
+		wh->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
+		wh->base.hmd->screens[0].scanout_time_ns = 0;
+	}
+
 	// Set initial HMD screen power state.
 	wh->hmd_screen_enable = true;
 
