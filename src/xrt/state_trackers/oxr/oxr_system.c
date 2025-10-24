@@ -406,6 +406,28 @@ oxr_system_get_force_feedback_support(struct oxr_logger *log, struct oxr_instanc
 }
 
 void
+oxr_system_get_face_tracking_android_support(struct oxr_logger *log, struct oxr_instance *inst, bool *supported)
+{
+	assert(supported);
+
+	*supported = false;
+	struct oxr_system *sys = &inst->system;
+	const struct xrt_device *face_xdev = GET_XDEV_BY_ROLE(sys, face);
+
+	if (face_xdev == NULL || !face_xdev->supported.face_tracking || face_xdev->inputs == NULL) {
+		return;
+	}
+
+	for (size_t input_idx = 0; input_idx < face_xdev->input_count; ++input_idx) {
+		const struct xrt_input *input = &face_xdev->inputs[input_idx];
+		if (input->name == XRT_INPUT_ANDROID_FACE_TRACKING) {
+			*supported = true;
+			return;
+		}
+	}
+}
+
+void
 oxr_system_get_face_tracking_htc_support(struct oxr_logger *log,
                                          struct oxr_instance *inst,
                                          bool *supports_eye,
@@ -567,6 +589,20 @@ oxr_system_get_properties(struct oxr_logger *log, struct oxr_system *sys, XrSyst
 		}
 	}
 #endif
+
+#ifdef OXR_HAVE_ANDROID_face_tracking
+	XrSystemFaceTrackingPropertiesANDROID *android_face_tracking_props = NULL;
+	if (sys->inst->extensions.ANDROID_face_tracking) {
+		android_face_tracking_props = OXR_GET_OUTPUT_FROM_CHAIN(
+		    properties, XR_TYPE_SYSTEM_FACE_TRACKING_PROPERTIES_ANDROID, XrSystemFaceTrackingPropertiesANDROID);
+	}
+
+	if (android_face_tracking_props) {
+		bool supported = false;
+		oxr_system_get_face_tracking_android_support(log, sys->inst, &supported);
+		android_face_tracking_props->supportsFaceTracking = supported;
+	}
+#endif // OXR_HAVE_HTC_facial_tracking
 
 #ifdef OXR_HAVE_HTC_facial_tracking
 	XrSystemFacialTrackingPropertiesHTC *htc_facial_tracking_props = NULL;

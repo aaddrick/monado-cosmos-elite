@@ -181,6 +181,15 @@
 		]
 	},
 
+	"device_device_get_face_calibration_state_android": {
+		"in": [
+			{"name": "id", "type": "uint32_t"}
+		],
+		"out": [
+			{"name": "face_is_calibrated", "type": "bool"}
+		]
+	},
+
 	"device_get_body_skeleton": {
 		"in": [
 			{"name": "id", "type": "uint32_t"},

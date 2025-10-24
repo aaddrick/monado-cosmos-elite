@@ -1124,6 +1124,9 @@ bool
 oxr_system_get_force_feedback_support(struct oxr_logger *log, struct oxr_instance *inst);
 
 void
+oxr_system_get_face_tracking_android_support(struct oxr_logger *log, struct oxr_instance *inst, bool *supported);
+
+void
 oxr_system_get_face_tracking_htc_support(struct oxr_logger *log,
                                          struct oxr_instance *inst,
                                          bool *supports_eye,

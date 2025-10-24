@@ -406,6 +406,16 @@ struct xrt_device
 	                                  struct xrt_facial_expression_set *out_value);
 
 	/*!
+	 * @brief Gets the face tracking calibration state
+	 *
+	 * @param[in] xdev                    The device.
+	 * @param[in] out_value               Is face tracking calibrated?
+	 *
+	 * @see xrt_input_name
+	 */
+	xrt_result_t (*get_face_calibration_state_android)(struct xrt_device *xdev, bool *out_face_is_calibrated);
+
+	/*!
 	 * @brief Get the body skeleton in T-pose, used to query the skeleton hierarchy, scale, proportions etc
 	 *
 	 * @param[in] xdev                    The device.
@@ -753,6 +763,19 @@ xrt_device_get_face_tracking(struct xrt_device *xdev,
                              struct xrt_facial_expression_set *out_value)
 {
 	return xdev->get_face_tracking(xdev, facial_expression_type, at_timestamp_ns, out_value);
+}
+
+/*!
+ * Helper function for @ref xrt_device::get_face_calibration_state_android.
+ *
+ * @copydoc xrt_device::get_face_calibration_state_android
+ *
+ * @public @memberof xrt_device
+ */
+static inline xrt_result_t
+xrt_device_get_face_calibration_state_android(struct xrt_device *xdev, bool *out_face_is_calibrated)
+{
+	return xdev->get_face_calibration_state_android(xdev, out_face_is_calibrated);
 }
 
 /*!
