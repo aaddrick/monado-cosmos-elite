@@ -106,6 +106,10 @@ if(XRT_FEATURE_OPENXR_BODY_TRACKING_FB)
 	target_sources(st_oxr PRIVATE oxr_api_body_tracking.c oxr_body_tracking.c)
 endif()
 
+if(XRT_FEATURE_OPENXR_FACE_TRACKING_ANDROID)
+	target_sources(st_oxr PRIVATE oxr_api_face_tracking_android.c oxr_face_tracking_android.c)
+endif()
+
 if(XRT_FEATURE_OPENXR_FACIAL_TRACKING_HTC)
 	target_sources(st_oxr PRIVATE oxr_api_face_tracking_htc.c oxr_face_tracking_htc.c)
 endif()

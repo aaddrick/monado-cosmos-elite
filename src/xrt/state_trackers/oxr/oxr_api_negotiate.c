@@ -419,6 +419,13 @@ handle_non_null(struct oxr_instance *inst, struct oxr_logger *log, const char *n
 	ENTRY_IF_EXT(xrCancelFutureEXT, EXT_future);
 #endif // OXR_HAVE_EXT_future
 
+#ifdef OXR_HAVE_ANDROID_face_tracking
+	ENTRY_IF_EXT(xrCreateFaceTrackerANDROID, ANDROID_face_tracking);
+	ENTRY_IF_EXT(xrDestroyFaceTrackerANDROID, ANDROID_face_tracking);
+	ENTRY_IF_EXT(xrGetFaceCalibrationStateANDROID, ANDROID_face_tracking);
+	ENTRY_IF_EXT(xrGetFaceStateANDROID, ANDROID_face_tracking);
+#endif
+
 #ifdef OXR_HAVE_KHR_extended_struct_name_lengths
 	ENTRY_IF_EXT(xrStructureTypeToString2KHR, KHR_extended_struct_name_lengths);
 #endif // OXR_HAVE_KHR_extended_struct_name_lengths

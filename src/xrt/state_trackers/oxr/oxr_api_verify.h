@@ -97,6 +97,8 @@ struct oxr_subaction_paths;
 #define OXR_VERIFY_FUTURE_AND_INIT_LOG(log, thing, new_thing, name) \
 	OXR_VERIFY_AND_SET_AND_INIT(log, thing, new_thing, oxr_future_ext, FUTURE, name, new_thing->inst); \
 	OXR_VERIFY_FUTURE_VALID(log, new_thing)
+#define OXR_VERIFY_FACE_TRACKER_ANDROID_AND_INIT_LOG(log, thing, new_thing, name) \
+	OXR_VERIFY_AND_SET_AND_INIT(log, thing, new_thing, oxr_face_tracker_android, FTRACKER, name, new_thing->sess->sys->inst)
 // clang-format on
 
 #define OXR_VERIFY_INSTANCE_NOT_NULL(log, arg, new_arg) OXR_VERIFY_SET(log, arg, new_arg, oxr_instance, INSTANCE);

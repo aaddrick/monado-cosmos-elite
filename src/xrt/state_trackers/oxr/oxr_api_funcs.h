@@ -779,6 +779,30 @@ XRAPI_ATTR XrResult XRAPI_CALL
 oxr_xrCancelFutureEXT(XrInstance instance, const XrFutureCancelInfoEXT *cancelInfo);
 #endif
 
+/*
+ *
+ * oxr_api_face_tracking_android.c
+ *
+ */
+
+#ifdef OXR_HAVE_ANDROID_face_tracking
+XRAPI_ATTR XrResult XRAPI_CALL
+oxr_xrCreateFaceTrackerANDROID(XrSession session,
+                               const XrFaceTrackerCreateInfoANDROID *createInfo,
+                               XrFaceTrackerANDROID *faceTracker);
+
+XRAPI_ATTR XrResult XRAPI_CALL
+oxr_xrDestroyFaceTrackerANDROID(XrFaceTrackerANDROID facialTracker);
+
+XRAPI_ATTR XrResult XRAPI_CALL
+oxr_xrGetFaceStateANDROID(XrFaceTrackerANDROID faceTracker,
+                          const XrFaceStateGetInfoANDROID *getInfo,
+                          XrFaceStateANDROID *faceStateOutput);
+
+XRAPI_ATTR XrResult XRAPI_CALL
+oxr_xrGetFaceCalibrationStateANDROID(XrFaceTrackerANDROID faceTracker, XrBool32 *faceIsCalibratedOutput);
+#endif
+
 /*!
  * @}
  */

@@ -127,6 +127,7 @@ struct oxr_interaction_profile;
 struct oxr_action_set_ref;
 struct oxr_action_ref;
 struct oxr_hand_tracker;
+struct oxr_face_tracker_android;
 struct oxr_facial_tracker_htc;
 struct oxr_face_tracker2_fb;
 struct oxr_body_tracker_fb;
@@ -467,6 +468,20 @@ oxr_face_tracker2_fb_to_openxr(struct oxr_face_tracker2_fb *face_tracker2_fb)
 	return XRT_CAST_PTR_TO_OXR_HANDLE(XrFaceTracker2FB, face_tracker2_fb);
 }
 #endif
+
+#ifdef OXR_HAVE_ANDROID_face_tracking
+/*!
+ * To go back to a OpenXR object.
+ *
+ * @relates oxr_facial_tracker_htc
+ */
+static inline XrFaceTrackerANDROID
+oxr_face_tracker_android_to_openxr(struct oxr_face_tracker_android *face_tracker_android)
+{
+	return XRT_CAST_PTR_TO_OXR_HANDLE(XrFaceTrackerANDROID, face_tracker_android);
+}
+#endif
+
 /*!
  *
  * @name oxr_input.c
@@ -3093,6 +3108,46 @@ oxr_future_ext_complete(struct oxr_logger *log,
 XrResult
 oxr_event_push_XrEventDataUserPresenceChangedEXT(struct oxr_logger *log, struct oxr_session *sess, bool isUserPresent);
 #endif // OXR_HAVE_EXT_user_presence
+
+#ifdef OXR_HAVE_ANDROID_face_tracking
+/*!
+ * Android specific Facial tracker.
+ *
+ * Parent type/handle is @ref oxr_instance
+ *
+ *
+ * @obj{XrFaceTrackerANDROID}
+ * @extends oxr_handle_base
+ */
+struct oxr_face_tracker_android
+{
+	//! Common structure for things referred to by OpenXR handles.
+	struct oxr_handle_base handle;
+
+	//! Owner of this face tracker.
+	struct oxr_session *sess;
+
+	//! xrt_device backing this face tracker
+	struct xrt_device *xdev;
+};
+
+XrResult
+oxr_face_tracker_android_create(struct oxr_logger *log,
+                                struct oxr_session *sess,
+                                const XrFaceTrackerCreateInfoANDROID *createInfo,
+                                XrFaceTrackerANDROID *faceTracker);
+
+XrResult
+oxr_get_face_state_android(struct oxr_logger *log,
+                           struct oxr_face_tracker_android *facial_tracker_android,
+                           const XrFaceStateGetInfoANDROID *getInfo,
+                           XrFaceStateANDROID *faceStateOutput);
+
+XrResult
+oxr_get_face_calibration_state_android(struct oxr_logger *log,
+                                       struct oxr_face_tracker_android *facial_tracker_android,
+                                       XrBool32 *faceIsCalibratedOutput);
+#endif // OXR_HAVE_ANDROID_face_tracking
 
 /*!
  * @}
