@@ -107,7 +107,7 @@ if(XRT_FEATURE_OPENXR_BODY_TRACKING_FB)
 endif()
 
 if(XRT_FEATURE_OPENXR_FACIAL_TRACKING_HTC)
-	target_sources(st_oxr PRIVATE oxr_api_face_tracking.c oxr_face_tracking.c)
+	target_sources(st_oxr PRIVATE oxr_api_face_tracking_htc.c oxr_face_tracking_htc.c)
 endif()
 
 if(XRT_FEATURE_OPENXR_FACE_TRACKING2_FB)
