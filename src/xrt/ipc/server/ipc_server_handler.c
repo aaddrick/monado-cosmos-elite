@@ -388,6 +388,7 @@ ipc_handle_instance_describe_client(volatile struct ipc_client_state *ics,
 	EXT(meta_body_tracking_full_body_enabled);
 	EXT(meta_body_tracking_calibration_enabled);
 	EXT(fb_face_tracking2_enabled);
+	EXT(android_face_tracking_enabled);
 
 #undef EXT
 #undef PTT
@@ -505,6 +506,7 @@ ipc_handle_session_begin(volatile struct ipc_client_state *ics)
 	    .fb_face_tracking2_enabled = ics->client_state.info.fb_face_tracking2_enabled,
 	    .meta_body_tracking_full_body_enabled = ics->client_state.info.meta_body_tracking_full_body_enabled,
 	    .meta_body_tracking_calibration_enabled = ics->client_state.info.meta_body_tracking_calibration_enabled,
+	    .android_face_tracking_enabled = ics->client_state.info.android_face_tracking_enabled,
 	};
 
 	return xrt_comp_begin_session(ics->xc, &begin_session_info);

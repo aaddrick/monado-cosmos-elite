@@ -475,6 +475,17 @@
 
 
 /*
+ * XR_ANDROID_face_tracking
+ */
+#if defined(XR_ANDROID_face_tracking) && defined(XRT_FEATURE_OPENXR_FACE_TRACKING_ANDROID)
+#define OXR_HAVE_ANDROID_face_tracking
+#define OXR_EXTENSION_SUPPORT_ANDROID_face_tracking(_) _(ANDROID_face_tracking, ANDROID_FACE_TRACKING)
+#else
+#define OXR_EXTENSION_SUPPORT_ANDROID_face_tracking(_)
+#endif
+
+
+/*
  * XR_BD_controller_interaction
  */
 #if defined(XR_BD_controller_interaction) && defined(XRT_FEATURE_OPENXR_INTERACTION_BYTEDANCE)
@@ -936,6 +947,7 @@
     OXR_EXTENSION_SUPPORT_EXT_plane_detection(_) \
     OXR_EXTENSION_SUPPORT_EXT_samsung_odyssey_controller(_) \
     OXR_EXTENSION_SUPPORT_EXT_user_presence(_) \
+    OXR_EXTENSION_SUPPORT_ANDROID_face_tracking(_) \
     OXR_EXTENSION_SUPPORT_BD_controller_interaction(_) \
     OXR_EXTENSION_SUPPORT_FB_body_tracking(_) \
     OXR_EXTENSION_SUPPORT_FB_composition_layer_alpha_blend(_) \
