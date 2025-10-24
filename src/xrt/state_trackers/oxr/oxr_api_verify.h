@@ -355,6 +355,14 @@ struct oxr_subaction_paths;
 		}                                                                                                      \
 	} while (false)
 
+#define OXR_VERIFY_ARG_TIME_NOT_ZERO(log, xr_time)                                                                     \
+	do {                                                                                                           \
+		if (xr_time <= (XrTime)0) {                                                                            \
+			return oxr_error(log, XR_ERROR_TIME_INVALID, "(time == %" PRIi64 ") is not a valid time.",     \
+			                 xr_time);                                                                     \
+		}                                                                                                      \
+	} while (false)
+
 
 /*
  *
