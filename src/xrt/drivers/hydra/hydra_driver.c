@@ -345,9 +345,7 @@ hydra_device_parse_controller(struct hydra_device *hd, uint8_t *buf, int64_t now
 	    (XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT | XRT_SPACE_RELATION_ORIENTATION_VALID_BIT) |
 	    (XRT_SPACE_RELATION_POSITION_TRACKED_BIT | XRT_SPACE_RELATION_POSITION_VALID_BIT);
 
-	m_relation_history_estimate_motion(state->relation_history, &space_relation, now, &space_relation);
-
-	m_relation_history_push(state->relation_history, &space_relation, now);
+	m_relation_history_push_with_motion_estimation(state->relation_history, &space_relation, now);
 
 	state->buttons = hydra_read_uint8(&buf);
 
