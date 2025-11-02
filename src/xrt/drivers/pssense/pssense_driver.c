@@ -84,11 +84,11 @@ enum pssense_input_index
 	PSSENSE_INDEX_CIRCLE_TOUCH,
 	PSSENSE_INDEX_SQUEEZE_CLICK,
 	PSSENSE_INDEX_SQUEEZE_TOUCH,
-	PSSENSE_INDEX_SQUEEZE_PROXIMITY,
+	PSSENSE_INDEX_SQUEEZE_PROXIMITY_FLOAT,
 	PSSENSE_INDEX_TRIGGER_CLICK,
 	PSSENSE_INDEX_TRIGGER_TOUCH,
 	PSSENSE_INDEX_TRIGGER_VALUE,
-	PSSENSE_INDEX_TRIGGER_PROXIMITY,
+	PSSENSE_INDEX_TRIGGER_PROXIMITY_FLOAT,
 	PSSENSE_INDEX_THUMBSTICK,
 	PSSENSE_INDEX_THUMBSTICK_CLICK,
 	PSSENSE_INDEX_THUMBSTICK_TOUCH,
@@ -661,11 +661,11 @@ pssense_device_update_inputs(struct xrt_device *xdev)
 	pssense->base.inputs[PSSENSE_INDEX_CIRCLE_TOUCH].value.boolean = pssense->state.circle_touch;
 	pssense->base.inputs[PSSENSE_INDEX_SQUEEZE_CLICK].value.boolean = pssense->state.squeeze_click;
 	pssense->base.inputs[PSSENSE_INDEX_SQUEEZE_TOUCH].value.boolean = pssense->state.squeeze_touch;
-	pssense->base.inputs[PSSENSE_INDEX_SQUEEZE_PROXIMITY].value.vec1.x = pssense->state.squeeze_proximity;
+	pssense->base.inputs[PSSENSE_INDEX_SQUEEZE_PROXIMITY_FLOAT].value.vec1.x = pssense->state.squeeze_proximity;
 	pssense->base.inputs[PSSENSE_INDEX_TRIGGER_CLICK].value.boolean = pssense->state.trigger_click;
 	pssense->base.inputs[PSSENSE_INDEX_TRIGGER_TOUCH].value.boolean = pssense->state.trigger_touch;
 	pssense->base.inputs[PSSENSE_INDEX_TRIGGER_VALUE].value.vec1.x = pssense->state.trigger_value;
-	pssense->base.inputs[PSSENSE_INDEX_TRIGGER_PROXIMITY].value.vec1.x = pssense->state.trigger_proximity;
+	pssense->base.inputs[PSSENSE_INDEX_TRIGGER_PROXIMITY_FLOAT].value.vec1.x = pssense->state.trigger_proximity;
 	pssense->base.inputs[PSSENSE_INDEX_THUMBSTICK].value.vec2 = pssense->state.thumbstick;
 	pssense->base.inputs[PSSENSE_INDEX_THUMBSTICK_CLICK].value.boolean = pssense->state.thumbstick_click;
 	pssense->base.inputs[PSSENSE_INDEX_THUMBSTICK_TOUCH].value.boolean = pssense->state.thumbstick_touch;
@@ -933,11 +933,11 @@ pssense_found(struct xrt_prober *xp,
 	SET_INPUT(CIRCLE_TOUCH);
 	SET_INPUT(SQUEEZE_CLICK);
 	SET_INPUT(SQUEEZE_TOUCH);
-	SET_INPUT(SQUEEZE_PROXIMITY);
+	SET_INPUT(SQUEEZE_PROXIMITY_FLOAT);
 	SET_INPUT(TRIGGER_CLICK);
 	SET_INPUT(TRIGGER_TOUCH);
 	SET_INPUT(TRIGGER_VALUE);
-	SET_INPUT(TRIGGER_PROXIMITY);
+	SET_INPUT(TRIGGER_PROXIMITY_FLOAT);
 	SET_INPUT(THUMBSTICK);
 	SET_INPUT(THUMBSTICK_CLICK);
 	SET_INPUT(THUMBSTICK_TOUCH);
