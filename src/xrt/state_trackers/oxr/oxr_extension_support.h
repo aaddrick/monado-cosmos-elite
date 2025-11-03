@@ -797,17 +797,6 @@
 
 
 /*
- * XR_MNDX_oculus_remote
- */
-#if defined(XR_MNDX_oculus_remote) && defined(XRT_FEATURE_OPENXR_INTERACTION_MNDX)
-#define OXR_HAVE_MNDX_oculus_remote
-#define OXR_EXTENSION_SUPPORT_MNDX_oculus_remote(_) _(MNDX_oculus_remote, MNDX_OCULUS_REMOTE)
-#else
-#define OXR_EXTENSION_SUPPORT_MNDX_oculus_remote(_)
-#endif
-
-
-/*
  * XR_MNDX_egl_enable
  */
 #if defined(XR_MNDX_egl_enable) && defined(XR_USE_PLATFORM_EGL)
@@ -837,6 +826,17 @@
 #define OXR_EXTENSION_SUPPORT_MNDX_hydra(_) _(MNDX_hydra, MNDX_HYDRA)
 #else
 #define OXR_EXTENSION_SUPPORT_MNDX_hydra(_)
+#endif
+
+
+/*
+ * XR_MNDX_oculus_remote
+ */
+#if defined(XR_MNDX_oculus_remote) && defined(XRT_FEATURE_OPENXR_INTERACTION_MNDX)
+#define OXR_HAVE_MNDX_oculus_remote
+#define OXR_EXTENSION_SUPPORT_MNDX_oculus_remote(_) _(MNDX_oculus_remote, MNDX_OCULUS_REMOTE)
+#else
+#define OXR_EXTENSION_SUPPORT_MNDX_oculus_remote(_)
 #endif
 
 
@@ -964,10 +964,10 @@
     OXR_EXTENSION_SUPPORT_HTCX_vive_tracker_interaction(_) \
     OXR_EXTENSION_SUPPORT_MNDX_ball_on_a_stick_controller(_) \
     OXR_EXTENSION_SUPPORT_MNDX_blubur_s1(_) \
-    OXR_EXTENSION_SUPPORT_MNDX_oculus_remote(_) \
     OXR_EXTENSION_SUPPORT_MNDX_egl_enable(_) \
     OXR_EXTENSION_SUPPORT_MNDX_force_feedback_curl(_) \
     OXR_EXTENSION_SUPPORT_MNDX_hydra(_) \
+    OXR_EXTENSION_SUPPORT_MNDX_oculus_remote(_) \
     OXR_EXTENSION_SUPPORT_MNDX_psvr2_interaction(_) \
     OXR_EXTENSION_SUPPORT_MNDX_system_buttons(_) \
     OXR_EXTENSION_SUPPORT_MNDX_xdev_space(_)
