@@ -15,27 +15,27 @@
 
 // For corruption and layer checking.
 // clang-format off
-#define OXR_XR_DEBUG_INSTANCE  (*(uint64_t *)"oxrinst\0")
-#define OXR_XR_DEBUG_SESSION   (*(uint64_t *)"oxrsess\0")
-#define OXR_XR_DEBUG_SPACE     (*(uint64_t *)"oxrspac\0")
-#define OXR_XR_DEBUG_PATH      (*(uint64_t *)"oxrpath\0")
-#define OXR_XR_DEBUG_ACTION    (*(uint64_t *)"oxracti\0")
-#define OXR_XR_DEBUG_SWAPCHAIN (*(uint64_t *)"oxrswap\0")
-#define OXR_XR_DEBUG_ACTIONSET (*(uint64_t *)"oxraset\0")
-#define OXR_XR_DEBUG_MESSENGER (*(uint64_t *)"oxrmess\0")
-#define OXR_XR_DEBUG_SOURCESET (*(uint64_t *)"oxrsrcs\0")
-#define OXR_XR_DEBUG_SOURCE    (*(uint64_t *)"oxrsrc_\0")
-#define OXR_XR_DEBUG_HTRACKER  (*(uint64_t *)"oxrhtra\0")
-#define OXR_XR_DEBUG_PASSTHROUGH    	(*(uint64_t *)"oxrpass\0")
-#define OXR_XR_DEBUG_PASSTHROUGH_LAYER  (*(uint64_t *)"oxrptla\0")
-#define OXR_XR_DEBUG_FTRACKER  (*(uint64_t *)"oxrftra\0")
+#define OXR_XR_DEBUG_INSTANCE                         (*(uint64_t *)"oxrinst\0")
+#define OXR_XR_DEBUG_SESSION                          (*(uint64_t *)"oxrsess\0")
+#define OXR_XR_DEBUG_SPACE                            (*(uint64_t *)"oxrspac\0")
+#define OXR_XR_DEBUG_PATH                             (*(uint64_t *)"oxrpath\0")
+#define OXR_XR_DEBUG_ACTION                           (*(uint64_t *)"oxracti\0")
+#define OXR_XR_DEBUG_SWAPCHAIN                        (*(uint64_t *)"oxrswap\0")
+#define OXR_XR_DEBUG_ACTIONSET                        (*(uint64_t *)"oxraset\0")
+#define OXR_XR_DEBUG_MESSENGER                        (*(uint64_t *)"oxrmess\0")
+#define OXR_XR_DEBUG_SOURCESET                        (*(uint64_t *)"oxrsrcs\0")
+#define OXR_XR_DEBUG_SOURCE                           (*(uint64_t *)"oxrsrc_\0")
+#define OXR_XR_DEBUG_HTRACKER                         (*(uint64_t *)"oxrhtra\0")
+#define OXR_XR_DEBUG_PASSTHROUGH                      (*(uint64_t *)"oxrpass\0")
+#define OXR_XR_DEBUG_PASSTHROUGH_LAYER                (*(uint64_t *)"oxrptla\0")
+#define OXR_XR_DEBUG_FTRACKER                         (*(uint64_t *)"oxrftra\0")
 // body tracker
-#define OXR_XR_DEBUG_BTRACKER  (*(uint64_t *)"oxrbtra\0")
-#define OXR_XR_DEBUG_XDEVLIST  (*(uint64_t *)"oxrxdli\0")
+#define OXR_XR_DEBUG_BTRACKER                         (*(uint64_t *)"oxrbtra\0")
+#define OXR_XR_DEBUG_XDEVLIST                         (*(uint64_t *)"oxrxdli\0")
 // plane detection
-#define OXR_XR_DEBUG_PLANEDET  (*(uint64_t *)"oxrplan\0")
+#define OXR_XR_DEBUG_PLANEDET                         (*(uint64_t *)"oxrplan\0")
 // futures
-#define OXR_XR_DEBUG_FUTURE  (*(uint64_t *)"oxrfutr\0")
+#define OXR_XR_DEBUG_FUTURE                           (*(uint64_t *)"oxrfutr\0")
 // clang-format on
 
 /*!
