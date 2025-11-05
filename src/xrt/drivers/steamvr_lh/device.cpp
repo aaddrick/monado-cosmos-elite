@@ -1053,6 +1053,8 @@ HmdDevice::handle_property_write(const vr::PropertyWrite_t &prop)
 			set_scanout_type(XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM, interval_ns * 1600.0 / 1624.0);
 		} else if (variant == VIVE_VARIANT_BEYOND) {
 			set_scanout_type(XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM, interval_ns * 2544.0 / 2568.0);
+		} else if (variant == VIVE_VARIANT_PRO2) {
+			set_scanout_type(XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM, interval_ns * 2448.0 / 2574.0);
 		} else {
 			set_scanout_type(XRT_SCANOUT_DIRECTION_NONE, 0);
 		}
