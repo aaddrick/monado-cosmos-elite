@@ -120,10 +120,7 @@ load_cardboard_distortion(struct android_device *d,
 	}
 
 	if (params.has_vertical_alignment) {
-		if (params.vertical_alignment != cardboard_DeviceParams_VerticalAlignmentType_BOTTOM) {
-			ANDROID_ERROR(d, "Only vertical alignment bottom supported");
-			return false;
-		}
+		args->vertical_alignment = (enum u_cardboard_vertical_alignment)params.vertical_alignment;
 	}
 
 	if (params.has_inter_lens_distance) {
@@ -421,6 +418,7 @@ android_device_create(void)
 	            .angle_up = angle,
 	            .angle_down = -angle,
 	        },
+	    .vertical_alignment = U_CARDBOARD_VERTICAL_ALIGNMENT_BOTTOM,
 	};
 	struct u_cardboard_distortion_arguments args = cardboard_v1_distortion_args;
 	if (!load_cardboard_distortion(d, &metrics, &args)) {
