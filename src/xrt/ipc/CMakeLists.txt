@@ -23,6 +23,7 @@ foreach(
 			${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.py
 			${CMAKE_CURRENT_SOURCE_DIR}/shared/ipcproto/common.py
 			${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.json
+			${CMAKE_CURRENT_SOURCE_DIR}/shared/ipc_protocol_generated.h.template
 		COMMENT "Generating ${fn} from protocol JSON description"
 		)
 endforeach()
