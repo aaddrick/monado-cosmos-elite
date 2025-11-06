@@ -259,7 +259,7 @@ calc_pose_data(struct comp_renderer *r,
 	struct xrt_fov xdev_fovs[XRT_MAX_VIEWS] = XRT_STRUCT_INIT;
 	struct xrt_pose xdev_poses[2][XRT_MAX_VIEWS] = XRT_STRUCT_INIT;
 
-	uint64_t scanout_time_ns = 0;
+	int64_t scanout_time_ns = 0;
 	if (r->c->xdev->hmd->screens[0].scanout_direction == XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM) {
 		scanout_time_ns = r->c->xdev->hmd->screens[0].scanout_time_ns;
 	} else if (r->c->xdev->hmd->screens[0].scanout_direction != XRT_SCANOUT_DIRECTION_NONE) {

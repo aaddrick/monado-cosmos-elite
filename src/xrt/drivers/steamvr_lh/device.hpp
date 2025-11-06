@@ -211,7 +211,7 @@ private:
 	set_nominal_frame_interval(uint64_t interval_ns);
 
 	void
-	set_scanout_type(enum xrt_scanout_direction direction, uint64_t time_ns);
+	set_scanout_type(enum xrt_scanout_direction direction, int64_t time_ns);
 
 	std::condition_variable hmd_parts_cv;
 	std::mutex hmd_parts_mut;

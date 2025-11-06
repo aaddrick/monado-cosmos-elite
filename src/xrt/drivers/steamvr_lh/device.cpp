@@ -868,7 +868,7 @@ HmdDevice::set_nominal_frame_interval(uint64_t interval_ns)
 }
 
 void
-HmdDevice::set_scanout_type(xrt_scanout_direction direction, uint64_t time_ns)
+HmdDevice::set_scanout_type(xrt_scanout_direction direction, int64_t time_ns)
 {
 	auto set = [this, direction, time_ns] {
 		hmd_parts->base.screens[0].scanout_direction = direction;
@@ -1047,7 +1047,7 @@ HmdDevice::handle_property_write(const vr::PropertyWrite_t &prop)
 	case vr::Prop_DisplayFrequency_Float: {
 		assert(prop.unBufferSize == sizeof(float));
 		float freq = *static_cast<float *>(prop.pvBuffer);
-		uint64_t interval_ns = (1.f / freq) * 1e9f;
+		int64_t interval_ns = (1.f / freq) * 1e9f;
 		set_nominal_frame_interval(interval_ns);
 		if (variant == VIVE_VARIANT_PRO) {
 			set_scanout_type(XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM, interval_ns * 1600.0 / 1624.0);

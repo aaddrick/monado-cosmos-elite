@@ -103,7 +103,7 @@ struct xrt_hmd_parts
 		//! Nominal frame interval
 		uint64_t nominal_frame_interval_ns;
 		enum xrt_scanout_direction scanout_direction;
-		uint64_t scanout_time_ns;
+		int64_t scanout_time_ns;
 	} screens[1];
 
 	/*!
