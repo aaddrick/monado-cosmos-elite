@@ -1,4 +1,5 @@
 // Copyright 2019-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -611,4 +612,21 @@ oxr_space_locate_device(struct oxr_logger *log,
 	    out_relation);                //
 
 	return ret;
+}
+
+XrResult
+oxr_space_get_xrt_space(struct oxr_logger *log, struct oxr_space *spc, struct xrt_space **out_xspace)
+{
+	assert(out_xspace != NULL);
+	assert(*out_xspace == NULL);
+
+	struct xrt_space *xspace = NULL;
+	XrResult ret = get_xrt_space(log, spc, &xspace);
+	if (ret != XR_SUCCESS) {
+		return ret;
+	}
+
+	xrt_space_reference(out_xspace, xspace);
+
+	return XR_SUCCESS;
 }

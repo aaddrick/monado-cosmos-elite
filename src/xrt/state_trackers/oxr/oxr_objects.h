@@ -984,6 +984,19 @@ oxr_space_locate_device(struct oxr_logger *log,
                         XrTime time,
                         struct xrt_space_relation *out_relation);
 
+/*!
+ * Get the xrt_space associated with this oxr_space, the @ref xrt_space will
+ * be reference counted by this function so the caller will need to call
+ * @ref xrt_space_reference to decrement the reference count.
+ *
+ * @param      log          Logging struct.
+ * @param      spc          Oxr space to get the xrt_space from.
+ * @param[out] out_xspace   Returns the xrt_space associated with this oxr_space.
+ * @return Any errors, XR_SUCCESS, xspace is not set on XR_ERROR_*.
+ */
+XRT_CHECK_RESULT XrResult
+oxr_space_get_xrt_space(struct oxr_logger *log, struct oxr_space *spc, struct xrt_space **out_xspace);
+
 
 /*
  *
