@@ -355,9 +355,6 @@ hdk_device_create(struct os_hid_device *dev, enum HDK_VARIANT variant)
 		hd->base.hmd->distortion.fov[0].angle_right = -hd->base.hmd->distortion.fov[1].angle_left;
 	}
 
-	hd->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
-	hd->base.hmd->screens[0].scanout_time_ns = 0;
-
 	switch (variant) {
 	case HDK_UNKNOWN: assert(!"unknown device"); break;
 

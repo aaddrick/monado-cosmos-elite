@@ -551,8 +551,6 @@ blubur_s1_hmd_create(struct os_hid_device *dev, const char *serial)
 	hmd->base.hmd->screens[0].w_pixels = PANEL_WIDTH;
 	hmd->base.hmd->screens[0].h_pixels = VIEW_SIZE;
 	hmd->base.hmd->screens[0].nominal_frame_interval_ns = 1000000000LLU / 120; // 120hz
-	hmd->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
-	hmd->base.hmd->screens[0].scanout_time_ns = 0;
 
 	hmd->base.hmd->view_count = 2;
 	hmd->base.hmd->views[0] = (struct xrt_view){

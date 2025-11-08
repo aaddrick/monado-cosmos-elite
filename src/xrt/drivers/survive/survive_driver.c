@@ -918,6 +918,26 @@ compute_distortion(struct xrt_device *xdev, uint32_t view, float u, float v, str
 	return XRT_SUCCESS;
 }
 
+static xrt_result_t
+survive_get_compositor_info(struct xrt_device *xdev,
+                            const struct xrt_device_compositor_mode *mode,
+                            struct xrt_device_compositor_info *out_info)
+{
+	struct survive_device *d = (struct survive_device *)xdev;
+
+	time_duration_ns scanout_time_ns;
+	enum xrt_scanout_direction scanout_direction;
+
+	vive_variant_scanout_info(d->hmd.config.variant, mode->frame_interval_ns, &scanout_time_ns, &scanout_direction);
+
+	(*out_info) = (struct xrt_device_compositor_info){
+	    .scanout_time_ns = scanout_time_ns,
+	    .scanout_direction = scanout_direction,
+	};
+
+	return XRT_SUCCESS;
+}
+
 static bool
 _create_hmd_device(struct survive_system *sys, const struct SurviveSimpleObject *sso, char *conf_str)
 {
@@ -981,16 +1001,6 @@ _create_hmd_device(struct survive_system *sys, const struct SurviveSimpleObject 
 		survive->base.hmd->screens[0].nominal_frame_interval_ns = (uint64_t)time_s_to_ns(1.0f / 90.0f);
 	}
 
-	if (survive->hmd.config.variant == VIVE_VARIANT_PRO) {
-		survive->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM;
-		survive->base.hmd->screens[0].scanout_time_ns = survive->base.hmd->screens[0].nominal_frame_interval_ns;
-		// Compensate for the length of vblank.
-		survive->base.hmd->screens[0].scanout_time_ns *= 1600.0 / 1624.0;
-	} else {
-		survive->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
-		survive->base.hmd->screens[0].scanout_time_ns = 0;
-	}
-
 	for (uint8_t eye = 0; eye < 2; eye++) {
 		struct xrt_view *v = &survive->base.hmd->views[eye];
 		v->display.w_pixels = w_pixels;
@@ -1011,10 +1021,12 @@ _create_hmd_device(struct survive_system *sys, const struct SurviveSimpleObject 
 	survive->base.hmd->distortion.preferred = XRT_DISTORTION_MODEL_COMPUTE;
 	survive->base.compute_distortion = compute_distortion;
 	survive->base.get_battery_status = survive_device_get_battery_status;
+	survive->base.get_compositor_info = survive_get_compositor_info;
 
 	survive->base.supported.orientation_tracking = true;
 	survive->base.supported.position_tracking = true;
 	survive->base.supported.battery_status = true;
+	survive->base.supported.compositor_info = true;
 	survive->base.device_type = XRT_DEVICE_TYPE_HMD;
 
 	survive->base.inputs[0].name = XRT_INPUT_GENERIC_HEAD_POSE;

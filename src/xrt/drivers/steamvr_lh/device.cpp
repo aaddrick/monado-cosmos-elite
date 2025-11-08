@@ -260,6 +260,8 @@ HmdDevice::HmdDevice(const DeviceBuilder &builder) : Device(builder)
 	this->device_type = XRT_DEVICE_TYPE_HMD;
 	this->container_handle = 0;
 
+	this->supported.compositor_info = true;
+
 	inputs_vec = {xrt_input{true, 0, XRT_INPUT_GENERIC_HEAD_POSE, {}}};
 	this->inputs = inputs_vec.data();
 	this->input_count = inputs_vec.size();
@@ -269,6 +271,7 @@ HmdDevice::HmdDevice(const DeviceBuilder &builder) : Device(builder)
 	SETUP_MEMBER_FUNC(compute_distortion);
 	SETUP_MEMBER_FUNC(set_brightness);
 	SETUP_MEMBER_FUNC(get_brightness);
+	SETUP_MEMBER_FUNC(get_compositor_info);
 #undef SETUP_MEMBER_FUNC
 }
 
@@ -755,6 +758,23 @@ HmdDevice::set_brightness(float brightness, bool relative)
 }
 
 xrt_result_t
+HmdDevice::get_compositor_info(const struct xrt_device_compositor_mode *mode,
+                               struct xrt_device_compositor_info *out_info)
+{
+	time_duration_ns scanout_time_ns;
+	enum xrt_scanout_direction scanout_direction;
+
+	vive_variant_scanout_info(this->variant, mode->frame_interval_ns, &scanout_time_ns, &scanout_direction);
+
+	(*out_info) = {
+	    .scanout_direction = scanout_direction,
+	    .scanout_time_ns = scanout_time_ns,
+	};
+
+	return XRT_SUCCESS;
+}
+
+xrt_result_t
 HmdDevice::get_tracked_pose(xrt_input_name name, uint64_t at_timestamp_ns, xrt_space_relation *out_relation)
 {
 	switch (name) {
@@ -1131,26 +1151,6 @@ HmdDevice::set_nominal_frame_interval(uint64_t interval_ns)
 	}
 }
 
-void
-HmdDevice::set_scanout_type(xrt_scanout_direction direction, int64_t time_ns)
-{
-	auto set = [this, direction, time_ns] {
-		hmd_parts->base.screens[0].scanout_direction = direction;
-		hmd_parts->base.screens[0].scanout_time_ns = time_ns;
-	};
-
-	if (hmd_parts) {
-		set();
-	} else {
-		std::thread t([this, set] {
-			std::unique_lock lk(hmd_parts_mut);
-			hmd_parts_cv.wait(lk, [this] { return hmd_parts != nullptr; });
-			set();
-		});
-		t.detach();
-	}
-}
-
 namespace {
 // From openvr driver documentation
 // (https://github.com/ValveSoftware/openvr/blob/master/docs/Driver_API_Documentation.md#Input-Profiles):
@@ -1313,15 +1313,6 @@ HmdDevice::handle_property_write(const vr::PropertyWrite_t &prop)
 		float freq = *static_cast<float *>(prop.pvBuffer);
 		int64_t interval_ns = (1.f / freq) * 1e9f;
 		set_nominal_frame_interval(interval_ns);
-		if (variant == VIVE_VARIANT_PRO) {
-			set_scanout_type(XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM, interval_ns * 1600.0 / 1624.0);
-		} else if (variant == VIVE_VARIANT_BEYOND) {
-			set_scanout_type(XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM, interval_ns * 2544.0 / 2568.0);
-		} else if (variant == VIVE_VARIANT_PRO2) {
-			set_scanout_type(XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM, interval_ns * 2448.0 / 2574.0);
-		} else {
-			set_scanout_type(XRT_SCANOUT_DIRECTION_NONE, 0);
-		}
 		break;
 	}
 	case vr::Prop_UserIpdMeters_Float: {

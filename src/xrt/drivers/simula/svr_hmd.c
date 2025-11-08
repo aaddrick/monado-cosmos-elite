@@ -245,9 +245,6 @@ svr_hmd_create(struct svr_two_displays_distortion *distortion)
 	svr->base.device_type = XRT_DEVICE_TYPE_HMD;
 
 	svr->base.hmd->screens[0].nominal_frame_interval_ns = (uint64_t)time_s_to_ns(1.0f / 90.0f);
-	svr->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
-	svr->base.hmd->screens[0].scanout_time_ns = 0;
-
 
 	// Print name.
 	snprintf(svr->base.str, XRT_DEVICE_NAME_LEN, "SimulaVR HMD");

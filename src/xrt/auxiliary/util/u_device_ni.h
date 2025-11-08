@@ -228,6 +228,16 @@ xrt_result_t
 u_device_ni_set_brightness(struct xrt_device *xdev, float brightness, bool relative);
 
 /*!
+ * Not implemented function for @ref xrt_device::get_compositor_info.
+ *
+ * @ingroup aux_util
+ */
+xrt_result_t
+u_device_ni_get_compositor_info(struct xrt_device *xdev,
+                                const struct xrt_device_compositor_mode *mode,
+                                struct xrt_device_compositor_info *out_info);
+
+/*!
  * Not implemented function for @ref xrt_device::begin_feature.
  *
  * @ingroup aux_util

@@ -203,6 +203,9 @@ public:
 	xrt_result_t
 	set_brightness(float brightness, bool relative);
 
+	xrt_result_t
+	get_compositor_info(const struct xrt_device_compositor_mode *mode, struct xrt_device_compositor_info *out_info);
+
 	bool
 	init_vive_pro_2(struct xrt_prober *xp);
 
@@ -214,9 +217,6 @@ private:
 
 	void
 	set_nominal_frame_interval(uint64_t interval_ns);
-
-	void
-	set_scanout_type(enum xrt_scanout_direction direction, int64_t time_ns);
 
 	std::condition_variable hmd_parts_cv;
 	std::mutex hmd_parts_mut;

@@ -565,6 +565,7 @@ u_device_populate_function_pointers(struct xrt_device *xdev,
 	xdev->get_battery_status = u_device_ni_get_battery_status;
 	xdev->get_brightness = u_device_ni_get_brightness;
 	xdev->set_brightness = u_device_ni_set_brightness;
+	xdev->get_compositor_info = u_device_ni_get_compositor_info;
 	xdev->begin_feature = u_device_ni_begin_feature;
 	xdev->end_feature = u_device_ni_end_feature;
 

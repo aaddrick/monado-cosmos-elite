@@ -496,8 +496,6 @@ rokid_hmd_create(struct xrt_prober_device *prober_device)
 	// Set up display details
 	// refresh rate
 	rokid->base.hmd->screens[0].nominal_frame_interval_ns = time_s_to_ns(1.0f / 60.0f);
-	rokid->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
-	rokid->base.hmd->screens[0].scanout_time_ns = 0;
 
 	const float quarter_vFOV = 0.25f * (is_rokid_max ? 46.0f : 40.0f) * ((float)M_PI / 180.0f);
 	const float quarter_hFOV = quarter_vFOV * 16.0f / 9.0f;

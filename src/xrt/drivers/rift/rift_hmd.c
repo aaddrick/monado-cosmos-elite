@@ -627,8 +627,6 @@ rift_hmd_create(struct os_hid_device *dev, enum rift_variant variant, char *devi
 
 	// Set up display details
 	hmd->base.hmd->screens[0].nominal_frame_interval_ns = time_s_to_ns(1.0f / 75.0f);
-	hmd->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
-	hmd->base.hmd->screens[0].scanout_time_ns = 0;
 
 	hmd->extra_display_info.icd = MICROMETERS_TO_METERS(hmd->display_info.lens_separation);
 

@@ -799,8 +799,6 @@ create_hmd(ohmd_context *ctx, int device_idx, int device_flags)
 	ohd->base.hmd->screens[0].w_pixels = info.display.w_pixels;
 	ohd->base.hmd->screens[0].h_pixels = info.display.h_pixels;
 	ohd->base.hmd->screens[0].nominal_frame_interval_ns = info.display.nominal_frame_interval_ns;
-	ohd->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
-	ohd->base.hmd->screens[0].scanout_time_ns = 0;
 
 	// Left
 	ohd->base.hmd->views[0].display.w_pixels = info.views[0].display.w_pixels;

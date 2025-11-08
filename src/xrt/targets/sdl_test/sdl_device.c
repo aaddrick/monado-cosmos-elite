@@ -115,7 +115,6 @@ sdl_device_init(struct sdl_program *sp)
 
 	// Refresh rate.
 	xdev->hmd->screens[0].nominal_frame_interval_ns = time_s_to_ns(1.0f / 60.0f);
-	xdev->hmd->screens[0].scanout_time_ns = 0;
 
 	// Blend mode(s), setup after u_device_setup_split_side_by_side.
 	xdev->hmd->blend_modes[0] = XRT_BLEND_MODE_OPAQUE;

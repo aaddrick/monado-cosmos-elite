@@ -82,6 +82,31 @@ struct xrt_view
 };
 
 /*!
+ * @brief Compositor information for a device.
+ */
+struct xrt_device_compositor_info
+{
+	//! The direction scanout on the display occurs.
+	enum xrt_scanout_direction scanout_direction;
+	/*!
+	 * The amount of time it takes to scanout the display in nanoseconds, from the start of the scanout, to the end
+	 * of the scanout.
+	 *
+	 * @note alignas for 32 bit client support, see @ref ipc-design
+	 */
+	XRT_ALIGNAS(8) int64_t scanout_time_ns;
+};
+
+/*!
+ * @brief Compositor mode information for a device.
+ */
+struct xrt_device_compositor_mode
+{
+	//! The amount of nanoseconds between frames.
+	int64_t frame_interval_ns;
+};
+
+/*!
  * All of the device components that deals with interfacing to a users head.
  *
  * HMD is probably a bad name for the future but for now will have to do.
@@ -102,8 +127,6 @@ struct xrt_hmd_parts
 		int h_pixels;
 		//! Nominal frame interval
 		uint64_t nominal_frame_interval_ns;
-		enum xrt_scanout_direction scanout_direction;
-		int64_t scanout_time_ns;
 	} screens[1];
 
 	/*!
@@ -268,6 +291,7 @@ struct xrt_device_supported
 	bool body_tracking_calibration;
 	bool battery_status;
 	bool brightness_control;
+	bool compositor_info;
 
 	bool planes;
 	enum xrt_plane_detection_capability_flags_ext plane_capability_flags;
@@ -680,6 +704,22 @@ struct xrt_device
 	xrt_result_t (*set_brightness)(struct xrt_device *xdev, float brightness, bool relative);
 
 	/*!
+	 * @brief Gets the compositor info for a device for the given mode.
+	 *
+	 * This function should never block, and never wait on congested locks.
+	 *
+	 * @param[in] xdev            The device.
+	 * @param[in] brightness      Desired display brightness. Usually between 0 and 1. Some devices may
+	 *                            allow exceeding 1 if the supported range exceeds 100%, but it will be clamped to
+	 *                            the supported range.
+	 * @param[in] relative        Whether to add \a brightness to the current brightness, instead of overwriting
+	 *                            the current brightness.
+	 */
+	xrt_result_t (*get_compositor_info)(struct xrt_device *xdev,
+	                                    const struct xrt_device_compositor_mode *mode,
+	                                    struct xrt_device_compositor_info *out_info);
+
+	/*!
 	 * Enable the feature for this device.
 	 *
 	 * @param[in] xdev        The device.
@@ -1054,6 +1094,21 @@ static inline xrt_result_t
 xrt_device_set_brightness(struct xrt_device *xdev, float brightness, bool relative)
 {
 	return xdev->set_brightness(xdev, brightness, relative);
+}
+
+/*!
+ * Helper function for @ref xrt_device::get_compositor_info.
+ *
+ * @copydoc xrt_device::get_compositor_info
+ *
+ * @public @memberof xrt_device
+ */
+static inline xrt_result_t
+xrt_device_get_compositor_info(struct xrt_device *xdev,
+                               const struct xrt_device_compositor_mode *mode,
+                               struct xrt_device_compositor_info *out_info)
+{
+	return xdev->get_compositor_info(xdev, mode, out_info);
 }
 
 /*!

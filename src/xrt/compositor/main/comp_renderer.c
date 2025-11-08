@@ -263,10 +263,24 @@ calc_pose_data(struct comp_renderer *r,
 	enum xrt_view_type view_type = (view_count == 1) ? XRT_VIEW_TYPE_MONO : XRT_VIEW_TYPE_STEREO;
 
 	int64_t scanout_time_ns = 0;
-	if (r->c->xdev->hmd->screens[0].scanout_direction == XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM) {
-		scanout_time_ns = r->c->xdev->hmd->screens[0].scanout_time_ns;
-	} else if (r->c->xdev->hmd->screens[0].scanout_direction != XRT_SCANOUT_DIRECTION_NONE) {
-		COMP_SPEW(r->c, "Unable to apply scanout compensation as only DIRECTION_TOP_TO_BOTTOM is supported");
+	if (r->c->xdev->supported.compositor_info) {
+		struct xrt_device_compositor_mode compositor_mode = {
+		    .frame_interval_ns = r->c->frame_interval_ns,
+		};
+		struct xrt_device_compositor_info device_compositor_info;
+		xrt_result_t xret = xrt_device_get_compositor_info( //
+		    r->c->xdev,                                     //
+		    &compositor_mode,                               //
+		    &device_compositor_info);                       //
+
+		if (xret != XRT_SUCCESS) {
+			COMP_WARN(r->c, "xrt_device_get_compositor_info failed, assuming 0 scanout time");
+		} else if (device_compositor_info.scanout_direction == XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM) {
+			scanout_time_ns = device_compositor_info.scanout_time_ns;
+		} else {
+			COMP_SPEW(r->c,
+			          "Unable to apply scanout compensation as only DIRECTION_TOP_TO_BOTTOM is supported");
+		}
 	}
 
 	int64_t begin_timestamp_ns = r->c->frame.rendering.predicted_display_time_ns;

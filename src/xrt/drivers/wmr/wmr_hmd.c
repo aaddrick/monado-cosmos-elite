@@ -1790,6 +1790,30 @@ compute_distortion_wmr(struct xrt_device *xdev, uint32_t view, float u, float v,
 	return XRT_SUCCESS;
 }
 
+static xrt_result_t
+get_compositor_info_wmr(struct xrt_device *xdev,
+                        const struct xrt_device_compositor_mode *mode,
+                        struct xrt_device_compositor_info *out_info)
+{
+	struct wmr_hmd *wh = wmr_hmd(xdev);
+
+	double scanout_multiplier = 0.0;
+	enum xrt_scanout_direction scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
+
+	if (wh->hmd_desc->hmd_type == WMR_HEADSET_SAMSUNG_800ZAA ||
+	    wh->hmd_desc->hmd_type == WMR_HEADSET_SAMSUNG_XE700X3AI) {
+		scanout_direction = XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM;
+		scanout_multiplier = 1600.0 / 1624.0;
+	}
+
+	*out_info = (struct xrt_device_compositor_info){
+	    .scanout_direction = scanout_direction,
+	    .scanout_time_ns = (int64_t)(mode->frame_interval_ns * scanout_multiplier),
+	};
+
+	return XRT_SUCCESS;
+}
+
 void
 wmr_hmd_create(enum wmr_headset_type hmd_type,
                struct os_hid_device *hid_holo,
@@ -1819,9 +1843,12 @@ wmr_hmd_create(enum wmr_headset_type hmd_type,
 	wh->base.get_tracked_pose = wmr_hmd_get_tracked_pose;
 	wh->base.get_view_poses = u_device_get_view_poses;
 	wh->base.destroy = wmr_hmd_destroy;
+	wh->base.get_compositor_info = get_compositor_info_wmr;
 	wh->base.name = XRT_DEVICE_GENERIC_HMD;
 	wh->base.device_type = XRT_DEVICE_TYPE_HMD;
 	wh->log_level = log_level;
+
+	wh->base.supported.compositor_info = true;
 
 	wh->hid_hololens_sensors_dev = hid_holo;
 	wh->hid_control_dev = hid_ctrl;
@@ -1946,18 +1973,6 @@ wmr_hmd_create(enum wmr_headset_type hmd_type,
 	wh->base.hmd->distortion.preferred = XRT_DISTORTION_MODEL_COMPUTE;
 	wh->base.compute_distortion = compute_distortion_wmr;
 	u_distortion_mesh_fill_in_compute(&wh->base);
-
-	// Set HMD Scanout direction and time
-	if (wh->hmd_desc->hmd_type == WMR_HEADSET_SAMSUNG_800ZAA ||
-	    wh->hmd_desc->hmd_type == WMR_HEADSET_SAMSUNG_XE700X3AI) {
-
-		wh->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_TOP_TO_BOTTOM;
-		wh->base.hmd->screens[0].scanout_time_ns =
-		    wh->base.hmd->screens[0].nominal_frame_interval_ns * 1600.0 / 1624.0;
-	} else {
-		wh->base.hmd->screens[0].scanout_direction = XRT_SCANOUT_DIRECTION_NONE;
-		wh->base.hmd->screens[0].scanout_time_ns = 0;
-	}
 
 	// Set initial HMD screen power state.
 	wh->hmd_screen_enable = true;
