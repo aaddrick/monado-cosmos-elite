@@ -1,4 +1,5 @@
 // Copyright 2019, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -60,6 +61,9 @@ enum xrt_tracking_type
 
 	// The device(s) are tracked by other methods.
 	XRT_TRACKING_TYPE_OTHER,
+
+	// The device(s) are (re)attachable.
+	XRT_TRACKING_TYPE_ATTACHABLE,
 };
 
 /*!

@@ -330,6 +330,26 @@ struct xrt_space_overseer
 	 */
 	xrt_result_t (*add_device)(struct xrt_space_overseer *xso, struct xrt_device *xdev);
 
+	/*!
+	 * Attach a device to a different space then it was associated with
+	 * originally, the space overseer might not support this operation.
+	 *
+	 * For some space overseer implementations this operation requires
+	 * that the device has the tracking origin type of
+	 * @ref XRT_TRACKING_TYPE_ATTACHABLE. Which space that becomes the
+	 * parent space of the device when @p space is NULL is undefined,
+	 * and the device might become un-trackable.
+	 *
+	 * @param[in] xso    Owning space overseer.
+	 * @param[in] xdev   Device to attach.
+	 * @param[in] space  Space to attach the device to, may be NULL.
+	 *
+	 * @return XRT_SUCCESS on success.
+	 * @return XRT_ERROR_DEVICE_NOT_ATTACHABLE if the device does not have
+	 *         the XRT_TRACKING_TYPE_ATTACHABLE tracking origin type.
+	 */
+	xrt_result_t (*attach_device)(struct xrt_space_overseer *xso, struct xrt_device *xdev, struct xrt_space *space);
+
 
 	/*
 	 *
@@ -560,6 +580,19 @@ static inline xrt_result_t
 xrt_space_overseer_add_device(struct xrt_space_overseer *xso, struct xrt_device *xdev)
 {
 	return xso->add_device(xso, xdev);
+}
+
+/*!
+ * @copydoc xrt_space_overseer::attach_device
+ *
+ * Helper for calling through the function pointer.
+ *
+ * @public @memberof xrt_space_overseer
+ */
+static inline xrt_result_t
+xrt_space_overseer_attach_device(struct xrt_space_overseer *xso, struct xrt_device *xdev, struct xrt_space *space)
+{
+	return xso->attach_device(xso, xdev, space);
 }
 
 /*!

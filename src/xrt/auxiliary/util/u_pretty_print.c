@@ -267,6 +267,7 @@ u_pp_xrt_result(struct u_pp_delegate dg, xrt_result_t xret)
 	case XRT_OPERATION_CANCELLED:                        DG("XRT_OPERATION_CANCELLED"); return;
 	case XRT_ERROR_FUTURE_RESULT_NOT_READY:              DG("XRT_ERROR_FUTURE_RESULT_NOT_READY"); return;
 	case XRT_ERROR_FUTURE_ALREADY_COMPLETE:              DG("XRT_ERROR_FUTURE_ALREADY_COMPLETE"); return;
+	case XRT_ERROR_DEVICE_NOT_ATTACHABLE:                DG("XRT_ERROR_DEVICE_NOT_ATTACHABLE"); return;
 	}
 	// clang-format on
 

@@ -251,4 +251,10 @@ typedef enum xrt_result
 	 * Invoking complete on an already completed future
 	 */
 	XRT_ERROR_FUTURE_ALREADY_COMPLETE = -41,
+
+	/*!
+	 * The device's tracking origin is not of type
+	 * XRT_TRACKING_TYPE_ATTACHABLE.
+	 */
+	XRT_ERROR_DEVICE_NOT_ATTACHABLE = -42,
 } xrt_result_t;

@@ -43,6 +43,13 @@ enum u_space_type
 	U_SPACE_TYPE_POSE,
 	U_SPACE_TYPE_OFFSET,
 	U_SPACE_TYPE_ROOT,
+
+	/*!
+	 * Space designed to be attachable to others, most importantly it is
+	 * re-attachable, and in order to move all of the spaces that has this
+	 * space as it's parent/next we need a node that can be updated.
+	 */
+	U_SPACE_TYPE_ATTACHABLE,
 };
 
 /*!
@@ -331,7 +338,8 @@ push_then_traverse(struct xrt_relation_chain *xrc, struct u_space *space, int64_
 		m_relation_chain_push_relation(xrc, &xsr);
 	} break;
 	case U_SPACE_TYPE_OFFSET: m_relation_chain_push_pose_if_not_identity(xrc, &space->offset.pose); break;
-	case U_SPACE_TYPE_ROOT: return; // Stops the traversing.
+	case U_SPACE_TYPE_ROOT: return;      // Stops the traversing.
+	case U_SPACE_TYPE_ATTACHABLE: break; // No-op
 	}
 
 	// Please tail-call optimise this miss compiler.
@@ -353,7 +361,8 @@ traverse_then_push_inverse(struct xrt_relation_chain *xrc, struct u_space *space
 	case U_SPACE_TYPE_NULL: break;
 	case U_SPACE_TYPE_POSE: break;
 	case U_SPACE_TYPE_OFFSET: break;
-	case U_SPACE_TYPE_ROOT: return; // Stops the traversing.
+	case U_SPACE_TYPE_ROOT: return;      // Stops the traversing.
+	case U_SPACE_TYPE_ATTACHABLE: break; // No-op
 	}
 
 	// Can't tail-call optimise this one :(
@@ -372,6 +381,7 @@ traverse_then_push_inverse(struct xrt_relation_chain *xrc, struct u_space *space
 	} break;
 	case U_SPACE_TYPE_OFFSET: m_relation_chain_push_inverted_pose_if_not_identity(xrc, &space->offset.pose); break;
 	case U_SPACE_TYPE_ROOT: assert(false); // Should not get here.
+	case U_SPACE_TYPE_ATTACHABLE: break;   // No-op
 	}
 }
 
@@ -503,9 +513,17 @@ add_device_helper(struct u_space_overseer *uso, struct xrt_device *xdev)
 
 	if (ptr != NULL) {
 		xs = (struct xrt_space *)ptr;
+	} else if (torig->type == XRT_TRACKING_TYPE_ATTACHABLE) {
+		/*
+		 * If we ever make u_space_overseer sub-classable make sure
+		 * this calls the right function, can't call interface function
+		 * as the lock is held here.
+		 */
+		xs = (struct xrt_space *)create_space(U_SPACE_TYPE_ATTACHABLE, u_space(root));
+		u_hashmap_int_insert(uso->xto_map, key, xs);
 	} else {
 		/*
-		 * If we ever make u_space_overseer sub-classable maek sure
+		 * If we ever make u_space_overseer sub-classable make sure
 		 * this calls the right function, can't call interface function
 		 * as the lock is held here.
 		 */
@@ -1093,6 +1111,52 @@ add_device(struct xrt_space_overseer *xso, struct xrt_device *xdev)
 	return add_device_helper(uso, xdev);
 }
 
+static xrt_result_t
+attach_device(struct xrt_space_overseer *xso, struct xrt_device *xdev, struct xrt_space *space)
+{
+	struct u_space_overseer *uso = u_space_overseer(xso);
+
+	// Check that the device has the correct tracking origin type.
+	if (xdev->tracking_origin == NULL || xdev->tracking_origin->type != XRT_TRACKING_TYPE_ATTACHABLE) {
+		U_LOG_E("Device '%s' does not have XRT_TRACKING_TYPE_ATTACHABLE tracking origin type", xdev->str);
+		return XRT_ERROR_DEVICE_NOT_ATTACHABLE;
+	}
+
+	// If no space is provided, use the root space.
+	struct xrt_space *target_space = space;
+	if (target_space == NULL) {
+		target_space = uso->base.semantic.root;
+	}
+
+	xrt_result_t xret = XRT_SUCCESS;
+	pthread_rwlock_wrlock(&uso->lock);
+
+
+	void *ptr = NULL;
+	uint64_t key = (uint64_t)(intptr_t)xdev->tracking_origin;
+	u_hashmap_int_find(uso->xto_map, key, &ptr);
+	if (ptr == NULL) {
+		U_LOG_E("Device doesn't have space associated with it!");
+		xret = XRT_ERROR_DEVICE_NOT_ATTACHABLE;
+		goto err_unlock;
+	}
+
+	struct u_space *us = (struct u_space *)ptr;
+	if (us->type != U_SPACE_TYPE_ATTACHABLE) {
+		U_LOG_E("Device doesn't have a attachable space!");
+		xret = XRT_ERROR_DEVICE_NOT_ATTACHABLE;
+		goto err_unlock;
+	}
+
+	// Update the link.
+	u_space_reference(&us->next, u_space(target_space));
+
+err_unlock:
+	pthread_rwlock_unlock(&uso->lock);
+
+	return xret;
+}
+
 static void
 destroy(struct xrt_space_overseer *xso)
 {
@@ -1150,6 +1214,7 @@ u_space_overseer_create(struct xrt_session_event_sink *broadcast)
 	uso->base.get_reference_space_offset = get_reference_space_offset;
 	uso->base.set_reference_space_offset = set_reference_space_offset;
 	uso->base.add_device = add_device;
+	uso->base.attach_device = attach_device;
 	uso->base.destroy = destroy;
 	uso->broadcast = broadcast;
 
