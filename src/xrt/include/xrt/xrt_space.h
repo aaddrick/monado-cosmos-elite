@@ -1,4 +1,5 @@
 // Copyright 2019-2023, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -303,6 +304,39 @@ struct xrt_space_overseer
 	                                   struct xrt_space **out_local_space,
 	                                   struct xrt_space **out_local_floor_space);
 
+	/*
+	 *
+	 * Special inter-monado component functions.
+	 *
+	 */
+
+	/*!
+	 * Add a new device to be tracked by the space overseer. The exact
+	 * semantic of the space is determined by the implementation of the
+	 * space overseer. And may be outright rejected by the implementation.
+	 *
+	 * After this call completes successfully, the device can be passed
+	 * into the @ref xrt_space_overseer::locate_device function, but may
+	 * not be locatable immediately.
+	 *
+	 * This function is not intended to be called by the OpenXR state
+	 * tracker, but by other monado components that need to add devices
+	 * but does not own the space overseer. Components like the fixer
+	 * uppers or for push devices.
+	 *
+	 * @param[in] xso The space overseer.
+	 * @param[in] xdev The device to be tracked.
+	 * @return XRT_SUCCESS if added, otherwise an error code.
+	 */
+	xrt_result_t (*add_device)(struct xrt_space_overseer *xso, struct xrt_device *xdev);
+
+
+	/*
+	 *
+	 * Destroy function always comes last.
+	 *
+	 */
+
 	/*!
 	 * Destroy function.
 	 *
@@ -513,6 +547,19 @@ xrt_space_overseer_create_local_space(struct xrt_space_overseer *xso,
                                       struct xrt_space **out_local_floor_space)
 {
 	return xso->create_local_space(xso, out_local_space, out_local_floor_space);
+}
+
+/*!
+ * @copydoc xrt_space_overseer::add_device
+ *
+ * Helper for calling through the function pointer.
+ *
+ * @public @memberof xrt_space_overseer
+ */
+static inline xrt_result_t
+xrt_space_overseer_add_device(struct xrt_space_overseer *xso, struct xrt_device *xdev)
+{
+	return xso->add_device(xso, xdev);
 }
 
 /*!

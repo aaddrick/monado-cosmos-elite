@@ -1,4 +1,5 @@
 // Copyright 2023, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -469,6 +470,57 @@ create_and_set_root_space(struct u_space_overseer *uso)
 
 	// Created with one reference.
 	uso->base.semantic.root = &us->base;
+}
+
+
+/*
+ *
+ * Device helpers.
+ *
+ */
+
+/*!
+ * Helper function to add a device to the space overseer. This function
+ * handles creating or finding a space for the device's tracking origin
+ * and linking the device to that space.
+ */
+static xrt_result_t
+add_device_helper(struct u_space_overseer *uso, struct xrt_device *xdev)
+{
+	struct xrt_tracking_origin *torig = xdev->tracking_origin;
+	assert(torig != NULL);
+
+	struct xrt_space *root = uso->base.semantic.root;
+	uint64_t key = (uint64_t)(intptr_t)torig;
+	struct xrt_space *xs = NULL;
+
+	// Need to take the write lock.
+	pthread_rwlock_wrlock(&uso->lock);
+
+	// Does this tracking origin already have space.
+	void *ptr = NULL;
+	u_hashmap_int_find(uso->xto_map, key, &ptr);
+
+	if (ptr != NULL) {
+		xs = (struct xrt_space *)ptr;
+	} else {
+		/*
+		 * If we ever make u_space_overseer sub-classable maek sure
+		 * this calls the right function, can't call interface function
+		 * as the lock is held here.
+		 */
+		xs = (struct xrt_space *)create_space(U_SPACE_TYPE_OFFSET, u_space(root));
+
+		update_offset_write_locked(u_space(xs), &torig->initial_offset);
+
+		u_hashmap_int_insert(uso->xto_map, key, xs);
+	}
+
+	pthread_rwlock_unlock(&uso->lock);
+
+	u_space_overseer_link_space_to_device(uso, xs, xdev);
+
+	return XRT_SUCCESS;
 }
 
 
@@ -1033,6 +1085,14 @@ unlock:
 	return xret;
 }
 
+static xrt_result_t
+add_device(struct xrt_space_overseer *xso, struct xrt_device *xdev)
+{
+	struct u_space_overseer *uso = u_space_overseer(xso);
+
+	return add_device_helper(uso, xdev);
+}
+
 static void
 destroy(struct xrt_space_overseer *xso)
 {
@@ -1089,6 +1149,7 @@ u_space_overseer_create(struct xrt_session_event_sink *broadcast)
 	uso->base.set_tracking_origin_offset = set_tracking_origin_offset;
 	uso->base.get_reference_space_offset = get_reference_space_offset;
 	uso->base.set_reference_space_offset = set_reference_space_offset;
+	uso->base.add_device = add_device;
 	uso->base.destroy = destroy;
 	uso->broadcast = broadcast;
 
@@ -1117,26 +1178,14 @@ u_space_overseer_legacy_setup(struct u_space_overseer *uso,
                               bool root_is_unbounded,
                               bool per_app_local_spaces)
 {
-	struct xrt_space *root = uso->base.semantic.root; // Convenience
 	uso->per_app_local_spaces = per_app_local_spaces;
 
+	// Add all devices to the space overseer.
 	for (uint32_t i = 0; i < xdev_count; i++) {
-		struct xrt_device *xdev = xdevs[i];
-		struct xrt_tracking_origin *torig = xdev->tracking_origin;
-		uint64_t key = (uint64_t)(intptr_t)torig;
-		struct xrt_space *xs = NULL;
-
-		void *ptr = NULL;
-		u_hashmap_int_find(uso->xto_map, key, &ptr);
-
-		if (ptr != NULL) {
-			xs = (struct xrt_space *)ptr;
-		} else {
-			u_space_overseer_create_offset_space(uso, root, &torig->initial_offset, &xs);
-			u_hashmap_int_insert(uso->xto_map, key, xs);
+		xrt_result_t xret = add_device_helper(uso, xdevs[i]);
+		if (xret != XRT_SUCCESS) {
+			U_LOG_E("Failed to add device '%s' to space overseer!", xdevs[i]->str);
 		}
-
-		u_space_overseer_link_space_to_device(uso, xs, xdev);
 	}
 
 	// If these are set something is probably wrong, but just in case unset them.

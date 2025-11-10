@@ -318,6 +318,12 @@ set_reference_space_offset(struct xrt_space_overseer *xso,
 	return ipc_call_space_set_reference_space_offset(icspo->ipc_c, type, offset);
 }
 
+static xrt_result_t
+add_device(struct xrt_space_overseer *xso, struct xrt_device *xdev)
+{
+	return XRT_ERROR_NOT_IMPLEMENTED;
+}
+
 static void
 destroy(struct xrt_space_overseer *xso)
 {
@@ -374,6 +380,7 @@ ipc_client_space_overseer_create(struct ipc_connection *ipc_c)
 	icspo->base.set_tracking_origin_offset = set_tracking_origin_offset;
 	icspo->base.get_reference_space_offset = get_reference_space_offset;
 	icspo->base.set_reference_space_offset = set_reference_space_offset;
+	icspo->base.add_device = add_device;
 	icspo->base.destroy = destroy;
 	icspo->ipc_c = ipc_c;
 
