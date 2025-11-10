@@ -253,6 +253,12 @@ client_loop(volatile struct ipc_client_state *ics)
 			break;
 		}
 
+		// This needs to hold true.
+		if (cmd_size > IPC_BUF_SIZE) {
+			IPC_ERROR(ics->server, "Command too large! (%u > %u)", (uint32_t)cmd_size, IPC_BUF_SIZE);
+			break;
+		}
+
 		// Read the whole command now that we know its size
 		uint8_t buf[IPC_BUF_SIZE] = {0};
 
