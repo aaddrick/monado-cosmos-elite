@@ -1,4 +1,5 @@
 // Copyright 2023, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -394,4 +395,12 @@ ipc_client_space_overseer_create(struct ipc_connection *ipc_c)
 #undef CREATE
 
 	return &icspo->base;
+}
+
+uint32_t
+ipc_client_space_get_id(struct xrt_space *space)
+{
+	assert(space != NULL);
+
+	return ipc_client_space(space)->id;
 }

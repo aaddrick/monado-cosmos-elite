@@ -145,6 +145,9 @@ ipc_client_system_create(struct ipc_connection *ipc_c, struct xrt_system_composi
 struct xrt_space_overseer *
 ipc_client_space_overseer_create(struct ipc_connection *ipc_c);
 
+uint32_t
+ipc_client_space_get_id(struct xrt_space *space);
+
 struct ipc_client_system_devices *
 ipc_client_system_devices_create(struct ipc_connection *ipc_c);
 
