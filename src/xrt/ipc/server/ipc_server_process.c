@@ -1097,7 +1097,7 @@ ipc_server_main_common(const struct ipc_server_main_info *ismi,
 	xret = init_all(s, log_level, callbacks, data, ismi->exit_on_disconnect);
 	U_LOG_CHK_ONLY_PRINT(log_level, xret, "init_all");
 	if (xret != XRT_SUCCESS) {
-		// Propegate the failure.
+		// Propagate the failure.
 		callbacks->init_failed(xret, data);
 		u_debug_gui_stop(&s->debug_gui);
 		free(s);
