@@ -157,7 +157,10 @@ ipc_client_instance_create_system(struct xrt_instance *xinst,
 	struct xrt_system_compositor *xsysc = NULL;
 
 	// Allocate a helper xrt_system_devices struct.
-	struct ipc_client_system_devices *icsd = ipc_client_system_devices_create(&ii->ipc_c);
+	struct ipc_client_system_devices *icsd = NULL;
+	xret = ipc_client_system_devices_create(&ii->ipc_c, &icsd);
+	IPC_CHK_AND_RET(&ii->ipc_c, xret, "ipc_client_system_devices_create");
+
 	struct xrt_system_devices *xsysd = &icsd->base.base;
 
 	uint32_t count = 0;

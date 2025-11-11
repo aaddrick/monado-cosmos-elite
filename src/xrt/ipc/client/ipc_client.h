@@ -148,8 +148,8 @@ ipc_client_space_overseer_create(struct ipc_connection *ipc_c);
 uint32_t
 ipc_client_space_get_id(struct xrt_space *space);
 
-struct ipc_client_system_devices *
-ipc_client_system_devices_create(struct ipc_connection *ipc_c);
+xrt_result_t
+ipc_client_system_devices_create(struct ipc_connection *ipc_c, struct ipc_client_system_devices **out_icsd);
 
 struct xrt_session *
 ipc_client_session_create(struct ipc_connection *ipc_c);

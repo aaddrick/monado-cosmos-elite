@@ -102,8 +102,8 @@ ipc_client_system_devices_destroy(struct xrt_system_devices *xsysd)
  *
  */
 
-struct ipc_client_system_devices *
-ipc_client_system_devices_create(struct ipc_connection *ipc_c)
+xrt_result_t
+ipc_client_system_devices_create(struct ipc_connection *ipc_c, struct ipc_client_system_devices **out_icsd)
 {
 	struct ipc_client_system_devices *icsd = U_TYPED_CALLOC(struct ipc_client_system_devices);
 	icsd->base.base.get_roles = ipc_client_system_devices_get_roles;
@@ -112,5 +112,7 @@ ipc_client_system_devices_create(struct ipc_connection *ipc_c)
 	icsd->base.base.feature_dec = ipc_client_system_devices_feature_dec;
 	icsd->ipc_c = ipc_c;
 
-	return icsd;
+	*out_icsd = icsd;
+
+	return XRT_SUCCESS;
 }
