@@ -194,9 +194,6 @@ struct ipc_device
 {
 	//! The actual device.
 	struct xrt_device *xdev;
-
-	//! Is the IO suppressed for this device.
-	bool io_active;
 };
 
 /*!

@@ -98,18 +98,13 @@ find_xdev_index(struct ipc_server *s, struct xrt_device *xdev)
 static void
 init_idev(struct ipc_device *idev, struct xrt_device *xdev)
 {
-	if (xdev != NULL) {
-		idev->io_active = true;
-		idev->xdev = xdev;
-	} else {
-		idev->io_active = false;
-	}
+	idev->xdev = xdev;
 }
 
 static void
 teardown_idev(struct ipc_device *idev)
 {
-	idev->io_active = false;
+	idev->xdev = NULL;
 }
 
 static void

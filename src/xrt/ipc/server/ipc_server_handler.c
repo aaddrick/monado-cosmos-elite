@@ -1,4 +1,5 @@
 // Copyright 2020-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -1642,20 +1643,6 @@ ipc_handle_system_toggle_io_client(volatile struct ipc_client_state *_ics, uint3
 }
 
 xrt_result_t
-ipc_handle_system_toggle_io_device(volatile struct ipc_client_state *ics, uint32_t device_id)
-{
-	if (device_id >= IPC_MAX_DEVICES) {
-		return XRT_ERROR_IPC_FAILURE;
-	}
-
-	struct ipc_device *idev = &ics->server->idevs[device_id];
-
-	idev->io_active = !idev->io_active;
-
-	return XRT_SUCCESS;
-}
-
-xrt_result_t
 ipc_handle_swapchain_get_properties(volatile struct ipc_client_state *ics,
                                     const struct xrt_swapchain_create_info *info,
                                     struct xrt_swapchain_create_properties *xsccp)
@@ -1950,7 +1937,7 @@ ipc_handle_device_update_input(volatile struct ipc_client_state *ics, uint32_t i
 	struct xrt_input *dst = &ism->inputs[isdev->first_input_index];
 	size_t size = sizeof(struct xrt_input) * isdev->input_count;
 
-	bool io_active = ics->io_active && idev->io_active;
+	bool io_active = ics->io_active;
 	if (io_active) {
 		memcpy(dst, src, size);
 	} else {
@@ -2005,7 +1992,7 @@ ipc_handle_device_get_tracked_pose(volatile struct ipc_client_state *ics,
 	}
 
 	// Special case the headpose.
-	bool disabled = (!isdev->io_active || !ics->io_active) && name != XRT_INPUT_GENERIC_HEAD_POSE;
+	bool disabled = !ics->io_active && name != XRT_INPUT_GENERIC_HEAD_POSE;
 	bool active_on_client = input->active;
 
 	// We have been disabled but the client hasn't called update.
