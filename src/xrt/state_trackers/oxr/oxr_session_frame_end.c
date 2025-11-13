@@ -38,6 +38,7 @@
 #include <assert.h>
 
 
+
 /*
  *
  * Helper functions and defines.
@@ -333,6 +334,7 @@ fill_in_passthrough(struct oxr_session *sess, const XrCompositionLayerBaseHeader
 	data->passthrough.xrt_pt.paused = passthrough_handle->paused;
 #endif
 }
+
 
 /*
  *
@@ -1165,20 +1167,20 @@ verify_passthrough_layer(struct xrt_compositor *xc,
 #endif
 }
 
+
 /*
  *
  * Submit functions.
  *
  */
 
-/**
+/*!
  * Turn the poses supplied with a composition layer into the poses the compositor wants.
  *
  * @param log logger
  * @param sess session
  * @param spc space that @p pose_ptr is supplied in
  * @param pose_ptr pose supplied with layer
- * @param inv_offset inverse of the tracking origin offset
  * @param timestamp timestamp for pose
  * @param[out] out_pose Resulting view-space pose
  * @return true if successfully transformed into a view space pose
@@ -1188,7 +1190,6 @@ handle_space(struct oxr_logger *log,
              struct oxr_session *sess,
              struct oxr_space *spc,
              const struct xrt_pose *pose_ptr,
-             const struct xrt_pose *inv_offset,
              uint64_t timestamp,
              struct xrt_pose *out_pose)
 {
@@ -1242,7 +1243,6 @@ submit_quad_layer(struct oxr_session *sess,
                   struct oxr_logger *log,
                   XrCompositionLayerQuad *quad,
                   struct xrt_device *head,
-                  struct xrt_pose *inv_offset,
                   uint64_t oxr_timestamp,
                   uint64_t xrt_timestamp)
 {
@@ -1254,7 +1254,7 @@ submit_quad_layer(struct oxr_session *sess,
 	struct xrt_pose *pose_ptr = (struct xrt_pose *)&quad->pose;
 
 	struct xrt_pose pose;
-	if (!handle_space(log, sess, spc, pose_ptr, inv_offset, oxr_timestamp, &pose)) {
+	if (!handle_space(log, sess, spc, pose_ptr, oxr_timestamp, &pose)) {
 		return XR_SUCCESS;
 	}
 
@@ -1293,7 +1293,6 @@ submit_projection_layer(struct oxr_session *sess,
                         struct oxr_logger *log,
                         XrCompositionLayerProjection *proj,
                         struct xrt_device *head,
-                        struct xrt_pose *inv_offset,
                         uint64_t oxr_timestamp,
                         uint64_t xrt_timestamp)
 {
@@ -1317,7 +1316,7 @@ submit_projection_layer(struct oxr_session *sess,
 		scs[i] = XRT_CAST_OXR_HANDLE_TO_PTR(struct oxr_swapchain *, proj->views[i].subImage.swapchain);
 		pose_ptr = (struct xrt_pose *)&proj->views[i].pose;
 
-		if (!handle_space(log, sess, spc, pose_ptr, inv_offset, oxr_timestamp, &pose[i])) {
+		if (!handle_space(log, sess, spc, pose_ptr, oxr_timestamp, &pose[i])) {
 			return XR_SUCCESS;
 		}
 	}
@@ -1399,7 +1398,6 @@ submit_cube_layer(struct oxr_session *sess,
                   struct oxr_logger *log,
                   const XrCompositionLayerCubeKHR *cube,
                   struct xrt_device *head,
-                  struct xrt_pose *inv_offset,
                   uint64_t oxr_timestamp,
                   uint64_t xrt_timestamp)
 {
@@ -1438,7 +1436,7 @@ submit_cube_layer(struct oxr_session *sess,
 	    .position = XRT_VEC3_ZERO,
 	};
 
-	if (!handle_space(log, sess, spc, &pose, inv_offset, oxr_timestamp, &data.cube.pose)) {
+	if (!handle_space(log, sess, spc, &pose, oxr_timestamp, &data.cube.pose)) {
 		return XR_SUCCESS;
 	}
 
@@ -1454,7 +1452,6 @@ submit_cylinder_layer(struct oxr_session *sess,
                       struct oxr_logger *log,
                       const XrCompositionLayerCylinderKHR *cylinder,
                       struct xrt_device *head,
-                      struct xrt_pose *inv_offset,
                       uint64_t oxr_timestamp,
                       uint64_t xrt_timestamp)
 {
@@ -1467,7 +1464,7 @@ submit_cylinder_layer(struct oxr_session *sess,
 	struct xrt_pose *pose_ptr = (struct xrt_pose *)&cylinder->pose;
 
 	struct xrt_pose pose;
-	if (!handle_space(log, sess, spc, pose_ptr, inv_offset, oxr_timestamp, &pose)) {
+	if (!handle_space(log, sess, spc, pose_ptr, oxr_timestamp, &pose)) {
 		return XR_SUCCESS;
 	}
 
@@ -1506,7 +1503,6 @@ submit_equirect1_layer(struct oxr_session *sess,
                        struct oxr_logger *log,
                        const XrCompositionLayerEquirectKHR *equirect,
                        struct xrt_device *head,
-                       struct xrt_pose *inv_offset,
                        uint64_t oxr_timestamp,
                        uint64_t xrt_timestamp)
 {
@@ -1518,7 +1514,7 @@ submit_equirect1_layer(struct oxr_session *sess,
 	struct xrt_pose *pose_ptr = (struct xrt_pose *)&equirect->pose;
 
 	struct xrt_pose pose;
-	if (!handle_space(log, sess, spc, pose_ptr, inv_offset, oxr_timestamp, &pose)) {
+	if (!handle_space(log, sess, spc, pose_ptr, oxr_timestamp, &pose)) {
 		return XR_SUCCESS;
 	}
 
@@ -1569,7 +1565,6 @@ submit_equirect2_layer(struct oxr_session *sess,
                        struct oxr_logger *log,
                        const XrCompositionLayerEquirect2KHR *equirect,
                        struct xrt_device *head,
-                       struct xrt_pose *inv_offset,
                        uint64_t oxr_timestamp,
                        uint64_t xrt_timestamp)
 {
@@ -1581,7 +1576,7 @@ submit_equirect2_layer(struct oxr_session *sess,
 	struct xrt_pose *pose_ptr = (struct xrt_pose *)&equirect->pose;
 
 	struct xrt_pose pose;
-	if (!handle_space(log, sess, spc, pose_ptr, inv_offset, oxr_timestamp, &pose)) {
+	if (!handle_space(log, sess, spc, pose_ptr, oxr_timestamp, &pose)) {
 		return XR_SUCCESS;
 	}
 
@@ -1620,7 +1615,6 @@ submit_passthrough_layer(struct oxr_session *sess,
                          struct oxr_logger *log,
                          const XrCompositionLayerPassthroughFB *passthrough,
                          struct xrt_device *head,
-                         struct xrt_pose *inv_offset,
                          uint64_t oxr_timestamp,
                          uint64_t xrt_timestamp)
 {
@@ -1793,9 +1787,6 @@ oxr_session_frame_end(struct oxr_logger *log, struct oxr_session *sess, const Xr
 	// Do state change if needed.
 	do_synchronize_state_change(log, sess);
 
-	struct xrt_pose inv_offset = {0};
-	math_pose_invert(&xdev->tracking_origin->initial_offset, &inv_offset);
-
 	struct xrt_layer_frame_data data = {
 	    .frame_id = sess->frame_id.begun,
 	    .display_time_ns = xrt_display_time_ns,
@@ -1812,32 +1803,32 @@ oxr_session_frame_end(struct oxr_logger *log, struct oxr_session *sess, const Xr
 
 		switch (layer->type) {
 		case XR_TYPE_COMPOSITION_LAYER_PROJECTION:
-			submit_projection_layer(sess, xc, log, (XrCompositionLayerProjection *)layer, xdev, &inv_offset,
+			submit_projection_layer(sess, xc, log, (XrCompositionLayerProjection *)layer, xdev,
 			                        frameEndInfo->displayTime, xrt_display_time_ns);
 			break;
 		case XR_TYPE_COMPOSITION_LAYER_QUAD:
-			submit_quad_layer(sess, xc, log, (XrCompositionLayerQuad *)layer, xdev, &inv_offset,
+			submit_quad_layer(sess, xc, log, (XrCompositionLayerQuad *)layer, xdev,
 			                  frameEndInfo->displayTime, xrt_display_time_ns);
 			break;
 		case XR_TYPE_COMPOSITION_LAYER_CUBE_KHR:
-			submit_cube_layer(sess, xc, log, (XrCompositionLayerCubeKHR *)layer, xdev, &inv_offset,
+			submit_cube_layer(sess, xc, log, (XrCompositionLayerCubeKHR *)layer, xdev,
 			                  frameEndInfo->displayTime, xrt_display_time_ns);
 			break;
 		case XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR:
-			submit_cylinder_layer(sess, xc, log, (XrCompositionLayerCylinderKHR *)layer, xdev, &inv_offset,
+			submit_cylinder_layer(sess, xc, log, (XrCompositionLayerCylinderKHR *)layer, xdev,
 			                      frameEndInfo->displayTime, xrt_display_time_ns);
 			break;
 		case XR_TYPE_COMPOSITION_LAYER_EQUIRECT_KHR:
-			submit_equirect1_layer(sess, xc, log, (XrCompositionLayerEquirectKHR *)layer, xdev, &inv_offset,
+			submit_equirect1_layer(sess, xc, log, (XrCompositionLayerEquirectKHR *)layer, xdev,
 			                       frameEndInfo->displayTime, xrt_display_time_ns);
 			break;
 		case XR_TYPE_COMPOSITION_LAYER_EQUIRECT2_KHR:
 			submit_equirect2_layer(sess, xc, log, (XrCompositionLayerEquirect2KHR *)layer, xdev,
-			                       &inv_offset, frameEndInfo->displayTime, xrt_display_time_ns);
+			                       frameEndInfo->displayTime, xrt_display_time_ns);
 			break;
 		case XR_TYPE_COMPOSITION_LAYER_PASSTHROUGH_FB:
 			submit_passthrough_layer(sess, xc, log, (XrCompositionLayerPassthroughFB *)layer, xdev,
-			                         &inv_offset, frameEndInfo->displayTime, xrt_display_time_ns);
+			                         frameEndInfo->displayTime, xrt_display_time_ns);
 			break;
 		default: assert(false && "invalid layer type");
 		}
