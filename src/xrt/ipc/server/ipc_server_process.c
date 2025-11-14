@@ -422,19 +422,23 @@ init_system_shm_state(struct ipc_server *s, volatile struct ipc_client_state *cs
 
 	// Setup the HMD
 	// set view count
-	assert(s->xsysd->static_roles.head->hmd);
-	ism->hmd.view_count = s->xsysd->static_roles.head->hmd->view_count;
-	for (uint32_t view = 0; view < s->xsysd->static_roles.head->hmd->view_count; ++view) {
-		ism->hmd.views[view].display.w_pixels = s->xsysd->static_roles.head->hmd->views[view].display.w_pixels;
-		ism->hmd.views[view].display.h_pixels = s->xsysd->static_roles.head->hmd->views[view].display.h_pixels;
-	}
+	const struct xrt_device *xhead = s->xsysd->static_roles.head;
+	const struct xrt_hmd_parts *xhmd = xhead != NULL ? xhead->hmd : NULL;
+	U_ZERO(&ism->hmd);
+	if (xhmd != NULL) {
+		ism->hmd.view_count = xhmd->view_count;
+		for (uint32_t view = 0; view < xhmd->view_count; ++view) {
+			ism->hmd.views[view].display.w_pixels = xhmd->views[view].display.w_pixels;
+			ism->hmd.views[view].display.h_pixels = xhmd->views[view].display.h_pixels;
+		}
 
-	for (size_t i = 0; i < s->xsysd->static_roles.head->hmd->blend_mode_count; i++) {
-		// Not super necessary, we also do this assert in oxr_system.c
-		assert(u_verify_blend_mode_valid(s->xsysd->static_roles.head->hmd->blend_modes[i]));
-		ism->hmd.blend_modes[i] = s->xsysd->static_roles.head->hmd->blend_modes[i];
+		for (uint32_t i = 0; i < xhmd->blend_mode_count; i++) {
+			// Not super necessary, we also do this assert in oxr_system.c
+			assert(u_verify_blend_mode_valid(xhmd->blend_modes[i]));
+			ism->hmd.blend_modes[i] = xhmd->blend_modes[i];
+		}
+		ism->hmd.blend_mode_count = xhmd->blend_mode_count;
 	}
-	ism->hmd.blend_mode_count = s->xsysd->static_roles.head->hmd->blend_mode_count;
 
 	// Finally tell the client how many devices we have.
 	ism->isdev_count = count;
