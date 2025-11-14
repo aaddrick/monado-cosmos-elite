@@ -806,10 +806,17 @@ Device::update_pose(const vr::DriverPose_t &newPose) const
 	relation.linear_velocity = copy_vec3(newPose.vecVelocity);
 	relation.angular_velocity = copy_vec3(newPose.vecAngularVelocity);
 
-	math_quat_rotate_vec3(&relation.pose.orientation, &relation.angular_velocity, &relation.angular_velocity);
-
-	// apply over local transform
+	// local transform (head to driver offset)
 	const xrt_pose local = copy_pose(newPose.qDriverFromHeadRotation, newPose.vecDriverFromHeadTranslation);
+
+	// IMU linear velocity contribution due to rotation around driver origin (tangential velocity)
+	xrt_vec3 tangential_velocity;
+	math_vec3_cross(&relation.angular_velocity, &local.position, &tangential_velocity);
+	math_quat_rotate_vec3(&relation.pose.orientation, &tangential_velocity, &tangential_velocity);
+	math_vec3_accum(&tangential_velocity, &relation.linear_velocity);
+
+	// apply local transform
+	math_quat_rotate_vec3(&relation.pose.orientation, &relation.angular_velocity, &relation.angular_velocity);
 	math_pose_transform(&relation.pose, &local, &relation.pose);
 
 	// apply world transform
