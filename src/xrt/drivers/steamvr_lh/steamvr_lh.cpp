@@ -162,6 +162,9 @@ Context::GetGenericInterface(const char *pchInterfaceVersion, vr::EVRInitError *
 	MATCH_INTERFACE(vr::IVRDriverManager_Version, &man);
 	MATCH_INTERFACE(vr::IVRBlockQueue_Version, &blockqueue);
 	MATCH_INTERFACE(vr::IVRPaths_Version, &paths);
+	// This version of the interface is not in a public header.
+	// Luckily it seems to be compatible with the previous version.
+	MATCH_INTERFACE("IVRPaths_002", &paths);
 
 	// Internal interfaces
 	MATCH_INTERFACE("IVRServer_XXX", &server);
