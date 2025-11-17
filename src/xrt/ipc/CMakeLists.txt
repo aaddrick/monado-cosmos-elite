@@ -1,5 +1,18 @@
 # Copyright 2020-2021, Collabora, Ltd.
+# Copyright 2025, NVIDIA CORPORATION.
 # SPDX-License-Identifier: BSL-1.0
+
+###
+# Merge split protocol JSON files into single proto.json
+file(GLOB PROTO_JSON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/shared/proto/*.json")
+
+merge_json_files(
+	OUTPUT
+	"${CMAKE_CURRENT_BINARY_DIR}/proto.json"
+	SOURCES
+	${PROTO_JSON_FILES}
+	IGNORE_SCHEMA
+	)
 
 ###
 # Generator
@@ -16,13 +29,12 @@ foreach(
 		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${fn}"
 		COMMAND
 			${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.py
-			${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.json
-			"${CMAKE_CURRENT_BINARY_DIR}/${fn}"
+			${CMAKE_CURRENT_BINARY_DIR}/proto.json "${CMAKE_CURRENT_BINARY_DIR}/${fn}"
 		VERBATIM
 		DEPENDS
 			${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.py
 			${CMAKE_CURRENT_SOURCE_DIR}/shared/ipcproto/common.py
-			${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.json
+			${CMAKE_CURRENT_BINARY_DIR}/proto.json
 			${CMAKE_CURRENT_SOURCE_DIR}/shared/ipc_protocol_generated.h.template
 		COMMENT "Generating ${fn} from protocol JSON description"
 		)
@@ -33,13 +45,12 @@ add_custom_command(
 	OUTPUT "${CMAKE_BINARY_DIR}/ipc-structs.txt"
 	COMMAND
 		${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.py
-		${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.json
-		"${CMAKE_BINARY_DIR}/ipc-structs.txt"
+		${CMAKE_CURRENT_BINARY_DIR}/proto.json "${CMAKE_BINARY_DIR}/ipc-structs.txt"
 	VERBATIM
 	DEPENDS
 		${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.py
 		${CMAKE_CURRENT_SOURCE_DIR}/shared/ipcproto/common.py
-		${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.json
+		${CMAKE_CURRENT_BINARY_DIR}/proto.json
 	COMMENT "Generating ipc-structs.txt from protocol JSON description"
 	)
 
