@@ -85,15 +85,15 @@ struct ipc_shared_binding_profile
 {
 	enum xrt_device_name name;
 
-	//! Number of inputs.
-	uint32_t input_count;
 	//! Offset into the array of pairs where this input bindings starts.
 	uint32_t first_input_index;
+	//! Number of inputs.
+	uint32_t input_count;
 
-	//! Number of outputs.
-	uint32_t output_count;
 	//! Offset into the array of pairs where this output bindings starts.
 	uint32_t first_output_index;
+	//! Number of outputs.
+	uint32_t output_count;
 };
 
 /*!
