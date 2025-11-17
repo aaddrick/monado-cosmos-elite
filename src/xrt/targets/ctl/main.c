@@ -1,4 +1,5 @@
 // Copyright 2020-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -314,6 +315,16 @@ main(int argc, char *argv[])
 	if (xret != XRT_SUCCESS) {
 		U_LOG_E("ipc_client_connection_init: %u", xret);
 		return -1;
+	}
+
+	bool is_system_available = false;
+	xret = ipc_call_instance_is_system_available(&ipc_c, &is_system_available);
+	if (xret != XRT_SUCCESS) {
+		U_LOG_E("ipc_call_instance_is_system_available: %u", xret);
+		return -1;
+	}
+	if (!is_system_available) {
+		PE("System isn't available, devices won't be available!");
 	}
 
 	switch (op_mode) {

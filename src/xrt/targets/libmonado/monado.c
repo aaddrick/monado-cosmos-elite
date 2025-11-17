@@ -1,4 +1,5 @@
 // Copyright 2019-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -145,6 +146,16 @@ mnd_root_create(mnd_root_t **out_root)
 		PE("Connection init error '%i'!\n", xret);
 		free(r);
 		return MND_ERROR_CONNECTING_FAILED;
+	}
+
+	bool is_system_available = false;
+	xret = ipc_call_instance_is_system_available(&r->ipc_c, &is_system_available);
+	if (xret != XRT_SUCCESS) {
+		PE("ipc_call_instance_is_system_available: '%i'!\n", xret);
+		return -1;
+	}
+	if (!is_system_available) {
+		PE("System isn't available, devices won't be available!");
 	}
 
 	*out_root = r;
