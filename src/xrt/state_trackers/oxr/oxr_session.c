@@ -162,7 +162,7 @@ handle_reference_space_change_pending(struct oxr_logger *log,
 	if (inst->quirks.map_stage_to_local_floor) {
 		/* When stage is mapped to local_floor:
 		 * ignore stage changes
-		 * for local_floor changes, send a duplicate envent for stage
+		 * for local_floor changes, send a duplicate event for stage
 		 * */
 		switch (ref_change->ref_type) {
 		case XRT_SPACE_REFERENCE_TYPE_STAGE: return XR_SUCCESS;
