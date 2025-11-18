@@ -11,6 +11,7 @@
  */
 
 #include "util/u_device.h"
+#include "util/u_device_ni.h"
 #include "util/u_logging.h"
 #include "util/u_misc.h"
 #include "util/u_visibility_mask.h"
@@ -506,4 +507,67 @@ u_device_noop_update_inputs(struct xrt_device *xdev)
 {
 	// Empty, should only be used from a device without any inputs.
 	return XRT_SUCCESS;
+}
+
+
+/*
+ *
+ * Helper function to fill in defaults.
+ *
+ */
+
+void
+u_device_populate_function_pointers(struct xrt_device *xdev,
+                                    u_device_get_tracked_pose_function_t get_tracked_pose_fn,
+                                    u_device_destroy_function_t destroy_fn)
+{
+	if (get_tracked_pose_fn == NULL) {
+		U_LOG_E("Got get_tracked_pose_fn == NULL!");
+		assert(get_tracked_pose_fn != NULL);
+	}
+
+	if (destroy_fn == NULL) {
+		U_LOG_E("Got destroy_fn == NULL!");
+		assert(destroy_fn != NULL);
+	}
+
+	/*
+	 * This must be implemented by the xrt_device, but not necessarily by
+	 * the driver so use noop version.
+	 */
+	xdev->update_inputs = u_device_noop_update_inputs;
+
+	// This must be implemented by the driver.
+	xdev->get_tracked_pose = get_tracked_pose_fn;
+
+	/*
+	 * These are not required to be implemented by the xrt_device, so use
+	 * not implemented versions, and let the driver override if needed.
+	 */
+	xdev->get_hand_tracking = u_device_ni_get_hand_tracking;
+	xdev->get_face_tracking = u_device_ni_get_face_tracking;
+	xdev->get_body_skeleton = u_device_ni_get_body_skeleton;
+	xdev->get_body_joints = u_device_ni_get_body_joints;
+	xdev->reset_body_tracking_calibration_meta = u_device_ni_reset_body_tracking_calibration_meta;
+	xdev->set_body_tracking_calibration_override_meta = u_device_ni_set_body_tracking_calibration_override_meta;
+	xdev->set_output = u_device_ni_set_output;
+	xdev->get_output_limits = u_device_ni_get_output_limits;
+	xdev->get_presence = u_device_ni_get_presence;
+	xdev->begin_plane_detection_ext = u_device_ni_begin_plane_detection_ext;
+	xdev->destroy_plane_detection_ext = u_device_ni_destroy_plane_detection_ext;
+	xdev->get_plane_detection_state_ext = u_device_ni_get_plane_detection_state_ext;
+	xdev->get_plane_detections_ext = u_device_ni_get_plane_detections_ext;
+	xdev->get_view_poses = u_device_ni_get_view_poses;
+	xdev->compute_distortion = u_device_ni_compute_distortion;
+	xdev->get_visibility_mask = u_device_ni_get_visibility_mask;
+	xdev->ref_space_usage = u_device_ni_ref_space_usage;
+	xdev->is_form_factor_available = u_device_ni_is_form_factor_available;
+	xdev->get_battery_status = u_device_ni_get_battery_status;
+	xdev->get_brightness = u_device_ni_get_brightness;
+	xdev->set_brightness = u_device_ni_set_brightness;
+	xdev->begin_feature = u_device_ni_begin_feature;
+	xdev->end_feature = u_device_ni_end_feature;
+
+	// This must be implemented by the driver.
+	xdev->destroy = destroy_fn;
 }

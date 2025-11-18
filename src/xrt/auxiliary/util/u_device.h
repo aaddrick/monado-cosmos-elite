@@ -204,6 +204,48 @@ xrt_result_t
 u_device_noop_update_inputs(struct xrt_device *xdev);
 
 
+/*
+ *
+ * Helper function to fill in defaults.
+ *
+ */
+
+/*!
+ * Function pointer type for the device's get_tracked_pose function.
+ *
+ * @ingroup aux_util
+ */
+typedef xrt_result_t (*u_device_get_tracked_pose_function_t)(struct xrt_device *xdev,
+                                                             const enum xrt_input_name name,
+                                                             const int64_t at_timestamp_ns,
+                                                             struct xrt_space_relation *const out_relation);
+
+/*!
+ * Function pointer type for the device's destroy function.
+ *
+ * @ingroup aux_util
+ */
+typedef void (*u_device_destroy_function_t)(struct xrt_device *xdev);
+
+/*!
+ * Populate the device's function pointers with default implementations.
+ *
+ * This function fills in all device function pointers with either noop or
+ * not-implemented versions, allowing drivers to override only the functions
+ * they actually implement. The exceptions are get_tracked_pose and destroy,
+ * which must be implemented by the driver and are passed in as function
+ * pointers, these must not be NULL.
+ *
+ * @param[in,out] xdev The device to populate with default function pointers.
+ * @param[in] get_tracked_pose_fn The function pointer to the device's get_tracked_pose function.
+ * @param[in] destroy_fn The function pointer to the device's destroy function.
+ * @ingroup aux_util
+ */
+void
+u_device_populate_function_pointers(struct xrt_device *xdev,
+                                    u_device_get_tracked_pose_function_t get_tracked_pose_fn,
+                                    u_device_destroy_function_t destroy_fn);
+
 #ifdef __cplusplus
 }
 #endif
