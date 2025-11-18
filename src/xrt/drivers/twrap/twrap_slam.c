@@ -29,6 +29,7 @@
 #include <assert.h>
 
 #include "util/u_device.h"
+#include "util/u_device_ni.h"
 #include "math/m_space.h"
 #include "util/u_tracked_imu_3dof.h"
 

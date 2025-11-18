@@ -22,6 +22,7 @@
 
 #include "util/u_time.h"
 #include "util/u_device.h"
+#include "util/u_device_ni.h"
 #include "util/u_logging.h"
 
 #include "util/u_json.h"

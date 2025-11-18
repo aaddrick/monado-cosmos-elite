@@ -16,6 +16,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_device.h"
+#include "util/u_device_ni.h"
 #include "util/u_distortion_mesh.h"
 #include "util/u_var.h"
 #include "util/u_visibility_mask.h"

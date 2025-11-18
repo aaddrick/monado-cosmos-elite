@@ -29,6 +29,8 @@ add_library(
 	u_deque.h
 	u_device.c
 	u_device.h
+	u_device_ni.c
+	u_device_ni.h
 	u_distortion.c
 	u_distortion.h
 	u_distortion_mesh.c

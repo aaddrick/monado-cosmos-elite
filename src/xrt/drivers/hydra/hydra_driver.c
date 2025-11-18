@@ -31,6 +31,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_device.h"
+#include "util/u_device_ni.h"
 #include "util/u_misc.h"
 #include "util/u_time.h"
 #include "util/u_logging.h"

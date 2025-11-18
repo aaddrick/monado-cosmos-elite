@@ -28,6 +28,7 @@
 #include "os/os_hid.h"
 
 #include "util/u_device.h"
+#include "util/u_device_ni.h"
 #include "util/u_trace_marker.h"
 #include "util/u_var.h"
 
