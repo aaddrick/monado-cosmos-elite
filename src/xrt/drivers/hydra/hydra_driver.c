@@ -31,7 +31,6 @@
 
 #include "util/u_debug.h"
 #include "util/u_device.h"
-#include "util/u_device_ni.h"
 #include "util/u_misc.h"
 #include "util/u_time.h"
 #include "util/u_logging.h"
@@ -798,10 +797,8 @@ hydra_found(struct xrt_prober *xp,
 	for (size_t i = 0; i < 2; ++i) {
 		struct hydra_device *hd = hs->devs[i];
 
-		hd->base.destroy = hydra_device_destroy;
+		u_device_populate_function_pointers(&hd->base, hydra_device_get_tracked_pose, hydra_device_destroy);
 		hd->base.update_inputs = hydra_device_update_inputs;
-		hd->base.get_tracked_pose = hydra_device_get_tracked_pose;
-		hd->base.set_output = u_device_ni_set_output;
 		hd->base.name = XRT_DEVICE_HYDRA;
 		snprintf(hd->base.str, XRT_DEVICE_NAME_LEN, "%s %i", "Razer Hydra Controller", (int)(i + 1));
 		snprintf(hd->base.serial, XRT_DEVICE_NAME_LEN, "%s%i", "RZRHDRC", (int)(i + 1));

@@ -28,7 +28,6 @@
 #include "os/os_hid.h"
 
 #include "util/u_device.h"
-#include "util/u_device_ni.h"
 #include "util/u_trace_marker.h"
 #include "util/u_var.h"
 
@@ -607,11 +606,9 @@ rift_s_controller_create(struct rift_s_system *sys, enum xrt_device_type device_
 
 	os_mutex_init(&ctrl->mutex);
 
+	u_device_populate_function_pointers(&ctrl->base, rift_s_controller_get_tracked_pose, rift_s_controller_destroy);
 	ctrl->base.update_inputs = rift_s_controller_update_inputs;
-	ctrl->base.set_output = u_device_ni_set_output;
-	ctrl->base.get_tracked_pose = rift_s_controller_get_tracked_pose;
 	ctrl->base.get_view_poses = u_device_get_view_poses;
-	ctrl->base.destroy = rift_s_controller_destroy;
 	ctrl->base.name = XRT_DEVICE_TOUCH_CONTROLLER;
 	ctrl->base.device_type = device_type;
 

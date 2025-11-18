@@ -21,7 +21,6 @@
 #include "util/u_misc.h"
 #include "util/u_debug.h"
 #include "util/u_device.h"
-#include "util/u_device_ni.h"
 #include "util/u_time.h"
 #include "util/u_distortion_mesh.h"
 #include "util/u_logging.h"
@@ -758,10 +757,9 @@ create_hmd(ohmd_context *ctx, int device_idx, int device_flags)
 
 	enum u_device_alloc_flags flags = U_DEVICE_ALLOC_HMD;
 	struct oh_device *ohd = U_DEVICE_ALLOCATE(struct oh_device, flags, 1, 0);
+	u_device_populate_function_pointers(&ohd->base, oh_device_get_tracked_pose, oh_device_destroy);
 	ohd->base.update_inputs = oh_device_update_inputs;
-	ohd->base.get_tracked_pose = oh_device_get_tracked_pose;
 	ohd->base.get_view_poses = u_device_get_view_poses;
-	ohd->base.destroy = oh_device_destroy;
 	ohd->base.inputs[0].name = XRT_INPUT_GENERIC_HEAD_POSE;
 	ohd->base.name = XRT_DEVICE_GENERIC_HMD;
 	ohd->ctx = ctx;
@@ -1075,11 +1073,9 @@ create_controller(ohmd_context *ctx, int device_idx, int device_flags, enum xrt_
 
 	enum u_device_alloc_flags flags = 0;
 	struct oh_device *ohd = U_DEVICE_ALLOCATE(struct oh_device, flags, input_count, output_count);
+	u_device_populate_function_pointers(&ohd->base, oh_device_get_tracked_pose, oh_device_destroy);
 	ohd->base.update_inputs = oh_device_update_inputs;
 	ohd->base.set_output = oh_device_set_output;
-	ohd->base.get_tracked_pose = oh_device_get_tracked_pose;
-	ohd->base.get_view_poses = u_device_ni_get_view_poses;
-	ohd->base.destroy = oh_device_destroy;
 	if (oculus_touch) {
 		ohd->ohmd_device_type = OPENHMD_OCULUS_RIFT_CONTROLLER;
 		ohd->base.name = XRT_DEVICE_TOUCH_CONTROLLER;

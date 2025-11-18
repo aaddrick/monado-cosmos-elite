@@ -16,7 +16,6 @@
 
 #include "util/u_debug.h"
 #include "util/u_device.h"
-#include "util/u_device_ni.h"
 #include "util/u_distortion_mesh.h"
 #include "util/u_var.h"
 #include "util/u_visibility_mask.h"
@@ -355,10 +354,7 @@ android_device_create(void)
 	struct android_device *d = U_DEVICE_ALLOCATE(struct android_device, flags, 1, 0);
 
 	d->base.name = XRT_DEVICE_GENERIC_HMD;
-	d->base.destroy = android_device_destroy;
-	d->base.update_inputs = u_device_noop_update_inputs;
-	d->base.set_output = u_device_ni_set_output;
-	d->base.get_tracked_pose = android_device_get_tracked_pose;
+	u_device_populate_function_pointers(&d->base, android_device_get_tracked_pose, android_device_destroy);
 	d->base.get_view_poses = u_device_get_view_poses;
 	d->base.get_visibility_mask = u_device_get_visibility_mask;
 	d->base.compute_distortion = android_device_compute_distortion;

@@ -15,7 +15,6 @@
 #include "util/u_misc.h"
 #include "util/u_debug.h"
 #include "util/u_device.h"
-#include "util/u_device_ni.h"
 #include "util/u_distortion_mesh.h"
 
 #include "math/m_api.h"
@@ -125,12 +124,8 @@ r_hmd_create(struct r_hub *r)
 	    struct r_hmd, flags, input_count, output_count);
 
 	// Setup the basics.
-	rh->base.update_inputs = u_device_noop_update_inputs;
-	rh->base.get_tracked_pose = r_hmd_get_tracked_pose;
-	rh->base.get_hand_tracking = u_device_ni_get_hand_tracking;
+	u_device_populate_function_pointers(&rh->base, r_hmd_get_tracked_pose, r_hmd_destroy);
 	rh->base.get_view_poses = r_hmd_get_view_poses;
-	rh->base.set_output = u_device_ni_set_output;
-	rh->base.destroy = r_hmd_destroy;
 	rh->base.tracking_origin = &r->origin;
 	rh->base.supported.orientation_tracking = true;
 	rh->base.supported.position_tracking = true;

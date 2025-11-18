@@ -24,7 +24,6 @@
 #include "util/u_misc.h"
 #include "util/u_debug.h"
 #include "util/u_device.h"
-#include "util/u_device_ni.h"
 #include "util/u_distortion_mesh.h"
 #include "util/u_config_json.h"
 
@@ -514,11 +513,9 @@ cemu_devices_create(struct xrt_device *head, struct xrt_device *hands, struct xr
 		cemud[i]->base.inputs[CEMU_INDEX_GRIP].name = XRT_INPUT_HAND_CTRL_EMU_GRIP_POSE;
 		cemud[i]->base.inputs[CEMU_INDEX_AIM].name = XRT_INPUT_HAND_CTRL_EMU_AIM_POSE;
 
+		u_device_populate_function_pointers(&cemud[i]->base, cemu_device_get_tracked_pose, cemu_device_destroy);
 		cemud[i]->base.update_inputs = cemu_device_update_inputs;
-		cemud[i]->base.get_tracked_pose = cemu_device_get_tracked_pose;
-		cemud[i]->base.set_output = u_device_ni_set_output;
 		cemud[i]->base.get_hand_tracking = cemu_device_get_hand_tracking;
-		cemud[i]->base.destroy = cemu_device_destroy;
 
 		cemud[i]->base.device_type =
 		    i ? XRT_DEVICE_TYPE_RIGHT_HAND_CONTROLLER : XRT_DEVICE_TYPE_LEFT_HAND_CONTROLLER;
