@@ -13,6 +13,9 @@
 
 #pragma once
 
+#include "util/u_device.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,7 +61,8 @@ void
 ipc_client_xdev_init(struct ipc_client_xdev *icx,
                      struct ipc_connection *ipc_c,
                      struct xrt_tracking_origin *xtrack,
-                     uint32_t device_id);
+                     uint32_t device_id,
+                     u_device_destroy_function_t destroy_fn);
 
 /*!
  * Frees any memory that was allocated as part of init and resets some pointers.

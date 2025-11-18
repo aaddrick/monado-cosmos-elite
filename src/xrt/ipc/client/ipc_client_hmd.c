@@ -321,14 +321,13 @@ ipc_client_hmd_create(struct ipc_connection *ipc_c, struct xrt_tracking_origin *
 	ipc_client_hmd_t *ich = U_DEVICE_ALLOCATE(ipc_client_hmd_t, flags, 0, 0);
 
 	// Fills in almost everything a regular device needs.
-	ipc_client_xdev_init(ich, ipc_c, xtrack, device_id);
+	ipc_client_xdev_init(ich, ipc_c, xtrack, device_id, ipc_client_hmd_destroy);
 
 	// Fill in needed HMD functions, and destroy.
 	ich->base.get_view_poses = ipc_client_hmd_get_view_poses;
 	ich->base.compute_distortion = ipc_client_hmd_compute_distortion;
 	ich->base.is_form_factor_available = ipc_client_hmd_is_form_factor_available;
 	ich->base.get_visibility_mask = ipc_client_hmd_get_visibility_mask;
-	ich->base.destroy = ipc_client_hmd_destroy;
 	ich->base.get_brightness = ipc_client_hmd_get_brightness;
 	ich->base.set_brightness = ipc_client_hmd_set_brightness;
 

@@ -20,7 +20,6 @@
 #include "util/u_misc.h"
 #include "util/u_debug.h"
 #include "util/u_device.h"
-#include "util/u_device_ni.h"
 
 #include "client/ipc_client.h"
 #include "client/ipc_client_connection.h"
@@ -392,7 +391,8 @@ void
 ipc_client_xdev_init(struct ipc_client_xdev *icx,
                      struct ipc_connection *ipc_c,
                      struct xrt_tracking_origin *xtrack,
-                     uint32_t device_id)
+                     uint32_t device_id,
+                     u_device_destroy_function_t destroy_fn)
 {
 	// Helpers.
 	struct ipc_shared_memory *ism = ipc_c->ism;
@@ -402,9 +402,14 @@ ipc_client_xdev_init(struct ipc_client_xdev *icx,
 	icx->ipc_c = ipc_c;
 	icx->device_id = device_id;
 
+	/*
+	 * Fill in not implemented or noop versions first,
+	 * destroy gets filled in by either device or HMD.
+	 */
+	u_device_populate_function_pointers(&icx->base, ipc_client_xdev_get_tracked_pose, destroy_fn);
+
 	// Shared implemented functions.
 	icx->base.update_inputs = ipc_client_xdev_update_inputs;
-	icx->base.get_tracked_pose = ipc_client_xdev_get_tracked_pose;
 	icx->base.get_hand_tracking = ipc_client_xdev_get_hand_tracking;
 	icx->base.get_face_tracking = ipc_client_xdev_get_face_tracking;
 	icx->base.get_body_skeleton = ipc_client_xdev_get_body_skeleton;
@@ -421,13 +426,6 @@ ipc_client_xdev_init(struct ipc_client_xdev *icx,
 	icx->base.destroy_plane_detection_ext = ipc_client_xdev_destroy_plane_detection_ext;
 	icx->base.get_plane_detection_state_ext = ipc_client_xdev_get_plane_detection_state_ext;
 	icx->base.get_plane_detections_ext = ipc_client_xdev_get_plane_detections_ext;
-
-	// Not implemented functions, some get overridden.
-	icx->base.get_view_poses = u_device_ni_get_view_poses;
-	icx->base.compute_distortion = u_device_ni_compute_distortion;
-	icx->base.get_visibility_mask = u_device_ni_get_visibility_mask;
-	icx->base.is_form_factor_available = u_device_ni_is_form_factor_available;
-	icx->base.get_battery_status = u_device_ni_get_battery_status;
 
 	// Copying the information from the isdev.
 	icx->base.device_type = isdev->device_type;

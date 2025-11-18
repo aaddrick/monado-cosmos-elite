@@ -86,10 +86,7 @@ ipc_client_device_create(struct ipc_connection *ipc_c, struct xrt_tracking_origi
 	ipc_client_device_t *icd = U_DEVICE_ALLOCATE(ipc_client_device_t, flags, 0, 0);
 
 	// Fills in almost everything a regular device needs.
-	ipc_client_xdev_init(icd, ipc_c, xtrack, device_id);
-
-	// Need to set the destroy function.
-	icd->base.destroy = ipc_client_device_destroy;
+	ipc_client_xdev_init(icd, ipc_c, xtrack, device_id, ipc_client_device_destroy);
 
 	// Setup variable tracker.
 	u_var_add_root(icd, icd->base.str, true);
