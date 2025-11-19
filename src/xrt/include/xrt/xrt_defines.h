@@ -1481,6 +1481,41 @@ union xrt_input_value {
 #define XRT_OUTPUT_TYPE_BITMASK 0xffu
 
 /*!
+ * @brief Create an enum value for xrt_output_name that packs an ID and output
+ * type.
+ *
+ * @param id an integer
+ * @param type The suffix of an xrt_output_type value name: `XRT_OUTPUT_TYPE_` is
+ * prepended automatically.
+ *
+ * @see xrt_output_name
+ * @ingroup xrt_iface
+ */
+#define XRT_OUTPUT_NAME(id, type) ((UINT32_C(id) << XRT_OUTPUT_TYPE_BITWIDTH) | (uint32_t)XRT_OUTPUT_TYPE_##type)
+
+/*!
+ * @brief Extract the xrt_output_type from an xrt_output_name.
+ *
+ * @param name An xrt_output_name value
+ *
+ * @relates xrt_output_name
+ * @returns @ref xrt_output_type
+ * @ingroup xrt_iface
+ */
+#define XRT_GET_OUTPUT_TYPE(name) ((enum xrt_output_type)(name & XRT_OUTPUT_TYPE_BITMASK))
+
+/*!
+ * @brief Extract the xrt_output_name id from an xrt_output_name.
+ *
+ * @param name An xrt_output_name value
+ *
+ * @relates xrt_output_name
+ * @returns The extracted id.
+ * @ingroup xrt_iface
+ */
+#define XRT_GET_OUTPUT_ID(name) ((uint32_t)(name >> XRT_OUTPUT_TYPE_BITWIDTH))
+
+/*!
  * Base type of this output.
  *
  * @ingroup xrt_iface
@@ -1492,8 +1527,6 @@ enum xrt_output_type
 	XRT_OUTPUT_TYPE_FORCE_FEEDBACK        = 0x01,
 	// clang-format on
 };
-
-#define XRT_OUTPUT_NAME(id, type) ((UINT32_C(id) << XRT_OUTPUT_TYPE_BITWIDTH) | (uint32_t)XRT_OUTPUT_TYPE_##type)
 
 enum xrt_face_expression2_fb
 {
