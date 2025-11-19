@@ -29,7 +29,50 @@ extern "C" {
  * they can easily be chained together to form a debug message printing out
  * various information. Most of the final logging functions in Monado inserts a
  * newline at the end of the message and we don't want two to be inserted.
+ *
+ * There are also helpers that goes from an enum to a string that that doesn't
+ * use the delegate to do the printing, these returns string that are compiled
+ * into the binary. They will return 'UNKNOWN' if they don't know the value.
+ * But can be made to return NULL on unknown.
  */
+
+/*!
+ * Returns a string of the input name, or NULL if invalid.
+ *
+ * @ingroup aux_pretty
+ */
+const char *
+u_str_xrt_input_name_or_null(enum xrt_input_name name);
+
+/*!
+ * Returns a string of the output name, or NULL if invalid.
+ *
+ * @ingroup aux_pretty
+ */
+const char *
+u_str_xrt_output_name_or_null(enum xrt_output_name name);
+
+/*!
+ * Returns a string of the device name, or NULL if invalid.
+ *
+ * @ingroup aux_pretty
+ */
+const char *
+u_str_xrt_device_name_or_null(enum xrt_device_name name);
+
+#define U_STR_NO_NULL(NAME, TYPE)                                                                                      \
+	static inline const char *NAME(TYPE enumerate)                                                                 \
+	{                                                                                                              \
+		const char *str = NAME##_or_null(enumerate);                                                           \
+		return str != NULL ? str : "UNKNOWN";                                                                  \
+	}
+
+U_STR_NO_NULL(u_str_xrt_input_name, enum xrt_input_name)
+U_STR_NO_NULL(u_str_xrt_output_name, enum xrt_output_name)
+U_STR_NO_NULL(u_str_xrt_device_name, enum xrt_device_name)
+
+#undef U_STR_NO_NULL
+
 
 /*!
  * Function prototype for receiving pretty printed strings.

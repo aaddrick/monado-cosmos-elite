@@ -1,4 +1,5 @@
 // Copyright 2022-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -39,8 +40,20 @@ get_xrt_input_type_short_str(enum xrt_input_type type)
 	case XRT_INPUT_TYPE_HAND_TRACKING: return "HAND_TRACKING";
 	case XRT_INPUT_TYPE_FACE_TRACKING: return "FACE_TRACKING";
 	case XRT_INPUT_TYPE_BODY_TRACKING: return "BODY_TRACKING";
-	default: return "<UNKNOWN>";
 	}
+
+	return "<UNKNOWN>";
+}
+
+const char *
+get_xrt_output_type_short_str(enum xrt_output_type type)
+{
+	switch (type) {
+	case XRT_OUTPUT_TYPE_VIBRATION: return "XRT_OUTPUT_TYPE_VIBRATION";
+	case XRT_OUTPUT_TYPE_FORCE_FEEDBACK: return "XRT_OUTPUT_TYPE_FORCE_FEEDBACK";
+	}
+
+	return "<UNKNOWN>";
 }
 
 void
@@ -65,6 +78,61 @@ stack_only_sink(void *ptr, const char *str, size_t length)
 	// Null terminate and update used.
 	sink->buffer[used] = '\0';
 	sink->used = used;
+}
+
+
+/*
+ *
+ * 'Exported' str functions.
+ *
+ */
+
+const char *
+u_str_xrt_input_name_or_null(enum xrt_input_name name)
+{
+#define XRT_INPUT_LIST_TO_CASE(NAME, _)                                                                                \
+	case NAME: return #NAME;
+
+	// No default case so we get warnings of missing entries.
+	switch (name) {
+		XRT_INPUT_LIST(XRT_INPUT_LIST_TO_CASE)
+	}
+
+#undef XRT_INPUT_LIST_TO_CASE
+
+	return NULL;
+}
+
+const char *
+u_str_xrt_output_name_or_null(enum xrt_output_name name)
+{
+#define XRT_OUTPUT_LIST_TO_CASE(NAME, _)                                                                               \
+	case NAME: return #NAME;
+
+	// No default case so we get warnings of missing entries.
+	switch (name) {
+		XRT_OUTPUT_LIST(XRT_OUTPUT_LIST_TO_CASE)
+	}
+
+#undef XRT_OUTPUT_LIST_TO_CASE
+
+	return NULL;
+}
+
+const char *
+u_str_xrt_device_name_or_null(enum xrt_device_name name)
+{
+#define XRT_DEVICE_NAME_LIST_TO_CASE(NAME)                                                                             \
+	case NAME: return #NAME;
+
+	// No default case so we get warnings of missing entries.
+	switch (name) {
+		XRT_DEVICE_NAME_LIST(XRT_DEVICE_NAME_LIST_TO_CASE)
+	}
+
+#undef XRT_DEVICE_NAME_LIST_TO_CASE
+
+	return NULL;
 }
 
 
@@ -112,17 +180,13 @@ u_pp(struct u_pp_delegate dg, const char *fmt, ...)
 void
 u_pp_xrt_input_name(struct u_pp_delegate dg, enum xrt_input_name name)
 {
-#define XRT_INPUT_LIST_TO_CASE(NAME, _)                                                                                \
-	case NAME: DG(#NAME); return;
-
-	switch (name) {
-		XRT_INPUT_LIST(XRT_INPUT_LIST_TO_CASE)
+	const char *might_be_null = u_str_xrt_input_name_or_null(name);
+	if (might_be_null != NULL) {
+		DG(might_be_null);
+		return;
 	}
 
-#undef XRT_INPUT_LIST_TO_CASE
-
 	/*
-	 * No default case so we get warnings of missing entries.
 	 * Invalid values handled below.
 	 */
 
@@ -136,52 +200,21 @@ u_pp_xrt_input_name(struct u_pp_delegate dg, enum xrt_input_name name)
 void
 u_pp_xrt_output_name(struct u_pp_delegate dg, enum xrt_output_name name)
 {
-#define XRT_OUTPUT_CASE(NAME)                                                                                          \
-	case NAME: DG(#NAME); return
-
-	switch (name) {
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_SIMPLE_VIBRATION);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_PSMV_RUMBLE_VIBRATION);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_INDEX_HAPTIC);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_VIVE_HAPTIC);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_WMR_HAPTIC);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_XBOX_HAPTIC_LEFT);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_XBOX_HAPTIC_RIGHT);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_XBOX_HAPTIC_LEFT_TRIGGER);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_XBOX_HAPTIC_RIGHT_TRIGGER);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_TOUCH_HAPTIC);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_FORCE_FEEDBACK_LEFT);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_FORCE_FEEDBACK_RIGHT);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_G2_CONTROLLER_HAPTIC);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_ODYSSEY_CONTROLLER_HAPTIC);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_ML2_CONTROLLER_VIBRATION);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_PSSENSE_VIBRATION);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_PSSENSE_TRIGGER_FEEDBACK);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_VIVE_TRACKER_HAPTIC);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_OPPO_MR_HAPTIC);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_PICO_NEO3_HAPTIC);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_PICO4_HAPTIC);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_VIVE_COSMOS_HAPTIC);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_VIVE_FOCUS3_HAPTIC);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_TOUCH_PRO_HAPTIC);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_TOUCH_PRO_HAPTIC_TRIGGER);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_TOUCH_PRO_HAPTIC_THUMB);
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_TOUCH_PLUS_HAPTIC);
-
-		XRT_OUTPUT_CASE(XRT_OUTPUT_NAME_PSVR2_HAPTIC);
+	const char *might_be_null = u_str_xrt_output_name_or_null(name);
+	if (might_be_null != NULL) {
+		DG(might_be_null);
+		return;
 	}
 
-#undef XRT_OUTPUT_CASE
+	/*
+	 * Invalid values handled below.
+	 */
+
+	uint32_t id = XRT_GET_OUTPUT_ID(name);
+	enum xrt_output_type type = XRT_GET_OUTPUT_TYPE(name);
+	const char *str = get_xrt_output_type_short_str(type);
+
+	u_pp(dg, "XRT_OUTPUT_0x%04x_%s", id, str);
 }
 
 void
