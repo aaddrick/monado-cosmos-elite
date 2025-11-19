@@ -514,6 +514,46 @@ oxr_action_get_pose_input(struct oxr_session *sess,
  */
 
 static bool
+find_xdev_name_from_pairs(const struct xrt_device *xdev,
+                          const struct xrt_binding_profile *xbp,
+                          enum xrt_input_name from_name,
+                          enum xrt_input_name *out_name)
+{
+	if (from_name == 0) {
+		*out_name = 0;
+		return true; // Not asking for anything, just keep going.
+	}
+
+	/*
+	 * For asymmetrical devices like PS Sense being re-bound to a symmetrical
+	 * "device" like simple controller can be problemantic as depending on
+	 * which hand it is menu is bound to different inputs. Instead of making
+	 * the driver have two completely unique binding mappings per hand, we
+	 * instead loop over all pairs finding the first match. In other words
+	 * this means there can be multiple of the same 'from' value in the
+	 * array of input pairs.
+	 */
+	for (size_t i = 0; i < xbp->input_count; i++) {
+		if (from_name != xbp->inputs[i].from) {
+			continue;
+		}
+
+		// What is the name on the xdev?
+		enum xrt_input_name xdev_name = xbp->inputs[i].device;
+
+		// See if we can't find it.
+		for (uint32_t k = 0; k < xdev->input_count; k++) {
+			if (xdev->inputs[k].name == xdev_name) {
+				*out_name = xdev_name;
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+static bool
 do_inputs(struct oxr_binding *binding_point,
           struct xrt_device *xdev,
           struct xrt_binding_profile *xbp,
@@ -522,43 +562,46 @@ do_inputs(struct oxr_binding *binding_point,
           uint32_t *input_count)
 {
 	enum xrt_input_name name = 0;
-	if (xbp == NULL) {
-		name = binding_point->input;
-	} else {
-		for (size_t i = 0; i < xbp->input_count; i++) {
-			if (binding_point->input != xbp->inputs[i].from) {
-				continue;
-			}
+	enum xrt_input_name dpad_activate_name = 0;
 
-			// We have found a device mapping.
-			name = xbp->inputs[i].device;
-			break;
+	if (xbp != NULL) {
+		bool t1 = find_xdev_name_from_pairs(xdev, xbp, binding_point->input, &name);
+		bool t2 = find_xdev_name_from_pairs(xdev, xbp, binding_point->dpad_activate, &dpad_activate_name);
+
+		// We couldn't find the needed inputs on the device.
+		if (!t1 || !t2) {
+			return false;
 		}
+	} else {
+		name = binding_point->input;
+		dpad_activate_name = binding_point->dpad_activate;
+	}
 
-		// Didn't find a mapping.
-		if (name == 0) {
+	struct xrt_input *input = NULL;
+	struct xrt_input *dpad_activate_input = NULL;
+
+	// Early out if there is no such input.
+	if (!oxr_xdev_find_input(xdev, name, &input)) {
+		return false;
+	}
+
+	// Check this before allocating an input.
+	if (dpad_activate_name != 0) {
+		if (!oxr_xdev_find_input(xdev, dpad_activate_name, &dpad_activate_input)) {
 			return false;
 		}
 	}
 
-	struct xrt_input *input = NULL;
-	if (oxr_xdev_find_input(xdev, name, &input)) {
-		uint32_t index = (*input_count)++;
-		inputs[index].input = input;
-		inputs[index].xdev = xdev;
-		inputs[index].bound_path = matched_path;
-		if (binding_point->dpad_activate != 0) {
-			struct xrt_input *dpad_activate = NULL;
-			if (!oxr_xdev_find_input(xdev, binding_point->dpad_activate, &dpad_activate)) {
-				return false;
-			}
-			inputs[index].dpad_activate_name = binding_point->dpad_activate;
-			inputs[index].dpad_activate = dpad_activate;
-		}
-		return true;
+	uint32_t index = (*input_count)++;
+	inputs[index].input = input;
+	inputs[index].xdev = xdev;
+	inputs[index].bound_path = matched_path;
+	if (dpad_activate_input != NULL) {
+		inputs[index].dpad_activate_name = dpad_activate_name;
+		inputs[index].dpad_activate = dpad_activate_input;
 	}
 
-	return false;
+	return true;
 }
 
 static bool
