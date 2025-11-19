@@ -9,7 +9,6 @@
  * @ingroup oxr_main
  */
 
-#include "b_generated_bindings_helpers.h"
 #include "oxr_bindings/b_oxr_generated_bindings.h"
 #include "util/u_debug.h"
 #include "util/u_time.h"
@@ -771,7 +770,7 @@ get_binding(struct oxr_logger *log,
 		if (found) {
 			if (xbp == NULL) {
 				oxr_slog(slog, "\t\t\t\tBound (xdev '%s'): %s!\n", xdev->str,
-				         xrt_input_name_string(binding_points[i]->input));
+				         u_str_xrt_input_name(binding_points[i]->input));
 			} else {
 				oxr_slog(slog, "\t\t\t\tBound (xbp)!\n");
 			}
@@ -1626,7 +1625,7 @@ oxr_action_bind_io(struct oxr_logger *log,
 			// Only add the input if we can find a transform.
 
 			oxr_slog(slog, "\t\tFinding transforms for '%s' to action '%s' of type '%s'\n",
-			         xrt_input_name_string(inputs[i].input->name), act_ref->name,
+			         u_str_xrt_input_name(inputs[i].input->name), act_ref->name,
 			         xr_action_type_to_str(act_ref->action_type));
 
 			enum oxr_dpad_region dpad_region;
@@ -1667,7 +1666,7 @@ oxr_action_bind_io(struct oxr_logger *log,
 				struct xrt_input *input = cache->inputs[i].input;
 				enum xrt_input_type t = XRT_GET_INPUT_TYPE(input->name);
 				bool active = input->active;
-				oxr_slog(slog, "\t\t\t'%s' ('%s') on '%s' (%s)\n", xrt_input_name_string(input->name),
+				oxr_slog(slog, "\t\t\t'%s' ('%s') on '%s' (%s)\n", u_str_xrt_input_name(input->name),
 				         xrt_input_type_to_str(t), cache->inputs[i].xdev->str,
 				         active ? "active" : "inactive");
 			}
