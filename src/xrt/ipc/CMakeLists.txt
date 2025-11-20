@@ -28,6 +28,23 @@ foreach(
 		)
 endforeach()
 
+# Generate IPC structures list in the build root
+add_custom_command(
+	OUTPUT "${CMAKE_BINARY_DIR}/ipc-structs.txt"
+	COMMAND
+		${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.py
+		${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.json
+		"${CMAKE_BINARY_DIR}/ipc-structs.txt"
+	VERBATIM
+	DEPENDS
+		${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.py
+		${CMAKE_CURRENT_SOURCE_DIR}/shared/ipcproto/common.py
+		${CMAKE_CURRENT_SOURCE_DIR}/shared/proto.json
+	COMMENT "Generating ipc-structs.txt from protocol JSON description"
+	)
+
+add_custom_target(ipc_structs_list ALL DEPENDS "${CMAKE_BINARY_DIR}/ipc-structs.txt")
+
 set(IPC_COMMON_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/ipc_protocol_generated.h
     shared/ipc_message_channel.h

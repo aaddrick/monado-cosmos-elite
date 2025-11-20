@@ -520,7 +520,7 @@ def main():
             generate_server_c(output, p)
         if output.endswith("ipc_server_generated.h"):
             generate_server_header(output, p)
-        if output.endswith("structs.txt"):
+        if output.endswith("structs.txt") or output.endswith("ipc-structs.txt"):
             generate_struct_names(output, p)
 
 
