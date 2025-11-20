@@ -142,9 +142,8 @@ reuse:
     - .gitlab-ci/ci-cmake-build.sh {{- make_cmake_args(job.cmake_defines) }}
 {%- if job.pahole %}
 
-    - src/xrt/ipc/shared/proto.py src/xrt/ipc/shared/proto.json structs.txt
     - mkdir -p "{{ job.name}}"
-    - pahole --sizes --class_name file://structs.txt build/src/xrt/targets/openxr/libopenxr_monado.so > "{{ job.name}}/ipc-sizes.txt"{% endif %}
+    - pahole --sizes --class_name file://build/ipc-structs.txt build/src/xrt/targets/openxr/libopenxr_monado.so > "{{ job.name}}/ipc-sizes.txt"{% endif %}
 
 {#- gradle builds -#}
 {%- elif "android" in job.name %}

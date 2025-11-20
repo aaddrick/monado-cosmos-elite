@@ -369,9 +369,8 @@ debian:cmake-no-opencv:
 
     - .gitlab-ci/prebuild.sh
     - .gitlab-ci/ci-cmake-build.sh -DCMAKE_BUILD_TYPE=Debug -DXRT_HAVE_OPENCV=OFF
-    - src/xrt/ipc/shared/proto.py src/xrt/ipc/shared/proto.json structs.txt
     - mkdir -p "debian:cmake-no-opencv"
-    - pahole --sizes --class_name file://structs.txt build/src/xrt/targets/openxr/libopenxr_monado.so > "debian:cmake-no-opencv/ipc-sizes.txt"
+    - pahole --sizes --class_name file://build/ipc-structs.txt build/src/xrt/targets/openxr/libopenxr_monado.so > "debian:cmake-no-opencv/ipc-sizes.txt"
     - cd build && ctest --output-on-failure
   artifacts:
     paths:
@@ -408,9 +407,8 @@ debian:cmake:32bit:
 
     - .gitlab-ci/prebuild.sh
     - .gitlab-ci/ci-cmake-build.sh -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=.gitlab-ci/i386.cmake -DXRT_HAVE_OPENCV=OFF
-    - src/xrt/ipc/shared/proto.py src/xrt/ipc/shared/proto.json structs.txt
     - mkdir -p "debian:cmake:32bit"
-    - pahole --sizes --class_name file://structs.txt build/src/xrt/targets/openxr/libopenxr_monado.so > "debian:cmake:32bit/ipc-sizes.txt"
+    - pahole --sizes --class_name file://build/ipc-structs.txt build/src/xrt/targets/openxr/libopenxr_monado.so > "debian:cmake:32bit/ipc-sizes.txt"
     - cd build && ctest --output-on-failure
   artifacts:
     paths:
