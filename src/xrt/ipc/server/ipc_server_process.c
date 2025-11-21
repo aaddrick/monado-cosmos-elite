@@ -1103,9 +1103,6 @@ ipc_server_main_common(const struct ipc_server_main_info *ismi,
 		return -1;
 	}
 
-	// Start the debug UI now (if enabled).
-	u_debug_gui_start(s->debug_gui, s->xinst, s->xsysd);
-
 	// Tell the callbacks we are entering the main-loop.
 	callbacks->mainloop_entering(s, s->xinst, data);
 
@@ -1117,6 +1114,9 @@ ipc_server_main_common(const struct ipc_server_main_info *ismi,
 	if (xret != XRT_SUCCESS) {
 		U_LOG_CHK_ONLY_PRINT(log_level, xret, "ipc_server_init_system_if_available_locked");
 	}
+
+	// Start the debug UI now (if enabled).
+	u_debug_gui_start(s->debug_gui, s->xinst, s->xsysd);
 
 	// Main loop.
 	ret = main_loop(s);
