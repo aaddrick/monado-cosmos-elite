@@ -212,6 +212,21 @@ struct vk_bundle
 
 	struct
 	{
+		//! Maximum number of sampler objects, as created by vkCreateSampler, which can simultaneously exist on
+		uint32_t max_sampler_allocation_count;
+
+		//! Maximum number of descriptor sets that can be simultaneously used by a pipeline.
+		uint32_t max_bound_descriptor_sets;
+
+		//! Maximum number of samplers that can be included in a pipeline layout.
+		uint32_t max_descriptor_set_samplers;
+
+		//! Maximum number of sampled images that can be included in a pipeline layout.
+		uint32_t max_descriptor_set_sampled_images;
+
+		//! Maximum number of samplers that can be accessible to a single shader stage in a pipeline layout.
+		uint32_t max_per_stage_descriptor_samplers;
+
 		//! Per stage limit on sampled images (includes combined).
 		uint32_t max_per_stage_descriptor_sampled_images;
 

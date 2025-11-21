@@ -241,6 +241,12 @@ fill_in_device_features(struct vk_bundle *vk, const uint32_t queue_family_index)
 
 	vk->features.timestamp_compute_and_graphics = pdp.limits.timestampComputeAndGraphics;
 	vk->features.timestamp_period = pdp.limits.timestampPeriod;
+
+	vk->limits.max_sampler_allocation_count = pdp.limits.maxSamplerAllocationCount;
+	vk->limits.max_bound_descriptor_sets = pdp.limits.maxBoundDescriptorSets;
+	vk->limits.max_descriptor_set_samplers = pdp.limits.maxDescriptorSetSamplers;
+	vk->limits.max_descriptor_set_sampled_images = pdp.limits.maxDescriptorSetSampledImages;
+	vk->limits.max_per_stage_descriptor_samplers = pdp.limits.maxPerStageDescriptorSamplers;
 	vk->limits.max_per_stage_descriptor_sampled_images = pdp.limits.maxPerStageDescriptorSampledImages;
 	vk->limits.max_per_stage_descriptor_storage_images = pdp.limits.maxPerStageDescriptorStorageImages;
 
