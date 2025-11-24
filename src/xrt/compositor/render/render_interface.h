@@ -93,12 +93,30 @@ extern "C" {
 //! The binding that the shared layer fragment shader has its source on.
 #define RENDER_BINDING_LAYER_SHARED_SRC 1
 
+/*!
+ * The maximum number samplers per view that can be used by the compute shader
+ * for layer composition (layer.comp)
+ */
+#define RENDER_CS_MAX_SAMPLERS_PER_VIEW 2
 
 /*
  *
  * Util functions.
  *
  */
+
+/*!
+ * Determines the maximum number of compositor layers supported based on Vulkan
+ * device limits and the composition path being used.
+ *
+ * @param vk                 Vulkan bundle containing device properties
+ * @param use_compute        True if using compute pipeline path, false for graphics
+ * @param desired_max_layers Maximum layers requested by the compositor
+ * @return                   Actual maximum layers supported, clamped by device limits (minimum 16)
+ *
+ */
+uint32_t
+render_max_layers_capable(const struct vk_bundle *vk, bool use_compute, uint32_t desired_max_layers);
 
 /*!
  * Create a simplified projection matrix for timewarp.

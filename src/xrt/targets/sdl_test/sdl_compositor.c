@@ -256,7 +256,13 @@ compositor_init_sys_info(struct sdl_compositor *c, struct sdl_program *sp, struc
 {
 	struct xrt_system_compositor_info *sys_info = &c->sys_info;
 
-	// Required by OpenXR spec.
+	/*
+	 * Required by OpenXR spec (minimum 16).
+	 *
+	 * NOTE: When using Vulkan compositor components (c/render, c/util),
+	 * call render_max_layers_capable() to clamp this value based on
+	 * actual device limits.
+	 */
 	sys_info->max_layers = XRT_MAX_LAYERS;
 
 	// UUIDs and LUID already set in vk init.
