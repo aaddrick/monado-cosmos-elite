@@ -72,7 +72,11 @@
 /*!
  * Max number of layers which can be handled at once.
  */
+#ifdef XRT_OS_ANDROID
+#define XRT_MAX_LAYERS 32
+#else
 #define XRT_MAX_LAYERS 128
+#endif
 
 /*!
  * @}
