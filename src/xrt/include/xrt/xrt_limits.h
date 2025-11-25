@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "xrt/xrt_config_os.h"
 #include "xrt/xrt_compiler.h"
 
 
@@ -74,8 +75,10 @@
  */
 #ifdef XRT_OS_ANDROID
 #define XRT_MAX_LAYERS 32
-#else
+#elif defined(XRT_OS_LINUX) || defined(XRT_OS_WINDOWS)
 #define XRT_MAX_LAYERS 128
+#else
+#error "Unknown platform, define XRT_MAX_LAYERS for your OS"
 #endif
 
 /*!
