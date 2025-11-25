@@ -59,11 +59,16 @@ extern "C" {
 #define RENDER_MAX_LAYERS (XRT_MAX_LAYERS)
 
 /*!
+ * The maximum number samplers per view that can be used by the compute shader
+ * for layer composition (layer.comp)
+ */
+#define RENDER_CS_MAX_SAMPLERS_PER_VIEW 2
+
+/*!
  * Max number of images that can be given at a single time to the layer
  * squasher in a single dispatch.
  */
-#define RENDER_MAX_IMAGES_SIZE (RENDER_MAX_LAYERS * XRT_MAX_VIEWS)
-#define RENDER_MAX_IMAGES_COUNT(RENDER_RESOURCES) (RENDER_MAX_LAYERS * RENDER_RESOURCES->view_count)
+#define RENDER_MAX_IMAGES_SIZE (RENDER_MAX_LAYERS * RENDER_CS_MAX_SAMPLERS_PER_VIEW)
 
 /*!
  * Maximum number of times that the layer squasher shader can run per
