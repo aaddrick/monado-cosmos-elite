@@ -65,7 +65,7 @@ oxr_get_face_state_android(struct oxr_logger *log,
 {
 	/*!
 	 * OXR_TWO_CALL_CHECK_* macro usage here is not technically necessary because validation
-	 * is handled in the API layer before this function is called, but we still re-use them here
+	 * is handled in the API layer before this function is called, but we still reuse them here
 	 * for declarative purposes of handling two-call patterns of setting capacities on the first call.
 	 */
 
