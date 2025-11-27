@@ -551,6 +551,11 @@ oxr_session_poll(struct oxr_logger *log, struct oxr_session *sess)
 		case XRT_SESSION_EVENT_STATE_CHANGE:
 			sess->compositor_visible = xse.state.visible;
 			sess->compositor_focused = xse.state.focused;
+
+			// Do not use xse.state.timestamp_ns, server side focused / visible state does not correspond
+			// 1:1 to the cycle we tell the app. In particular the compositor may have become focused /
+			// visible much earlier than what we tell the app when it became so.
+
 			break;
 		case XRT_SESSION_EVENT_OVERLAY_CHANGE:
 #ifdef OXR_HAVE_EXTX_overlay
@@ -1162,7 +1167,7 @@ oxr_create_xrt_session_and_native_compositor(struct oxr_logger *log,
 		                 "Failed to create xrt_session and xrt_compositor_native! '%i'", xret);
 	}
 	if (sess->sys->xsysc->xmcc != NULL) {
-		xrt_syscomp_set_state(sess->sys->xsysc, &sess->xcn->base, true, true);
+		xrt_syscomp_set_state(sess->sys->xsysc, &sess->xcn->base, true, true, os_monotonic_get_ns());
 		xrt_syscomp_set_z_order(sess->sys->xsysc, &sess->xcn->base, 0);
 	}
 	return XR_SUCCESS;
