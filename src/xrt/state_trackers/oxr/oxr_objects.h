@@ -2886,6 +2886,9 @@ struct oxr_facial_tracker_htc
 
 	//! Type of facial tracking, eyes or lips
 	enum xrt_facial_tracking_type_htc facial_tracking_type;
+
+	//! To track if the feature set has been incremented since creation.
+	bool feature_incremented;
 };
 
 XrResult
@@ -2965,6 +2968,9 @@ struct oxr_face_tracker2_fb
 
 	bool audio_enabled;
 	bool visual_enabled;
+
+	//! To track if the feature set has been incremented since creation.
+	bool feature_incremented;
 };
 
 XrResult
@@ -3134,6 +3140,9 @@ struct oxr_face_tracker_android
 
 	//! xrt_device backing this face tracker
 	struct xrt_device *xdev;
+
+	//! To track if the feature set has been incremented since creation.
+	bool feature_incremented;
 };
 
 XrResult

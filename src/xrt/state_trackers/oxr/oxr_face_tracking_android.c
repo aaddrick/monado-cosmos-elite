@@ -21,6 +21,12 @@ static XrResult
 oxr_face_tracker_android_destroy_cb(struct oxr_logger *log, struct oxr_handle_base *hb)
 {
 	struct oxr_face_tracker_android *face_tracker_android = (struct oxr_face_tracker_android *)hb;
+
+	if (face_tracker_android->feature_incremented) {
+		xrt_system_devices_feature_dec(face_tracker_android->sess->sys->xsysd,
+		                               XRT_DEVICE_FEATURE_FACE_TRACKING);
+	}
+
 	free(face_tracker_android);
 	return XR_SUCCESS;
 }
@@ -50,6 +56,13 @@ oxr_face_tracker_android_create(struct oxr_logger *log,
 	OXR_ALLOCATE_HANDLE_OR_RETURN(log, face_tracker_android, OXR_XR_DEBUG_FTRACKER,
 	                              oxr_face_tracker_android_destroy_cb, &sess->handle);
 
+	xrt_result_t xret = xrt_system_devices_feature_inc(sess->sys->xsysd, XRT_DEVICE_FEATURE_FACE_TRACKING);
+	if (xret != XRT_SUCCESS) {
+		oxr_handle_destroy(log, &face_tracker_android->handle);
+		return oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Failed to start face tracking feature");
+	}
+
+	face_tracker_android->feature_incremented = true;
 	face_tracker_android->sess = sess;
 	face_tracker_android->xdev = xdev;
 

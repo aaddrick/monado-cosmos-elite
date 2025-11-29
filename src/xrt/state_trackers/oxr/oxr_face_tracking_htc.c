@@ -35,6 +35,11 @@ static XrResult
 oxr_facial_tracker_htc_destroy_cb(struct oxr_logger *log, struct oxr_handle_base *hb)
 {
 	struct oxr_facial_tracker_htc *face_tracker_htc = (struct oxr_facial_tracker_htc *)hb;
+
+	if (face_tracker_htc->feature_incremented) {
+		xrt_system_devices_feature_dec(face_tracker_htc->sess->sys->xsysd, XRT_DEVICE_FEATURE_FACE_TRACKING);
+	}
+
 	free(face_tracker_htc);
 	return XR_SUCCESS;
 }
@@ -45,6 +50,8 @@ oxr_facial_tracker_htc_create(struct oxr_logger *log,
                               const XrFacialTrackerCreateInfoHTC *createInfo,
                               struct oxr_facial_tracker_htc **out_face_tracker_htc)
 {
+	xrt_result_t xret;
+
 	bool supports_eye = false;
 	bool supports_lip = false;
 	oxr_system_get_face_tracking_htc_support(log, sess->sys->inst, &supports_eye, &supports_lip);
@@ -71,6 +78,13 @@ oxr_facial_tracker_htc_create(struct oxr_logger *log,
 	struct oxr_facial_tracker_htc *face_tracker_htc = NULL;
 	OXR_ALLOCATE_HANDLE_OR_RETURN(log, face_tracker_htc, OXR_XR_DEBUG_FTRACKER, oxr_facial_tracker_htc_destroy_cb,
 	                              &sess->handle);
+
+	xret = xrt_system_devices_feature_inc(sess->sys->xsysd, XRT_DEVICE_FEATURE_FACE_TRACKING);
+	if (xret != XRT_SUCCESS) {
+		oxr_handle_destroy(log, &face_tracker_htc->handle);
+		return oxr_error(log, XR_ERROR_RUNTIME_FAILURE, "Failed to start face tracking feature");
+	}
+	face_tracker_htc->feature_incremented = true;
 
 	face_tracker_htc->sess = sess;
 	face_tracker_htc->xdev = xdev;

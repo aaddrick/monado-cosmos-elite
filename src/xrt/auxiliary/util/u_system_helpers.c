@@ -51,6 +51,7 @@ type_to_small_string(enum xrt_device_feature_type type)
 	case XRT_DEVICE_FEATURE_HAND_TRACKING_LEFT: return "hand_tracking_left";
 	case XRT_DEVICE_FEATURE_HAND_TRACKING_RIGHT: return "hand_tracking_right";
 	case XRT_DEVICE_FEATURE_EYE_TRACKING: return "eye_tracking";
+	case XRT_DEVICE_FEATURE_FACE_TRACKING: return "face_tracking";
 	default: return "invalid";
 	}
 }
@@ -148,6 +149,8 @@ feature_inc(struct xrt_system_devices *xsysd, enum xrt_device_feature_type type)
 		xret = set_hand_tracking_enabled(xsysd, XRT_HAND_RIGHT, true);
 	} else if (type == XRT_DEVICE_FEATURE_EYE_TRACKING) {
 		xret = xrt_device_begin_feature(xsysd->static_roles.eyes, type);
+	} else if (type == XRT_DEVICE_FEATURE_FACE_TRACKING) {
+		xret = xrt_device_begin_feature(xsysd->static_roles.face, type);
 	} else {
 		xret = XRT_ERROR_FEATURE_NOT_SUPPORTED;
 	}
@@ -183,6 +186,8 @@ feature_dec(struct xrt_system_devices *xsysd, enum xrt_device_feature_type type)
 		// @todo When eyes are moved from the static roles, we need to end features on the old device when
 		// swapping which device is in the eyes role
 		xret = xrt_device_end_feature(xsysd->static_roles.eyes, type);
+	} else if (type == XRT_DEVICE_FEATURE_FACE_TRACKING) {
+		xret = xrt_device_end_feature(xsysd->static_roles.face, type);
 	} else {
 		xret = XRT_ERROR_FEATURE_NOT_SUPPORTED;
 	}
