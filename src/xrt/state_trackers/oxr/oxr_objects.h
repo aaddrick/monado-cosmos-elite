@@ -2456,6 +2456,8 @@ struct oxr_space
 		struct xrt_space *xs;
 		struct xrt_device *xdev;
 		enum xrt_input_name name;
+
+		bool feature_eye_tracking;
 	} action;
 
 	struct

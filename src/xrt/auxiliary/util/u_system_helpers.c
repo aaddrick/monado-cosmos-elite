@@ -180,6 +180,8 @@ feature_dec(struct xrt_system_devices *xsysd, enum xrt_device_feature_type type)
 	} else if (type == XRT_DEVICE_FEATURE_HAND_TRACKING_RIGHT) {
 		xret = set_hand_tracking_enabled(xsysd, XRT_HAND_RIGHT, false);
 	} else if (type == XRT_DEVICE_FEATURE_EYE_TRACKING) {
+		// @todo When eyes are moved from the static roles, we need to end features on the old device when
+		// swapping which device is in the eyes role
 		xret = xrt_device_end_feature(xsysd->static_roles.eyes, type);
 	} else {
 		xret = XRT_ERROR_FEATURE_NOT_SUPPORTED;
