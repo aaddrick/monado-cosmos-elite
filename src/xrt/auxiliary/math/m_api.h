@@ -18,6 +18,8 @@
 
 #include "xrt/xrt_defines.h"
 
+#include "math/m_mathinclude.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -74,6 +76,25 @@ extern "C" {
  * @ingroup aux_math
  */
 #define CLAMP(X, A, B) (MIN(MAX((X), (A)), (B)))
+
+/*!
+ * Degrees to radians conversion.
+ *
+ * @ingroup aux_math
+ */
+// clang-format off
+// @todo: Remove the clang-format off/on when we move to a newer clang-format in CI.
+#define DEG_TO_RAD(DEG) ((DEG) * M_PI / 180.)
+// clang-format on
+
+/*!
+ * Radians to degrees conversion.
+ *
+ * @ingroup aux_math
+ */
+// clang-format off
+#define RAD_TO_DEG(RAD) ((RAD) * 180.0 / M_PI)
+// clang-format on
 
 
 /*

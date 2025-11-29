@@ -40,8 +40,6 @@
 /* Set to 1 to print controller states continuously */
 #define DUMP_CONTROLLER_STATE 0
 
-#define DEG_TO_RAD(D) ((D)*M_PI / 180.)
-
 static struct xrt_binding_input_pair simple_inputs_rift_s[4] = {
     {XRT_INPUT_SIMPLE_SELECT_CLICK, XRT_INPUT_TOUCH_TRIGGER_VALUE},
     {XRT_INPUT_SIMPLE_MENU_CLICK, XRT_INPUT_TOUCH_MENU_CLICK},

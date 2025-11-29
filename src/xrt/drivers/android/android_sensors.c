@@ -133,12 +133,10 @@ load_cardboard_distortion(struct android_device *d,
 		args->tray_to_lens_distance_meters = params.tray_to_lens_distance;
 	}
 
-#define DEG_TO_RAD(x) (float)(x * M_PI / 180.0)
 	args->fov = (struct xrt_fov){.angle_left = -DEG_TO_RAD(angles[0]),
 	                             .angle_right = DEG_TO_RAD(angles[1]),
 	                             .angle_down = -DEG_TO_RAD(angles[2]),
 	                             .angle_up = DEG_TO_RAD(angles[3])};
-#undef DEG_TO_RAD
 
 	ANDROID_INFO(d, "loaded calibration for device %s (%s)", model, vendor);
 

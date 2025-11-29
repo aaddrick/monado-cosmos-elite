@@ -37,7 +37,6 @@ extern "C" {
 #define IMU_SAMPLE_RATE (1000)      // 1000hz
 #define NS_PER_SAMPLE (1000 * 1000) // 1ms (1,000,000 ns) per sample
 
-#define DEG_TO_RAD(DEG) (DEG * M_PI / 180.0)
 #define MICROMETERS_TO_METERS(microns) (float)microns / 1000000.0f
 
 // value taken from LibOVR 0.4.4
