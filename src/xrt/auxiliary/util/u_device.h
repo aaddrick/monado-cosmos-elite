@@ -137,7 +137,7 @@ u_device_free(struct xrt_device *xdev);
  */
 void
 u_device_assign_xdev_roles(
-    struct xrt_device **xdevs, size_t xdev_count, int *head, int *left, int *right, int *gamepad);
+    struct xrt_device **xdevs, size_t xdev_count, int *head, int *eyes, int *face, int *left, int *right, int *gamepad);
 
 /*!
  * Helper function for `get_view_pose` in an HMD driver.

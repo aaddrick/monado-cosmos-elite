@@ -763,9 +763,9 @@ xrt_result_t
 get_roles(struct xrt_system_devices *xsysd, struct xrt_system_roles *out_roles)
 {
 	bool update_gen = false;
-	int head, left, right, gamepad;
+	int head, eyes, face, left, right, gamepad;
 
-	u_device_assign_xdev_roles(xsysd->xdevs, xsysd->xdev_count, &head, &left, &right, &gamepad);
+	u_device_assign_xdev_roles(xsysd->xdevs, xsysd->xdev_count, &head, &eyes, &face, &left, &right, &gamepad);
 
 	if (left != out_roles->left || right != out_roles->right || gamepad != out_roles->gamepad) {
 		update_gen = true;

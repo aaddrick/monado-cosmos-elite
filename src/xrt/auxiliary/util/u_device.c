@@ -360,10 +360,26 @@ try_move_assignment(struct xrt_device **xdevs, int *hand, int *other_hand)
 	}
 }
 
+static bool
+input_name_is_face_tracker(enum xrt_input_name name)
+{
+	switch (name) {
+	case XRT_INPUT_FB_FACE_TRACKING2_VISUAL:
+	case XRT_INPUT_FB_FACE_TRACKING2_AUDIO:
+	case XRT_INPUT_ANDROID_FACE_TRACKING:
+	case XRT_INPUT_HTC_EYE_FACE_TRACKING:
+	case XRT_INPUT_HTC_LIP_FACE_TRACKING: return true;
+	default: return false;
+	}
+}
+
 void
-u_device_assign_xdev_roles(struct xrt_device **xdevs, size_t xdev_count, int *head, int *left, int *right, int *gamepad)
+u_device_assign_xdev_roles(
+    struct xrt_device **xdevs, size_t xdev_count, int *head, int *eyes, int *face, int *left, int *right, int *gamepad)
 {
 	*head = XRT_DEVICE_ROLE_UNASSIGNED;
+	*eyes = XRT_DEVICE_ROLE_UNASSIGNED;
+	*face = XRT_DEVICE_ROLE_UNASSIGNED;
 	*left = XRT_DEVICE_ROLE_UNASSIGNED;
 	*right = XRT_DEVICE_ROLE_UNASSIGNED;
 	*gamepad = XRT_DEVICE_ROLE_UNASSIGNED;
@@ -378,6 +394,16 @@ u_device_assign_xdev_roles(struct xrt_device **xdevs, size_t xdev_count, int *he
 		case XRT_DEVICE_TYPE_HMD:
 			if (*head == XRT_DEVICE_ROLE_UNASSIGNED) {
 				*head = (int)i;
+			}
+			break;
+		case XRT_DEVICE_TYPE_EYE_TRACKER:
+			if (*eyes == XRT_DEVICE_ROLE_UNASSIGNED) {
+				*eyes = (int)i;
+			}
+			break;
+		case XRT_DEVICE_TYPE_FACE_TRACKER:
+			if (*face == XRT_DEVICE_ROLE_UNASSIGNED) {
+				*face = (int)i;
 			}
 			break;
 		case XRT_DEVICE_TYPE_LEFT_HAND_CONTROLLER:
@@ -423,6 +449,25 @@ u_device_assign_xdev_roles(struct xrt_device **xdevs, size_t xdev_count, int *he
 				*right = (int)i;
 			}
 			break;
+		}
+	}
+
+	// fill unassigned hand/face with other devices that contain the correct inputs for eye/face tracking
+	for (size_t i = 0; i < xdev_count; i++) {
+		struct xrt_device *xdev = xdevs[i];
+
+		if (xdev == NULL) {
+			continue;
+		}
+
+		for (size_t j = 0; j < xdev->input_count; j++) {
+			enum xrt_input_name input_name = xdev->inputs[j].name;
+			if (*eyes == XRT_DEVICE_ROLE_UNASSIGNED && input_name == XRT_INPUT_GENERIC_EYE_GAZE_POSE) {
+				*eyes = (int)i;
+			}
+			if (*face == XRT_DEVICE_ROLE_UNASSIGNED && input_name_is_face_tracker(input_name)) {
+				*face = (int)i;
+			}
 		}
 	}
 }
