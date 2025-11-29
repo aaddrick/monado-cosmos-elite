@@ -60,3 +60,130 @@
 #define __le64_to_cpu
 
 #endif
+
+/*!
+ * Little endian 32-bit float wrapper struct.
+ */
+typedef struct
+{
+	__le32 val;
+} __lef32;
+
+/*!
+ * Big endian 32-bit float wrapper struct.
+ */
+typedef struct
+{
+	__be32 val;
+} __bef32;
+
+static inline float
+__lef32_to_cpu(__lef32 f)
+{
+	union {
+		uint32_t raw;
+		float f32;
+	} safe_copy;
+
+	safe_copy.raw = __le32_to_cpu(f.val);
+	return safe_copy.f32;
+}
+
+static inline __lef32
+__cpu_to_lef32(float f)
+{
+	union {
+		uint32_t wire;
+		float f32;
+	} safe_copy;
+
+	safe_copy.f32 = f;
+	return (__lef32){.val = __cpu_to_le32(safe_copy.wire)};
+}
+
+static inline float
+__bef32_to_cpu(__bef32 f)
+{
+	union {
+		uint32_t raw;
+		float f32;
+	} safe_copy;
+
+	safe_copy.raw = __be32_to_cpu(f.val);
+	return safe_copy.f32;
+}
+
+static inline __bef32
+__cpu_to_bef32(float f)
+{
+	union {
+		uint32_t wire;
+		float f32;
+	} safe_copy;
+
+	safe_copy.f32 = f;
+	return (__bef32){.val = __cpu_to_be32(safe_copy.wire)};
+}
+
+/*
+ *
+ * Vec2
+ *
+ */
+
+struct __levec2
+{
+	__lef32 x;
+	__lef32 y;
+};
+
+static inline struct xrt_vec2
+__levec2_to_cpu(struct __levec2 v)
+{
+	return (struct xrt_vec2){
+	    .x = __lef32_to_cpu(v.x),
+	    .y = __lef32_to_cpu(v.y),
+	};
+}
+
+static inline struct __levec2
+__cpu_to_levec2(struct xrt_vec2 v)
+{
+	return (struct __levec2){
+	    .x = __cpu_to_lef32(v.x),
+	    .y = __cpu_to_lef32(v.y),
+	};
+}
+
+/*
+ *
+ * Vec3
+ *
+ */
+
+struct __levec3
+{
+	__lef32 x;
+	__lef32 y;
+	__lef32 z;
+};
+
+static inline struct xrt_vec3
+__levec3_to_cpu(struct __levec3 v)
+{
+	return (struct xrt_vec3){
+	    .x = __lef32_to_cpu(v.x),
+	    .y = __lef32_to_cpu(v.y),
+	    .z = __lef32_to_cpu(v.z),
+	};
+}
+
+static inline struct __levec3
+__cpu_to_levec3(struct xrt_vec3 v)
+{
+	return (struct __levec3){
+	    .x = __cpu_to_lef32(v.x),
+	    .y = __cpu_to_lef32(v.y),
+	    .z = __cpu_to_lef32(v.z),
+	};
+}
