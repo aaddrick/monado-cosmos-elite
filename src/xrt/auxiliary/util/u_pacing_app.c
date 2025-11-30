@@ -279,24 +279,24 @@ static int64_t
 calc_period(const struct pacing_app *pa)
 {
 	// Error checking.
-	int64_t base_period_ns = display_period(pa);
-	if (base_period_ns == 0) {
+	int64_t display_period_ns = display_period(pa);
+	if (display_period_ns == 0) {
 		assert(false && "Have not yet received and samples from timing driver.");
-		base_period_ns = U_TIME_1MS_IN_NS * 16; // Sure
+		display_period_ns = U_TIME_1MS_IN_NS * 16; // Sure
 	}
 
 	// Calculate the using both values separately.
-	int64_t period_ns = base_period_ns;
+	int64_t period_ns = display_period_ns;
 	while (pa->app.cpu_time_ns > period_ns) {
-		period_ns += base_period_ns;
+		period_ns += display_period_ns;
 	}
 
 	while (pa->app.draw_time_ns > period_ns) {
-		period_ns += base_period_ns;
+		period_ns += display_period_ns;
 	}
 
 	while (pa->app.gpu_time_ns > period_ns) {
-		period_ns += base_period_ns;
+		period_ns += display_period_ns;
 	}
 
 	return period_ns;
