@@ -287,6 +287,16 @@ calc_app_period(const struct pacing_app *pa)
 
 	// Calculate the using both values separately.
 	int64_t app_period_ns = display_period_ns;
+
+	/*
+	 * We can either limit the application to a calculated frame rate that
+	 * depends on it's total frame time. Or we try to use the minimal frame
+	 * period, aka the compositor's frame period. This will use more power.
+	 */
+	if (debug_get_bool_option_use_min_frame_period()) {
+		return app_period_ns;
+	}
+
 	while (pa->app.cpu_time_ns > app_period_ns) {
 		app_period_ns += display_period_ns;
 	}
@@ -446,18 +456,7 @@ pa_predict(struct u_pacing_app *upa,
 
 	DEBUG_PRINT_ID(frame_id);
 
-	int64_t app_period_ns;
-
-	/*
-	 * We can either limit the application to a calculated frame rate that
-	 * depends on it's total frame time. Or we try to use the minimal frame
-	 * period, aka the compositor's frame period. This will use more power.
-	 */
-	if (debug_get_bool_option_use_min_frame_period()) {
-		app_period_ns = display_period(pa);
-	} else {
-		app_period_ns = calc_app_period(pa);
-	}
+	int64_t app_period_ns = calc_app_period(pa);
 
 	int64_t predict_ns = predict_display_time(pa, now_ns, app_period_ns);
 	// How long we think the frame should take.
