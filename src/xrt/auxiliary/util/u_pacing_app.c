@@ -221,7 +221,7 @@ do_iir_filter(int64_t *target, double alpha_lt, double alpha_gt, int64_t sample)
 }
 
 static int64_t
-min_period(const struct pacing_app *pa)
+display_period(const struct pacing_app *pa)
 {
 	return pa->last_input.predicted_display_period_ns;
 }
@@ -279,7 +279,7 @@ static int64_t
 calc_period(const struct pacing_app *pa)
 {
 	// Error checking.
-	int64_t base_period_ns = min_period(pa);
+	int64_t base_period_ns = display_period(pa);
 	if (base_period_ns == 0) {
 		assert(false && "Have not yet received and samples from timing driver.");
 		base_period_ns = U_TIME_1MS_IN_NS * 16; // Sure
@@ -454,7 +454,7 @@ pa_predict(struct u_pacing_app *upa,
 	 * period, aka the compositor's frame period. This will use more power.
 	 */
 	if (debug_get_bool_option_use_min_frame_period()) {
-		period_ns = min_period(pa);
+		period_ns = display_period(pa);
 	} else {
 		period_ns = calc_period(pa);
 	}
