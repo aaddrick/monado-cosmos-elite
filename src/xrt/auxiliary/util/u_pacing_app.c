@@ -26,6 +26,9 @@ DEBUG_GET_ONCE_FLOAT_OPTION(min_app_time_ms, "U_PACING_APP_MIN_TIME_MS", 1.0f)
 DEBUG_GET_ONCE_FLOAT_OPTION(min_margin_ms, "U_PACING_APP_MIN_MARGIN_MS", 2.0f)
 DEBUG_GET_ONCE_BOOL_OPTION(use_min_frame_period, "U_PACING_APP_USE_MIN_FRAME_PERIOD", false)
 DEBUG_GET_ONCE_BOOL_OPTION(immediate_wait_frame_return, "U_PACING_APP_IMMEDIATE_WAIT_FRAME_RETURN", false)
+DEBUG_GET_ONCE_BOOL_OPTION(align_predicted_display_time_to_app_period,
+                           "U_PACING_APP_ALIGN_PREDICTED_DISPLAY_TIME_TO_APP_PERIOD",
+                           false)
 
 #define UPA_LOG_T(...) U_LOG_IFL_T(debug_get_log_option_log_level(), __VA_ARGS__)
 #define UPA_LOG_D(...) U_LOG_IFL_D(debug_get_log_option_log_level(), __VA_ARGS__)
@@ -322,9 +325,16 @@ predict_display_time(const struct pacing_app *pa, int64_t now_ns, int64_t displa
 		val += app_period_ns;
 	}
 
+	int64_t period_ns;
+	if (debug_get_bool_option_align_predicted_display_time_to_app_period()) {
+		period_ns = app_period_ns;
+	} else {
+		period_ns = display_period_ns;
+	}
+
 	// Have to have enough time to perform app work.
 	while ((val - app_and_compositor_time_ns) <= now_ns) {
-		val += display_period_ns;
+		val += period_ns;
 	}
 
 	return val;
