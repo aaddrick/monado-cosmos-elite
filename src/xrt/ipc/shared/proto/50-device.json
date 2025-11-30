@@ -250,5 +250,15 @@
 			{"name": "brightness", "type": "float"},
 			{"name": "relative", "type": "bool"}
 		]
-	}
+	},
+
+	"device_get_compositor_info": {
+		"in": [
+			{"name": "id", "type": "uint32_t"},
+			{"name": "mode", "type": "struct xrt_device_compositor_mode"}
+		],
+		"out": [
+			{"name": "info", "type": "struct xrt_device_compositor_info"}
+		]
+	} 
 }

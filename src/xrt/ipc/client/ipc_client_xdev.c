@@ -210,13 +210,26 @@ ipc_client_xdev_set_output(struct xrt_device *xdev, enum xrt_output_name name, c
 	return xret;
 }
 
-xrt_result_t
+static xrt_result_t
 ipc_client_xdev_get_output_limits(struct xrt_device *xdev, struct xrt_output_limits *limits)
 {
 	struct ipc_client_xdev *icx = ipc_client_xdev(xdev);
 
 	xrt_result_t xret = ipc_call_device_get_output_limits(icx->ipc_c, icx->device_id, limits);
 	IPC_CHK_ONLY_PRINT(icx->ipc_c, xret, "ipc_call_device_get_output_limits");
+
+	return xret;
+}
+
+static xrt_result_t
+ipc_client_xdev_get_compositor_info(struct xrt_device *xdev,
+                                    const struct xrt_device_compositor_mode *mode,
+                                    struct xrt_device_compositor_info *out_info)
+{
+	struct ipc_client_xdev *icx = ipc_client_xdev(xdev);
+
+	xrt_result_t xret = ipc_call_device_get_compositor_info(icx->ipc_c, icx->device_id, mode, out_info);
+	IPC_CHK_ONLY_PRINT(icx->ipc_c, xret, "ipc_call_device_get_compositor_info");
 
 	return xret;
 }
@@ -420,6 +433,7 @@ ipc_client_xdev_init(struct ipc_client_xdev *icx,
 	icx->base.get_presence = ipc_client_xdev_get_presence;
 	icx->base.set_output = ipc_client_xdev_set_output;
 	icx->base.get_output_limits = ipc_client_xdev_get_output_limits;
+	icx->base.get_compositor_info = ipc_client_xdev_get_compositor_info;
 
 	// Plane detection EXT.
 	icx->base.begin_plane_detection_ext = ipc_client_xdev_begin_plane_detection_ext;

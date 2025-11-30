@@ -2657,6 +2657,18 @@ ipc_handle_device_set_brightness(volatile struct ipc_client_state *ics, uint32_t
 }
 
 xrt_result_t
+ipc_handle_device_get_compositor_info(volatile struct ipc_client_state *ics,
+                                      uint32_t id,
+                                      const struct xrt_device_compositor_mode *mode,
+                                      struct xrt_device_compositor_info *out_info)
+{
+	struct xrt_device *xdev = NULL;
+	GET_XDEV_OR_RETURN(ics, id, xdev);
+
+	return xrt_device_get_compositor_info(xdev, mode, out_info);
+}
+
+xrt_result_t
 ipc_handle_future_get_state(volatile struct ipc_client_state *ics, uint32_t future_id, enum xrt_future_state *out_state)
 {
 	struct xrt_future *xft = NULL;
