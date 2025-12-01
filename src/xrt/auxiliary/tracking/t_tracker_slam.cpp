@@ -811,97 +811,6 @@ flush_poses(TrackerSlam &t)
 	return true;
 }
 
-//! Integrates IMU samples on top of a base pose and predicts from that
-static void
-predict_pose_from_imu(TrackerSlam &t,
-                      timepoint_ns when_ns,
-                      xrt_space_relation base_rel, // Pose to integrate IMUs on top of
-                      timepoint_ns base_rel_ts,
-                      struct xrt_space_relation *out_relation)
-{
-	os_mutex_lock(&t.lock_ff);
-
-	// Find oldest imu index i that is newer than latest SLAM pose (or -1)
-	int i = 0;
-	uint64_t imu_ts = UINT64_MAX;
-	xrt_vec3 _;
-	while (m_ff_vec3_f32_get(t.gyro_ff, i, &_, &imu_ts)) {
-		if ((int64_t)imu_ts < base_rel_ts) {
-			i--; // Back to the oldest newer-than-SLAM IMU index (or -1)
-			break;
-		}
-		i++;
-	}
-
-	if (i == -1) {
-		SLAM_WARN("No IMU samples received after latest SLAM pose (and frame)");
-	}
-
-	xrt_space_relation integ_rel = base_rel;
-	timepoint_ns integ_rel_ts = base_rel_ts;
-	xrt_quat &o = integ_rel.pose.orientation;
-	xrt_vec3 &p = integ_rel.pose.position;
-	xrt_vec3 &w = integ_rel.angular_velocity;
-	xrt_vec3 &v = integ_rel.linear_velocity;
-	bool clamped = false; // If when_ns is older than the latest IMU ts
-
-	while (i >= 0) { // Decreasing i increases timestamp
-		// Get samples
-		xrt_vec3 g{};
-		xrt_vec3 a{};
-		uint64_t g_ts{};
-		uint64_t a_ts{};
-		bool got = true;
-		got &= m_ff_vec3_f32_get(t.gyro_ff, i, &g, &g_ts);
-		got &= m_ff_vec3_f32_get(t.accel_ff, i, &a, &a_ts);
-		timepoint_ns ts = g_ts;
-
-
-		// Checks
-		if (ts > when_ns) {
-			clamped = true;
-			//! @todo Instead of using same a and g values, do an interpolated sample like this:
-			// a = prev_a + ((when_ns - prev_ts) / (ts - prev_ts)) * (a - prev_a);
-			// g = prev_g + ((when_ns - prev_ts) / (ts - prev_ts)) * (g - prev_g);
-			ts = when_ns; // clamp ts to when_ns
-		}
-		SLAM_DASSERT(got && g_ts == a_ts, "Failure getting synced gyro and accel samples");
-		SLAM_DASSERT(ts >= base_rel_ts, "Accessing imu sample that is older than latest SLAM pose");
-
-		// Update time
-		float dt = (float)time_ns_to_s(ts - integ_rel_ts);
-		integ_rel_ts = ts;
-
-		// Integrate gyroscope
-		xrt_quat angvel_delta{};
-		xrt_vec3 scaled_half_g = g * dt * 0.5f;
-		math_quat_exp(&scaled_half_g, &angvel_delta); // Same as using math_quat_from_angle_vector(g/dt)
-		math_quat_rotate(&o, &angvel_delta, &o);      // Orientation
-		math_quat_rotate_derivative(&o, &g, &w);      // Angular velocity
-
-		// Integrate accelerometer
-		xrt_vec3 world_accel{};
-		math_quat_rotate_vec3(&o, &a, &world_accel);
-		world_accel += t.gravity_correction;
-		v += world_accel * dt;                        // Linear velocity
-		p += v * dt + world_accel * (dt * dt * 0.5f); // Position
-
-		if (clamped) {
-			break;
-		}
-		i--;
-	}
-
-	os_mutex_unlock(&t.lock_ff);
-
-	// Do the prediction based on the updated relation
-	double last_imu_to_now_dt = time_ns_to_s(when_ns - integ_rel_ts);
-	xrt_space_relation predicted_relation{};
-	m_predict_relation(&integ_rel, last_imu_to_now_dt, &predicted_relation);
-
-	*out_relation = predicted_relation;
-}
-
 //! Return our best guess of the relation at time @p when_ns using all the data the tracker has.
 static void
 predict_pose(TrackerSlam &t, timepoint_ns when_ns, struct xrt_space_relation *out_relation)
@@ -937,7 +846,18 @@ predict_pose(TrackerSlam &t, timepoint_ns when_ns, struct xrt_space_relation *ou
 
 
 	if (t.pred_type == SLAM_PRED_DEAD_RECKONING) {
-		predict_pose_from_imu(t, when_ns, rel, (int64_t)rel_ts, out_relation);
+		os_mutex_lock(&t.lock_ff);
+
+		t_apply_dead_reckoning(    //
+		    t.gyro_ff,             //
+		    t.accel_ff,            //
+		    &t.gravity_correction, //
+		    when_ns,               //
+		    &rel,                  //
+		    (int64_t)rel_ts,       //
+		    out_relation);         //
+
+		os_mutex_unlock(&t.lock_ff);
 		return;
 	}
 
