@@ -11,13 +11,16 @@
 #include "xrt/xrt_defines.h"
 #include "xrt/xrt_tracking.h"
 #include "xrt/xrt_frameserver.h"
+
 #include "util/u_debug.h"
 #include "util/u_logging.h"
 #include "util/u_misc.h"
 #include "util/u_sink.h"
 #include "util/u_var.h"
 #include "util/u_trace_marker.h"
+
 #include "os/os_threading.h"
+
 #include "math/m_api.h"
 #include "math/m_filter_fifo.h"
 #include "math/m_filter_one_euro.h"
@@ -25,10 +28,12 @@
 #include "math/m_relation_history.h"
 #include "math/m_space.h"
 #include "math/m_vec3.h"
+
 #include "tracking/t_euroc_recorder.h"
 #include "tracking/t_openvr_tracker.h"
 #include "tracking/t_tracking.h"
 #include "tracking/t_vit_loader.h"
+#include "tracking/t_dead_reckoning.h"
 
 #include "vit/vit_interface.h"
 
@@ -43,6 +48,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+
 
 //! @todo Get preferred system from systems found at build time
 #define PREFERRED_VIT_SYSTEM_LIBRARY "libbasalt.so"
@@ -79,7 +85,7 @@ DEBUG_GET_ONCE_OPTION(slam_config, "SLAM_CONFIG", nullptr)
 DEBUG_GET_ONCE_BOOL_OPTION(slam_ui, "SLAM_UI", false)
 DEBUG_GET_ONCE_BOOL_OPTION(slam_submit_from_start, "SLAM_SUBMIT_FROM_START", false)
 DEBUG_GET_ONCE_NUM_OPTION(slam_openvr_groundtruth_device, "SLAM_OPENVR_GROUNDTRUTH_DEVICE", 0)
-DEBUG_GET_ONCE_NUM_OPTION(slam_prediction_type, "SLAM_PREDICTION_TYPE", long(SLAM_PRED_IP_IO_IA_IL))
+DEBUG_GET_ONCE_NUM_OPTION(slam_prediction_type, "SLAM_PREDICTION_TYPE", long(SLAM_PRED_DEAD_RECKONING))
 DEBUG_GET_ONCE_BOOL_OPTION(slam_write_csvs, "SLAM_WRITE_CSVS", false)
 DEBUG_GET_ONCE_OPTION(slam_csv_path, "SLAM_CSV_PATH", "evaluation/")
 DEBUG_GET_ONCE_BOOL_OPTION(slam_timing_stat, "SLAM_TIMING_STAT", true)
@@ -924,13 +930,13 @@ predict_pose(TrackerSlam &t, timepoint_ns when_ns, struct xrt_space_relation *ou
 
 	// Use only SLAM data if asking for an old point in time or PREDICTION_SP_SO_SA_SL
 	SLAM_DASSERT_(rel_ts < INT64_MAX);
-	if (t.pred_type == SLAM_PRED_SP_SO_SA_SL || when_ns <= (int64_t)rel_ts) {
+	if (t.pred_type == SLAM_PRED_POSE_ONLY || when_ns <= (int64_t)rel_ts) {
 		t.slam_rels.get(when_ns, out_relation);
 		return;
 	}
 
 
-	if (t.pred_type == SLAM_PRED_IP_IO_IA_IL) {
+	if (t.pred_type == SLAM_PRED_DEAD_RECKONING) {
 		predict_pose_from_imu(t, when_ns, rel, (int64_t)rel_ts, out_relation);
 		return;
 	}
@@ -938,14 +944,14 @@ predict_pose(TrackerSlam &t, timepoint_ns when_ns, struct xrt_space_relation *ou
 	os_mutex_lock(&t.lock_ff);
 
 	// Update angular velocity with gyro data
-	if (t.pred_type >= SLAM_PRED_SP_SO_IA_SL) {
+	if (t.pred_type >= SLAM_PRED_GYRO) {
 		xrt_vec3 avg_gyro{};
 		m_ff_vec3_f32_filter(t.gyro_ff, rel_ts, when_ns, &avg_gyro);
 		math_quat_rotate_derivative(&rel.pose.orientation, &avg_gyro, &rel.angular_velocity);
 	}
 
 	// Update linear velocity with accel data
-	if (t.pred_type >= SLAM_PRED_SP_SO_IA_IL) {
+	if (t.pred_type >= SLAM_PRED_ACCEL_GYRO) {
 		xrt_vec3 avg_accel{};
 		m_ff_vec3_f32_filter(t.accel_ff, rel_ts, when_ns, &avg_accel);
 		xrt_vec3 world_accel{};
@@ -1024,7 +1030,7 @@ static void
 setup_ui(TrackerSlam &t)
 {
 	t.pred_combo.count = SLAM_PRED_COUNT;
-	t.pred_combo.options = "None\0Interpolate SLAM poses\0Also gyro\0Also accel\0Latest IMU\0";
+	t.pred_combo.options = "NONE\0POSE_ONLY\0GYRO\0ACCEL_GYRO\0DEAD_RECKONING\0";
 	t.pred_combo.value = (int *)&t.pred_type;
 	t.ui_sink = vector<u_sink_debug>(t.cam_count);
 	for (size_t i = 0; i < t.ui_sink.size(); i++) {
