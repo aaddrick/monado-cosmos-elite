@@ -1471,6 +1471,8 @@ oxr_session_hand_joints(struct oxr_logger *log,
                         const XrHandJointsLocateInfoEXT *locateInfo,
                         XrHandJointLocationsEXT *locations)
 {
+	XrResult ret = XR_SUCCESS;
+
 	struct oxr_space *baseSpc = XRT_CAST_OXR_HANDLE_TO_PTR(struct oxr_space *, locateInfo->baseSpace);
 
 	struct oxr_session *sess = hand_tracker->sess;
@@ -1478,6 +1480,14 @@ oxr_session_hand_joints(struct oxr_logger *log,
 
 	XrHandJointVelocitiesEXT *vel =
 	    OXR_GET_OUTPUT_FROM_CHAIN(locations, XR_TYPE_HAND_JOINT_VELOCITIES_EXT, XrHandJointVelocitiesEXT);
+
+#ifdef OXR_HAVE_EXT_hand_tracking_data_source
+	XrHandTrackingDataSourceStateEXT *data_source_state = NULL;
+	if (hand_tracker->sess->sys->inst->extensions.EXT_hand_tracking_data_source) {
+		data_source_state = OXR_GET_OUTPUT_FROM_CHAIN(locations, XR_TYPE_HAND_TRACKING_DATA_SOURCE_STATE_EXT,
+		                                              XrHandTrackingDataSourceStateEXT);
+	}
+#endif
 
 	const XrTime at_time = locateInfo->time;
 
@@ -1504,24 +1514,17 @@ oxr_session_hand_joints(struct oxr_logger *log,
 		value = (struct xrt_hand_joint_set){0};
 		xrt_result_t xret = xrt_device_get_hand_tracking(data_source->xdev, data_source->input_name,
 		                                                 at_timestamp_ns, &value, &ignored);
-		OXR_CHECK_XRET(log, sess, xret, xrt_device_get_hand_tracking);
+		OXR_CHECK_XRET_GOTO(log, sess, xret, xrt_device_get_hand_tracking, ret, hand_tracking_inactive);
 		if (value.is_active) {
 			break;
 		}
 	}
 
 	if (data_source == NULL || data_source->xdev == NULL) {
-		locations->isActive = false;
-		return XR_SUCCESS;
+		goto hand_tracking_inactive;
 	}
 
 #ifdef OXR_HAVE_EXT_hand_tracking_data_source
-	XrHandTrackingDataSourceStateEXT *data_source_state = NULL;
-	if (hand_tracker->sess->sys->inst->extensions.EXT_hand_tracking_data_source) {
-		data_source_state = OXR_GET_OUTPUT_FROM_CHAIN(locations, XR_TYPE_HAND_TRACKING_DATA_SOURCE_STATE_EXT,
-		                                              XrHandTrackingDataSourceStateEXT);
-	}
-
 	if (data_source_state != NULL) {
 		data_source_state->isActive = XR_TRUE;
 		data_source_state->dataSource = xrt_hand_tracking_data_source_to_xr(data_source->input_name);
@@ -1534,14 +1537,10 @@ oxr_session_hand_joints(struct oxr_logger *log,
 	// Get the xdev's pose in the base space.
 	struct xrt_space_relation T_base_xdev = XRT_SPACE_RELATION_ZERO;
 
-	XrResult ret = oxr_space_locate_device(log, data_source->xdev, baseSpc, at_time, &T_base_xdev);
-	if (ret != XR_SUCCESS) {
+	ret = oxr_space_locate_device(log, data_source->xdev, baseSpc, at_time, &T_base_xdev);
+	if (ret != XR_SUCCESS || T_base_xdev.relation_flags == 0) {
 		// Error printed logged oxr_space_locate_device
-		return ret;
-	}
-	if (T_base_xdev.relation_flags == 0) {
-		locations->isActive = false;
-		return XR_SUCCESS;
+		goto hand_tracking_inactive;
 	}
 
 	// Get the hands pose in the base space.
@@ -1553,18 +1552,7 @@ oxr_session_hand_joints(struct oxr_logger *log,
 
 	// Can we not relate to this space or did we not get values?
 	if (T_base_hand.relation_flags == 0 || !value.is_active) {
-		locations->isActive = false;
-
-		// Loop over all joints and zero flags.
-		for (uint32_t i = 0; i < locations->jointCount; i++) {
-			locations->jointLocations[i].locationFlags = XRT_SPACE_RELATION_BITMASK_NONE;
-			if (vel) {
-				XrHandJointVelocityEXT *v = &vel->jointVelocities[i];
-				v->velocityFlags = XRT_SPACE_RELATION_BITMASK_NONE;
-			}
-		}
-
-		return XR_SUCCESS;
+		goto hand_tracking_inactive;
 	}
 
 	// We know we are active.
@@ -1606,7 +1594,26 @@ oxr_session_hand_joints(struct oxr_logger *log,
 		}
 	}
 
-	return XR_SUCCESS;
+	return ret;
+
+hand_tracking_inactive:
+	locations->isActive = XR_FALSE;
+
+#ifdef OXR_HAVE_EXT_hand_tracking_data_source
+	if (data_source_state != NULL) {
+		data_source_state->isActive = XR_FALSE;
+	}
+#endif
+
+	// Loop over all joints and zero flags.
+	for (uint32_t i = 0; i < locations->jointCount; i++) {
+		locations->jointLocations[i].locationFlags = XRT_SPACE_RELATION_BITMASK_NONE;
+		if (vel) {
+			vel->jointVelocities[i].velocityFlags = XRT_SPACE_RELATION_BITMASK_NONE;
+		}
+	}
+
+	return ret;
 }
 
 /*
