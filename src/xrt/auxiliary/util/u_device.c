@@ -604,7 +604,6 @@ u_device_populate_function_pointers(struct xrt_device *xdev,
 	xdev->get_plane_detections_ext = u_device_ni_get_plane_detections_ext;
 	xdev->get_view_poses = u_device_ni_get_view_poses;
 	xdev->compute_distortion = u_device_ni_compute_distortion;
-	xdev->get_visibility_mask = u_device_ni_get_visibility_mask;
 	xdev->ref_space_usage = u_device_ni_ref_space_usage;
 	xdev->is_form_factor_available = u_device_ni_is_form_factor_available;
 	xdev->get_battery_status = u_device_ni_get_battery_status;
@@ -613,6 +612,11 @@ u_device_populate_function_pointers(struct xrt_device *xdev,
 	xdev->get_compositor_info = u_device_ni_get_compositor_info;
 	xdev->begin_feature = u_device_ni_begin_feature;
 	xdev->end_feature = u_device_ni_end_feature;
+
+	/*
+	 * Same as above, but have default implementation that must available.
+	 */
+	xdev->get_visibility_mask = u_device_get_visibility_mask;
 
 	// This must be implemented by the driver.
 	xdev->destroy = destroy_fn;
