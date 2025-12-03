@@ -49,7 +49,7 @@ oxr_face_tracker_android_create(struct oxr_logger *log,
 	}
 
 	if (!xdev->supported.face_tracking) {
-		return oxr_error(log, XR_ERROR_FEATURE_UNSUPPORTED, "Device does not support HTC facial tracking");
+		return oxr_error(log, XR_ERROR_FEATURE_UNSUPPORTED, "Device does not support Android face tracking");
 	}
 
 	struct oxr_face_tracker_android *face_tracker_android = NULL;
