@@ -764,6 +764,9 @@ struct xrt_relation_chain
 	/*! XR_EXT_hand_interaction */\
 	_(XRT_DEVICE_EXT_HAND_INTERACTION) \
 \
+	/*! XR_ANDROID_face_tracking */\
+	_(XRT_DEVICE_ANDROID_FACE_TRACKING) \
+\
 	/*! XR_HTC_facial_tracking */\
 	_(XRT_DEVICE_HTC_FACE_TRACKING) \
 \
