@@ -1896,6 +1896,7 @@ struct xrt_facial_expression_set_android
 	float parameters[XRT_FACE_PARAMETER_COUNT_ANDROID];
 	float region_confidences[XRT_FACE_REGION_CONFIDENCE_COUNT_ANDROID];
 
+	enum xrt_face_tracking_state_android state;
 	uint64_t sample_time_ns;
 
 	XRT_ALIGNAS(8) bool is_valid;

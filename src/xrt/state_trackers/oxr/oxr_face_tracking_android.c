@@ -112,6 +112,7 @@ region_confidences_check:
 	    &facial_expression_set_result.face_expression_set_android;
 
 	faceStateOutput->isValid = face_expression_set_android->is_valid;
+	faceStateOutput->faceTrackingState = (XrFaceTrackingStateANDROID)face_expression_set_android->state;
 	if (faceStateOutput->isValid == XR_FALSE) {
 		return XR_SUCCESS;
 	}
