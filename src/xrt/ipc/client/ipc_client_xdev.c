@@ -96,6 +96,16 @@ ipc_client_xdev_get_face_tracking(struct xrt_device *xdev,
 }
 
 static xrt_result_t
+ipc_client_xdev_get_face_calibration_state_android(struct xrt_device *xdev, bool *out_face_is_calibrated)
+{
+	struct ipc_client_xdev *icx = ipc_client_xdev(xdev);
+
+	xrt_result_t xret =
+	    ipc_call_device_get_face_calibration_state_android(icx->ipc_c, icx->device_id, out_face_is_calibrated);
+	IPC_CHK_ALWAYS_RET(icx->ipc_c, xret, "ipc_call_device_get_face_calibration_state_android");
+}
+
+static xrt_result_t
 ipc_client_xdev_get_body_skeleton(struct xrt_device *xdev,
                                   enum xrt_input_name body_tracking_type,
                                   struct xrt_body_skeleton *out_value)
@@ -425,6 +435,7 @@ ipc_client_xdev_init(struct ipc_client_xdev *icx,
 	icx->base.update_inputs = ipc_client_xdev_update_inputs;
 	icx->base.get_hand_tracking = ipc_client_xdev_get_hand_tracking;
 	icx->base.get_face_tracking = ipc_client_xdev_get_face_tracking;
+	icx->base.get_face_calibration_state_android = ipc_client_xdev_get_face_calibration_state_android;
 	icx->base.get_body_skeleton = ipc_client_xdev_get_body_skeleton;
 	icx->base.get_body_joints = ipc_client_xdev_get_body_joints;
 	icx->base.reset_body_tracking_calibration_meta = ipc_client_xdev_reset_body_tracking_calibration_meta;
