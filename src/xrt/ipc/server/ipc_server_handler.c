@@ -2572,9 +2572,9 @@ ipc_handle_device_get_face_tracking(volatile struct ipc_client_state *ics,
 }
 
 xrt_result_t
-ipc_handle_device_device_get_face_calibration_state_android(volatile struct ipc_client_state *ics,
-                                                            uint32_t id,
-                                                            bool *out_face_is_calibrated)
+ipc_handle_device_get_face_calibration_state_android(volatile struct ipc_client_state *ics,
+                                                     uint32_t id,
+                                                     bool *out_face_is_calibrated)
 {
 	const uint32_t device_id = id;
 	struct xrt_device *xdev = NULL;

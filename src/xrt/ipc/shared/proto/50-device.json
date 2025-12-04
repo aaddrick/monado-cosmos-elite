@@ -181,7 +181,7 @@
 		]
 	},
 
-	"device_device_get_face_calibration_state_android": {
+	"device_get_face_calibration_state_android": {
 		"in": [
 			{"name": "id", "type": "uint32_t"}
 		],
