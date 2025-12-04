@@ -69,7 +69,25 @@ static bool
 should_skip_format_vk_1_and_2(const struct oxr_instance *inst, uint64_t format)
 {
 	bool skip_depth_stencil = inst->quirks.disable_vulkan_format_depth_stencil;
-	bool skip_stencil = false;
+	/*!
+	 * WARNING: Stencil-only formats have not been thoroughly tested.
+	 *
+	 * As of writing, when enabled using the compute-pipeline path with
+	 * CTS 1.1.53 on Linux with an NVIDIA GPU (driver v580.105.8.0):
+	 *
+	 * The CTS swapchain creation tests attempt to create a swapchain
+	 * with VK_FORMAT_S8_UINT format. The test fails because native
+	 * swapchain creation returns VK_ERROR_DEVICE_LOST from
+	 * `do_post_create_vulkan_setup()` when waiting on a fence after
+	 * submitting commands that perform image layout barrier transitions
+	 * on a compute-only queue.
+	 *
+	 * This is most likely a driver bug with stencil image barriers on
+	 * compute queues. Since no OpenXR core or extensions currently
+	 * utilize stencil-only swapchains, they are not required to be
+	 * supported.
+	 */
+	bool skip_stencil = true;
 	bool skip_depth = inst->quirks.disable_vulkan_format_depth;
 
 	// Access to Vulkan headers are not guaranteed.
