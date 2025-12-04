@@ -1884,7 +1884,7 @@ struct xrt_facial_expression_set2_fb
 	float confidences[XRT_FACE_CONFIDENCE2_COUNT_FB];
 
 	enum xrt_face_tracking_data_source2_fb data_source;
-	uint64_t sample_time_ns;
+	int64_t sample_time_ns;
 
 	XRT_ALIGNAS(8) bool is_valid;
 	bool is_eye_following_blendshapes_valid;
@@ -1897,7 +1897,7 @@ struct xrt_facial_expression_set_android
 	float region_confidences[XRT_FACE_REGION_CONFIDENCE_COUNT_ANDROID];
 
 	enum xrt_face_tracking_state_android state;
-	uint64_t sample_time_ns;
+	int64_t sample_time_ns;
 
 	XRT_ALIGNAS(8) bool is_valid;
 };
