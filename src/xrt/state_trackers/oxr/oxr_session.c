@@ -834,7 +834,7 @@ oxr_session_locate_views(struct oxr_logger *log,
 		if (print) {
 			char tmp[16];
 			snprintf(tmp, 16, "view[%i]", i);
-			oxr_pp_pose_indented_as_object(&slog, &result.pose, tmp);
+			oxr_pp_relation_indented(&slog, &result, tmp);
 		}
 
 		/*
