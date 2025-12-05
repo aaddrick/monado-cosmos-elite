@@ -191,12 +191,11 @@ vk_check_extension(VkExtensionProperties *props, uint32_t prop_count, const char
 
 static XrResult
 vk_get_instance_ext_props(struct oxr_logger *log,
-                          VkInstance vulkanInstance,
                           PFN_vkGetInstanceProcAddr vulkanGetInstanceProcAddr,
                           VkExtensionProperties **out_props,
                           uint32_t *out_prop_count)
 {
-	GET_PROC(vulkanInstance, EnumerateInstanceExtensionProperties);
+	GET_PROC(VK_NULL_HANDLE, EnumerateInstanceExtensionProperties);
 
 	if (!loaded_EnumerateInstanceExtensionProperties) {
 		return oxr_error(log, XR_ERROR_RUNTIME_FAILURE,
@@ -245,8 +244,7 @@ oxr_vk_create_vulkan_instance(struct oxr_logger *log,
 
 	VkExtensionProperties *props = NULL;
 	uint32_t prop_count = 0;
-	XrResult res = vk_get_instance_ext_props(log, sys->vulkan_enable2_instance, createInfo->pfnGetInstanceProcAddr,
-	                                         &props, &prop_count);
+	XrResult res = vk_get_instance_ext_props(log, createInfo->pfnGetInstanceProcAddr, &props, &prop_count);
 	if (res != XR_SUCCESS) {
 		return res;
 	}
