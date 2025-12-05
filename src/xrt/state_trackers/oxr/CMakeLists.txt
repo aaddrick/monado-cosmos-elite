@@ -122,6 +122,12 @@ if(XRT_FEATURE_OPENXR_FUTURE_EXT)
 	target_sources(st_oxr PRIVATE oxr_api_future.c oxr_future.c)
 endif()
 
+if(XRT_FEATURE_OPENXR_HAND_TRACKING_EXT)
+	target_sources(
+		st_oxr PRIVATE oxr_api_hand_tracking.c oxr_hand_tracking.c oxr_hand_tracking.h
+		)
+endif()
+
 target_link_libraries(
 	st_oxr
 	PRIVATE

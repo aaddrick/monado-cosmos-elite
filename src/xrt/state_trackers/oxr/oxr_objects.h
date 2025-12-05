@@ -640,15 +640,6 @@ oxr_action_stop_haptic_feedback(struct oxr_logger *log,
                                 struct oxr_subaction_paths subaction_paths);
 
 /*!
- * @public @memberof oxr_instance
- */
-XrResult
-oxr_hand_tracker_create(struct oxr_logger *log,
-                        struct oxr_session *sess,
-                        const XrHandTrackerCreateInfoEXT *createInfo,
-                        struct oxr_hand_tracker **out_hand_tracker);
-
-/*!
  * @}
  */
 
@@ -869,12 +860,6 @@ oxr_session_frame_begin(struct oxr_logger *log, struct oxr_session *sess);
 XrResult
 oxr_session_frame_end(struct oxr_logger *log, struct oxr_session *sess, const XrFrameEndInfo *frameEndInfo);
 
-XrResult
-oxr_session_hand_joints(struct oxr_logger *log,
-                        struct oxr_hand_tracker *hand_tracker,
-                        const XrHandJointsLocateInfoEXT *locateInfo,
-                        XrHandJointLocationsEXT *locations);
-
 /*
  * Gets the body pose in the base space.
  */
@@ -885,11 +870,6 @@ oxr_get_base_body_pose(struct oxr_logger *log,
                        struct xrt_device *body_xdev,
                        XrTime at_time,
                        struct xrt_space_relation *out_base_body);
-
-XrResult
-oxr_session_apply_force_feedback(struct oxr_logger *log,
-                                 struct oxr_hand_tracker *hand_tracker,
-                                 const XrForceFeedbackCurlApplyLocationsMNDX *locations);
 
 #ifdef OXR_HAVE_KHR_android_thread_settings
 XrResult
@@ -2740,63 +2720,6 @@ struct oxr_debug_messenger
 
 	//! Opaque user data
 	void *XR_MAY_ALIAS user_data;
-};
-
-struct oxr_hand_tracking_data_source
-{
-	//! xrt_device backing this hand tracker
-	struct xrt_device *xdev;
-
-	//! the input name associated with this hand tracker
-	enum xrt_input_name input_name;
-};
-
-static inline int
-oxr_hand_tracking_data_source_cmp(const void *p1, const void *p2)
-{
-	const struct oxr_hand_tracking_data_source *lhs = (const struct oxr_hand_tracking_data_source *)p1;
-	const struct oxr_hand_tracking_data_source *rhs = (const struct oxr_hand_tracking_data_source *)p2;
-	assert(lhs && rhs);
-	if (rhs->input_name < lhs->input_name)
-		return -1;
-	if (rhs->input_name > lhs->input_name)
-		return 1;
-	return 0;
-}
-
-/*!
- * A hand tracker.
- *
- * Parent type/handle is @ref oxr_instance
- *
- *
- * @obj{XrHandTrackerEXT}
- * @extends oxr_handle_base
- */
-struct oxr_hand_tracker
-{
-	//! Common structure for things referred to by OpenXR handles.
-	struct oxr_handle_base handle;
-
-	//! Owner of this hand tracker.
-	struct oxr_session *sess;
-
-	struct oxr_hand_tracking_data_source unobstructed;
-	struct oxr_hand_tracking_data_source conforming;
-
-	/*!
-	 * An ordered list of requested data-source from above options (@ref
-	 * oxr_hand_tracker::[unobstructed|conforming]), ordered by
-	 * @ref oxr_hand_tracker::input_name (see @ref oxr_hand_tracking_data_source_cmp)
-	 *
-	 * if OXR_HAVE_EXT_hand_tracking_data_source is not defined the list
-	 * will contain refs to all the above options.
-	 */
-	struct oxr_hand_tracking_data_source *requested_sources[2];
-	uint32_t requested_sources_count;
-
-	XrHandEXT hand;
-	XrHandJointSetEXT hand_joint_set;
 };
 
 #ifdef OXR_HAVE_FB_passthrough
