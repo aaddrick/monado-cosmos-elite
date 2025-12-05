@@ -856,32 +856,28 @@ pssense_get_calibration_data(struct pssense_device *pssense)
 
 #define SET_INPUT(NAME) (pssense->base.inputs[PSSENSE_INDEX_##NAME].name = XRT_INPUT_PSSENSE_##NAME)
 
-int
-pssense_found(struct xrt_prober *xp,
-              struct xrt_prober_device **devices,
-              size_t device_count,
-              size_t index,
-              cJSON *attached_data,
-              struct xrt_device **out_xdevs)
+struct xrt_device *
+pssense_create(struct xrt_prober *xp, struct xrt_prober_device *xpdev)
 {
 	struct os_hid_device *hid = NULL;
 	int ret;
 
-	ret = xrt_prober_open_hid_interface(xp, devices[index], 0, &hid);
+	ret = xrt_prober_open_hid_interface(xp, xpdev, 0, &hid);
 	if (ret != 0) {
-		return -1;
+		U_LOG_E("Failed to open HID interface for PlayStation Sense controller!");
+		return NULL;
 	}
 
 	unsigned char product_name[128];
 	ret = xrt_prober_get_string_descriptor( //
 	    xp,                                 //
-	    devices[index],                     //
+	    xpdev,                              //
 	    XRT_PROBER_STRING_PRODUCT,          //
 	    product_name,                       //
 	    sizeof(product_name));              //
 	if (ret <= 0) {
 		U_LOG_E("Failed to get product name from Bluetooth device!");
-		return -1;
+		return NULL;
 	}
 
 	enum u_device_alloc_flags flags = U_DEVICE_ALLOC_TRACKING_NONE;
@@ -906,16 +902,16 @@ pssense_found(struct xrt_prober *xp,
 	pssense->log_level = debug_get_log_option_pssense_log();
 	pssense->hid = hid;
 
-	if (devices[index]->product_id == PSSENSE_PID_LEFT) {
+	if (xpdev->product_id == PSSENSE_PID_LEFT) {
 		pssense->base.device_type = XRT_DEVICE_TYPE_LEFT_HAND_CONTROLLER;
 		pssense->hand = PSSENSE_HAND_LEFT;
-	} else if (devices[index]->product_id == PSSENSE_PID_RIGHT) {
+	} else if (xpdev->product_id == PSSENSE_PID_RIGHT) {
 		pssense->base.device_type = XRT_DEVICE_TYPE_RIGHT_HAND_CONTROLLER;
 		pssense->hand = PSSENSE_HAND_RIGHT;
 	} else {
 		PSSENSE_ERROR(pssense, "Unable to determine controller type");
 		pssense_device_destroy(&pssense->base);
-		return -1;
+		return NULL;
 	}
 
 	SET_INPUT(PS_CLICK);
@@ -949,27 +945,27 @@ pssense_found(struct xrt_prober *xp,
 	if (ret != 0) {
 		PSSENSE_ERROR(pssense, "Failed to init mutex!");
 		pssense_device_destroy(&pssense->base);
-		return -1;
+		return NULL;
 	}
 
 	ret = os_thread_helper_init(&pssense->controller_thread);
 	if (ret != 0) {
 		PSSENSE_ERROR(pssense, "Failed to init threading!");
 		pssense_device_destroy(&pssense->base);
-		return -1;
+		return NULL;
 	}
 
 	ret = os_thread_helper_start(&pssense->controller_thread, pssense_run_thread, pssense);
 	if (ret != 0) {
 		PSSENSE_ERROR(pssense, "Failed to start thread!");
 		pssense_device_destroy(&pssense->base);
-		return -1;
+		return NULL;
 	}
 
 	if (!pssense_get_calibration_data(pssense)) {
 		PSSENSE_ERROR(pssense, "Failed to retrieve calibration data");
 		pssense_device_destroy(&pssense->base);
-		return -1;
+		return NULL;
 	}
 
 	u_var_add_root(pssense, pssense->base.str, false);
@@ -1007,7 +1003,25 @@ pssense_found(struct xrt_prober *xp,
 	u_var_add_ro_vec3_i32(pssense, &pssense->state.accel_raw, "Raw Accel");
 	u_var_add_pose(pssense, &pssense->pose, "Pose");
 
-	out_xdevs[0] = &pssense->base;
+	return &pssense->base;
+}
+
+int
+pssense_found(struct xrt_prober *xp,
+              struct xrt_prober_device **devices,
+              size_t device_count,
+              size_t index,
+              cJSON *attached_data,
+              struct xrt_device **out_xdevs)
+{
+	struct xrt_prober_device *xpdev = devices[index];
+
+	struct xrt_device *xdev = pssense_create(xp, xpdev);
+	if (xdev == NULL) {
+		return -1;
+	}
+
+	out_xdevs[0] = xdev;
 	return 1;
 }
 
