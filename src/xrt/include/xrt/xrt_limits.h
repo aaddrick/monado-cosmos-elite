@@ -75,7 +75,7 @@
  */
 #ifdef XRT_OS_ANDROID
 #define XRT_MAX_LAYERS 32
-#elif defined(XRT_OS_LINUX) || defined(XRT_OS_WINDOWS)
+#elif defined(XRT_OS_LINUX) || defined(XRT_OS_WINDOWS) || defined(XRT_OS_OSX)
 #define XRT_MAX_LAYERS 128
 #else
 #error "Unknown platform, define XRT_MAX_LAYERS for your OS"
