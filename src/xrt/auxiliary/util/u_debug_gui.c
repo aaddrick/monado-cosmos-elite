@@ -8,14 +8,14 @@
  * @author Moshi Turner <moshiturner@protonmail.com>
  */
 
-#include "math/m_api.h"
 #include "xrt/xrt_system.h"
 #include "xrt/xrt_instance.h"
 #include "xrt/xrt_config_build.h"
+#include "math/m_api.h"
+#include "util/u_debug_gui.h"
+
 
 #ifndef XRT_FEATURE_DEBUG_GUI
-
-struct u_debug_gui;
 
 int
 u_debug_gui_create(const struct u_debug_gui_create_info *udgci, struct u_debug_gui **out_debug_ui)
