@@ -1,4 +1,5 @@
 // Copyright 2019-2021, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -28,6 +29,13 @@ namespace fs = std::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
+
+/*
+ *
+ * Helpers
+ *
+ */
+
 static inline fs::path
 get_config_path()
 {
@@ -54,6 +62,13 @@ get_config_path()
 	return {};
 #endif
 }
+
+
+/*
+ *
+ * 'Exported' functions.
+ *
+ */
 
 int
 u_file_get_config_dir(char *out_path, size_t out_path_size)
@@ -105,4 +120,4 @@ u_file_open_file_in_config_dir(const char *filename, const char *mode)
 	return nullptr;
 }
 
-#endif // XRT_OS_LINUX
+#endif // !XRT_OS_LINUX
