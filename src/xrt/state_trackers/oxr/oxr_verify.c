@@ -472,8 +472,8 @@ oxr_verify_view_config_type_supported(struct oxr_logger *log,
 	}
 
 	return oxr_error(log, XR_ERROR_VIEW_CONFIGURATION_TYPE_UNSUPPORTED,
-	                 "(%s == 0x%08x) unsupported view configuration type by system %zu", view_conf_name, view_conf,
-	                 sys->systemId);
+	                 "(%s == 0x%08x) unsupported view configuration type by system %" PRIu64, view_conf_name,
+	                 view_conf, sys->systemId);
 }
 
 XrResult
