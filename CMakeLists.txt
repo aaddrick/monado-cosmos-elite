@@ -1,4 +1,5 @@
 # Copyright 2018-2024, Collabora, Ltd.
+# Copyright 2024-2025, NVIDIA CORPORATION.
 # SPDX-License-Identifier: BSL-1.0
 
 cmake_minimum_required(VERSION 3.22)
@@ -8,6 +9,11 @@ project(
 	LANGUAGES C CXX
 	DESCRIPTION "Monado(XRT) by Collabora et al"
 	)
+
+# Enable Objective-C for Apple platforms
+if(APPLE)
+	enable_language(OBJC)
+endif()
 
 # CMake 3.11 introduced CMP0072 - Prefer GLVND
 if(POLICY CMP0072)
