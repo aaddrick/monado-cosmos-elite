@@ -1,4 +1,5 @@
 // Copyright 2018-2024, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -256,7 +257,7 @@ oxr_xrGetD3D11GraphicsRequirementsKHR(XrInstance instance,
 
 #ifdef XR_USE_GRAPHICS_API_D3D12
 
-//! OpenXR API function @ep{xrGetD3D11GraphicsRequirementsKHR}
+//! OpenXR API function @ep{xrGetD3D12GraphicsRequirementsKHR}
 XRAPI_ATTR XrResult XRAPI_CALL
 oxr_xrGetD3D12GraphicsRequirementsKHR(XrInstance instance,
                                       XrSystemId systemId,
