@@ -538,6 +538,31 @@ struct vk_buffer
  */
 
 /*!
+ * This define will print if `RET` is not `VK_SUCCESS`, printing out that the
+ * @p FUNC_STR string has failed. The implicit argument @p vk will be used for
+ * the @ref vk_print_result call.
+ *
+ * Use this when you need to do special things after an error,
+ * but still want to pirnt the pretty message about the failure.
+ *
+ * @param RET      The @p VkResult to check.
+ * @param FUNC_STR String literal with the function name, used for logging.
+ *
+ * @ingroup aux_vk
+ *
+ * @see VK_CHK_AND_RET
+ * @see VK_CHK_WITH_RET
+ * @see VK_CHK_WITH_GOTO
+ */
+#define VK_CHK_ONLY_PRINT(RET, FUNC_STR)                                                                               \
+	do {                                                                                                           \
+		VkResult _ret = RET;                                                                                   \
+		if (_ret != VK_SUCCESS) {                                                                              \
+			vk_print_result(vk, __FILE__, __LINE__, __func__, _ret, FUNC_STR);                             \
+		}                                                                                                      \
+	} while (false)
+
+/*!
  * This define will error if `RET` is not `VK_SUCCESS`, printing out that the
  * @p FUNC_STR string has failed, then returns @p RET. The implicit argument
  * @p vk will be used for the @ref vk_print_result call.
@@ -549,6 +574,7 @@ struct vk_buffer
  *
  * @ingroup aux_vk
  *
+ * @see VK_CHK_ONLY_PRINT
  * @see VK_CHK_WITH_RET
  * @see VK_CHK_WITH_GOTO
  */
@@ -574,6 +600,7 @@ struct vk_buffer
  *
  * @ingroup aux_vk
  *
+ * @see VK_CHK_ONLY_PRINT
  * @see VK_CHK_AND_RET
  * @see VK_CHK_WITH_GOTO
  */
@@ -600,6 +627,7 @@ struct vk_buffer
  *
  * @ingroup aux_vk
  *
+ * @see VK_CHK_ONLY_PRINT
  * @see VK_CHK_AND_RET
  * @see VK_CHK_WITH_RET
  */
