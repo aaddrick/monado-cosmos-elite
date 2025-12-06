@@ -37,9 +37,12 @@ DEBUG_GET_ONCE_BOOL_OPTION(negotiate, "OXR_DEBUG_NEGOTIATE", false)
 
 
 #ifdef XRT_OS_WINDOWS
+//! @todo Remove these once clang format is updated
+//! @todo Check if this is actually needed? This was added one month before the libopenxr.def file?
+// clang-format off
 __declspec(dllexport) XRAPI_ATTR XrResult XRAPI_CALL
-    xrNegotiateLoaderRuntimeInterface(const XrNegotiateLoaderInfo *loaderInfo,
-                                      XrNegotiateRuntimeRequest *runtimeRequest);
+xrNegotiateLoaderRuntimeInterface(const XrNegotiateLoaderInfo *loaderInfo, XrNegotiateRuntimeRequest *runtimeRequest);
+// clang-format on
 #endif
 
 XRAPI_ATTR XrResult XRAPI_CALL
