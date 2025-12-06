@@ -1,4 +1,5 @@
 // Copyright 2020-2023, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -135,10 +136,7 @@ create_image(struct vk_bundle *vk, const struct xrt_swapchain_create_info *info,
 	};
 
 	ret = vk->vkGetAndroidHardwareBufferPropertiesANDROID(vk->device, a_buffer, &a_buffer_props);
-	if (ret != VK_SUCCESS) {
-		U_LOG_E("vkGetAndroidHardwareBufferPropertiesANDROID: %s", vk_result_string(ret));
-		return ret;
-	}
+	VK_CHK_AND_RET(ret, "vkGetAndroidHardwareBufferPropertiesANDROID");
 
 	//! @todo Actually use this buffer for something other then getting the format.
 	// Does null-check, validity check and clears.
@@ -269,10 +267,7 @@ create_image(struct vk_bundle *vk, const struct xrt_swapchain_create_info *info,
 #endif
 
 	ret = vk->vkCreateImage(vk->device, &create_info, NULL, &image);
-	if (ret != VK_SUCCESS) {
-		U_LOG_E("vkCreateImage: %s", vk_result_string(ret));
-		return ret;
-	}
+	VK_CHK_AND_RET(ret, "vkCreateImage");
 
 	// In
 #if !defined(XRT_GRAPHICS_BUFFER_HANDLE_IS_AHARDWAREBUFFER)
@@ -331,27 +326,34 @@ create_image(struct vk_bundle *vk, const struct xrt_swapchain_create_info *info,
 	 * Create and bind the memory.
 	 */
 
+	// Reset the next chain.
+	next_chain = NULL;
+
 	// In->pNext->pNext
 	VkMemoryDedicatedAllocateInfoKHR dedicated_memory_info = {
 	    .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR,
 	    .image = image,
 	    .buffer = VK_NULL_HANDLE,
 	};
+	if (use_dedicated_allocation) {
+		CHAIN(dedicated_memory_info);
+	}
 
 	// In->pNext
 	VkExportMemoryAllocateInfo export_alloc_info = {
 	    .sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR,
-	    .pNext = use_dedicated_allocation ? &dedicated_memory_info : NULL,
 	    .handleTypes = memory_handle_type,
 	};
+	CHAIN(export_alloc_info);
 
 	ret = vk_alloc_and_bind_image_memory(   //
 	    vk,                                 // vk_bundle
 	    image,                              // image
 	    requirements,                       // requirements
-	    &export_alloc_info,                 // pNext_for_allocate
+	    next_chain,                         // pNext_for_allocate
 	    "vk_image_allocator::create_image", // caller_name
 	    &device_memory);                    // out_mem
+	VK_CHK_ONLY_PRINT(ret, "vk_alloc_and_bind_image_memory");
 	if (ret != VK_SUCCESS) {
 		vk->vkDestroyImage(vk->device, image, NULL);
 		return ret;
@@ -402,6 +404,7 @@ vk_ic_allocate(struct vk_bundle *vk,
 	size_t i = 0;
 	for (; i < image_count; i++) {
 		ret = create_image(vk, xscci, &out_vkic->images[i]);
+		VK_CHK_ONLY_PRINT(ret, "create_image");
 		if (ret != VK_SUCCESS) {
 			break;
 		}
@@ -466,6 +469,7 @@ vk_ic_from_natives(struct vk_bundle *vk,
 		    &native_images[i],             // image_native
 		    &out_vkic->images[i].handle,   // out_image
 		    &out_vkic->images[i].memory);  // out_mem
+		VK_CHK_ONLY_PRINT(ret, "vk_create_image_from_native");
 		if (ret != VK_SUCCESS) {
 			if (!native_images[i].is_dxgi_handle) {
 				u_graphics_buffer_unref(&buf);
@@ -527,6 +531,7 @@ vk_ic_get_handles(struct vk_bundle *vk,
 	size_t i = 0;
 	for (; i < vkic->image_count && i < max_handles; i++) {
 		ret = vk_get_native_handle_from_device_memory(vk, vkic->images[i].memory, &out_handles[i]);
+		VK_CHK_ONLY_PRINT(ret, "vk_get_native_handle_from_device_memory");
 		if (ret != VK_SUCCESS) {
 			break;
 		}
