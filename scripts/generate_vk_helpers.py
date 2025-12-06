@@ -278,6 +278,8 @@ def get_instance_cmds():
         None,
         Cmd("vkCreateWin32SurfaceKHR", requires=("VK_USE_PLATFORM_WIN32_KHR",)),
         None,
+        Cmd("vkCreateMetalSurfaceEXT", requires=("VK_USE_PLATFORM_METAL_EXT",)),
+        None,
         Cmd("vkGetPhysicalDeviceSurfaceCapabilities2EXT", requires=("VK_EXT_display_surface_counter",)),
         None,
         Cmd("vkCreateDebugUtilsMessengerEXT", requires=("VK_EXT_debug_utils",)),
