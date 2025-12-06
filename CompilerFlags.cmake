@@ -38,6 +38,13 @@ if(NOT WIN32 AND NOT APPLE)
 	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--no-undefined")
 endif()
 
+if(APPLE)
+	# Suppress warnings about duplicate libraries in the link line.
+	# This happens because CMake's transitive dependency handling can
+	# result in the same static library appearing multiple times.
+	add_link_options("-Wl,-no_warn_duplicate_libraries")
+endif()
+
 # Must call before adding targets that will use xrt-optimized-math
 macro(xrt_optimized_math_flags)
 	if(MSVC)
