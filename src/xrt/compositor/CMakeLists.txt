@@ -1,5 +1,20 @@
 # Copyright 2019-2024, Collabora, Ltd.
+# Copyright 2025, NVIDIA CORPORATION.
 # SPDX-License-Identifier: BSL-1.0
+
+###
+# Compositor includes target
+#
+add_library(comp_includes INTERFACE)
+target_include_directories(comp_includes INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(comp_includes INTERFACE xrt-interfaces)
+
+###
+# Shaders - must come early so others can depend on it.
+#
+if(TRUE)
+	add_subdirectory(shaders)
+endif()
 
 ###
 # Client library
@@ -86,40 +101,14 @@ endif()
 #
 
 if(XRT_HAVE_VULKAN)
-	set(SHADERS
-	    shaders/blit.comp
-	    shaders/clear.comp
-	    shaders/distortion.comp
-	    shaders/layer.comp
-	    shaders/mesh.frag
-	    shaders/mesh.vert
-	    shaders/layer_cylinder.frag
-	    shaders/layer_cylinder.vert
-	    shaders/layer_equirect2.frag
-	    shaders/layer_equirect2.vert
-	    shaders/layer_projection.vert
-	    shaders/layer_quad.vert
-	    shaders/layer_shared.frag
-		)
-
-	spirv_shaders(
-		SHADER_HEADERS
-		SPIRV_VERSION
-		1.0 # Currently targeting Vulkan 1.0
-		SOURCES
-		${SHADERS}
-		)
-
 	add_library(
 		comp_render STATIC
-		${SHADER_HEADERS}
 		render/render_buffer.c
 		render/render_compute.c
 		render/render_distortion.c
 		render/render_gfx.c
 		render/render_interface.h
 		render/render_resources.c
-		render/render_shaders.c
 		render/render_sub_alloc.c
 		render/render_util.c
 		)
@@ -127,14 +116,10 @@ if(XRT_HAVE_VULKAN)
 	target_link_libraries(
 		comp_render
 		PUBLIC xrt-interfaces aux_vk
-		PRIVATE aux_util aux_os
+		PRIVATE aux_util aux_os comp_shaders
 		)
 	# So it can be used without any other compositor libraries.
 	target_include_directories(comp_render PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-	# Shaders - marked SYSTEM so we get no warnings
-	target_include_directories(comp_render SYSTEM PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-
-	add_subdirectory(shaders)
 endif()
 
 ##

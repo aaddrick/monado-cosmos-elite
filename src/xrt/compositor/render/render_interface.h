@@ -17,6 +17,8 @@
 #include "vk/vk_helpers.h"
 #include "vk/vk_cmd_pool.h"
 
+#include "shaders/render_shaders_interface.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -151,54 +153,6 @@ render_calc_time_warp_matrix(const struct xrt_pose *src_pose,
  */
 void
 render_calc_uv_to_tangent_lengths_rect(const struct xrt_fov *fov, struct xrt_normalized_rect *out_rect);
-
-
-/*
- *
- * Shaders.
- *
- */
-
-/*!
- * Holds all shaders.
- */
-struct render_shaders
-{
-	VkShaderModule blit_comp;
-	VkShaderModule clear_comp;
-	VkShaderModule layer_comp;
-	VkShaderModule distortion_comp;
-
-	VkShaderModule mesh_vert;
-	VkShaderModule mesh_frag;
-
-
-	/*
-	 * New layer renderer.
-	 */
-
-	VkShaderModule layer_cylinder_vert;
-	VkShaderModule layer_cylinder_frag;
-
-	VkShaderModule layer_equirect2_vert;
-	VkShaderModule layer_equirect2_frag;
-
-	VkShaderModule layer_projection_vert;
-	VkShaderModule layer_quad_vert;
-	VkShaderModule layer_shared_frag;
-};
-
-/*!
- * Loads all of the shaders that the compositor uses.
- */
-bool
-render_shaders_load(struct render_shaders *s, struct vk_bundle *vk);
-
-/*!
- * Unload and cleanup shaders.
- */
-void
-render_shaders_fini(struct render_shaders *s, struct vk_bundle *vk);
 
 
 /*

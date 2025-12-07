@@ -1,4 +1,5 @@
 // Copyright 2019-2023, Collabora, Ltd.
+// Copyright 2025, NVIDIA CORPORATION.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
@@ -10,7 +11,7 @@
 
 #include "vk/vk_mini_helpers.h"
 
-#include "render/render_interface.h"
+#include "render_shaders_interface.h"
 
 
 /*
@@ -25,20 +26,20 @@
 #pragma GCC diagnostic ignored "-Wnewline-eof"
 #endif
 
-#include "shaders/blit.comp.h"
-#include "shaders/clear.comp.h"
-#include "shaders/layer.comp.h"
-#include "shaders/distortion.comp.h"
-#include "shaders/layer_cylinder.frag.h"
-#include "shaders/layer_cylinder.vert.h"
-#include "shaders/layer_equirect2.frag.h"
-#include "shaders/layer_equirect2.vert.h"
-#include "shaders/layer_projection.vert.h"
-#include "shaders/layer_projection.vert.h"
-#include "shaders/layer_quad.vert.h"
-#include "shaders/layer_shared.frag.h"
-#include "shaders/mesh.frag.h"
-#include "shaders/mesh.vert.h"
+#include "blit.comp.h"
+#include "clear.comp.h"
+#include "layer.comp.h"
+#include "distortion.comp.h"
+#include "layer_cylinder.frag.h"
+#include "layer_cylinder.vert.h"
+#include "layer_equirect2.frag.h"
+#include "layer_equirect2.vert.h"
+#include "layer_projection.vert.h"
+#include "layer_projection.vert.h"
+#include "layer_quad.vert.h"
+#include "layer_shared.frag.h"
+#include "mesh.frag.h"
+#include "mesh.vert.h"
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
@@ -53,8 +54,8 @@
 
 #define LOAD(SHADER)                                                                                                   \
 	do {                                                                                                           \
-		const uint32_t *code = shaders_##SHADER;                                                               \
-		size_t size = sizeof(shaders_##SHADER);                                                                \
+		const uint32_t *code = SHADER;                                                                         \
+		size_t size = sizeof(SHADER);                                                                          \
 		VkResult ret = shader_load(vk,          /* vk_bundle */                                                \
 		                           code,        /* code      */                                                \
 		                           size,        /* size      */                                                \
