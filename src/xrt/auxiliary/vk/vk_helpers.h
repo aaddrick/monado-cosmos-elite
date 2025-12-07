@@ -640,6 +640,16 @@ struct vk_buffer
 		}                                                                                                      \
 	} while (false)
 
+//! For xrt_result_t, see @ref VK_CHK_AND_RET.
+#define XVK_CHK_AND_RET(...) U_LOG_CHK_AND_RET(vk->log_level, __VA_ARGS__)
+//! For xrt_result_t, see @ref VK_CHK_WITH_GOTO.
+#define XVK_CHK_WITH_GOTO(...) U_LOG_CHK_WITH_GOTO(vk->log_level, __VA_ARGS__)
+//! For xrt_result_t, see @ref VK_CHK_WITH_RET.
+#define XVK_CHK_WITH_RET(...) U_LOG_CHK_WITH_RET(vk->log_level, __VA_ARGS__)
+//! For xrt_result_t, see @ref VK_CHK_ONLY_PRINT.
+#define XVK_CHK_ONLY_PRINT(...) U_LOG_CHK_ONLY_PRINT(vk->log_level, __VA_ARGS__)
+//! For xrt_result_t, see @ref VK_CHK_ALWAYS_RET.
+#define XVK_CHK_ALWAYS_RET(...) U_LOG_CHK_ALWAYS_RET(vk->log_level, __VA_ARGS__)
 
 static inline void
 vk_append_to_pnext_chain(VkBaseInStructure *head, VkBaseInStructure *new_struct)
