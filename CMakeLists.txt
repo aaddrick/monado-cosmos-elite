@@ -263,11 +263,17 @@ option_with_deps(XRT_HAVE_ONNXRUNTIME "Enable ONNX runtime support" DEPENDS ONNX
 
 option(XRT_MODULE_IPC "Enable the build of the IPC layer" ON)
 option(XRT_MODULE_COMPOSITOR "Enable the compositor at all" ON)
+option_with_deps(XRT_MODULE_COMPOSITOR_CLIENT "Build compositor client library" DEPENDS XRT_MODULE_COMPOSITOR)
 option_with_deps(XRT_MODULE_COMPOSITOR_MAIN "Build main compositor host functionality" DEPENDS
 	XRT_MODULE_COMPOSITOR
 	XRT_HAVE_VULKAN
 	)
+option_with_deps(XRT_MODULE_COMPOSITOR_MULTI "Build multi-client compositor library" DEPENDS XRT_MODULE_COMPOSITOR)
 option_with_deps(XRT_MODULE_COMPOSITOR_NULL "Build testing null compositor" DEPENDS XRT_MODULE_COMPOSITOR XRT_HAVE_VULKAN)
+option_with_deps(XRT_MODULE_COMPOSITOR_RENDER "Build compositor render library" DEPENDS XRT_MODULE_COMPOSITOR XRT_HAVE_VULKAN)
+option_with_deps(XRT_MODULE_COMPOSITOR_SHADERS "Build compositor shaders" DEPENDS XRT_MODULE_COMPOSITOR XRT_HAVE_VULKAN)
+option_with_deps(XRT_MODULE_COMPOSITOR_UTIL "Build compositor utility library" DEPENDS XRT_MODULE_COMPOSITOR XRT_HAVE_VULKAN)
+option_with_deps(XRT_MODULE_COMPOSITOR_MOCK "Build mock compositor library" DEPENDS XRT_MODULE_COMPOSITOR)
 option_with_deps(XRT_MODULE_MERCURY_HANDTRACKING "Enable Mercury hand tracking" DEPENDS XRT_HAVE_OPENCV XRT_HAVE_ONNXRUNTIME)
 
 option(XRT_MODULE_MONADO_CLI "Build monado-cli" ON)
