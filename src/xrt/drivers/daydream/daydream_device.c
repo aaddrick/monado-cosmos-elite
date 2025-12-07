@@ -389,6 +389,9 @@ daydream_device_create(struct os_ble_device *ble)
 
 	daydream_get_calibration(dd);
 
+	os_mutex_init(&dd->lock);
+	os_thread_helper_init(&dd->oth);
+
 	// Everything done, finally start the thread.
 	int ret = os_thread_helper_start(&dd->oth, daydream_run_thread, dd);
 	if (ret != 0) {
