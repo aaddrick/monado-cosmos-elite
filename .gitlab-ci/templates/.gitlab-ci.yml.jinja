@@ -206,6 +206,8 @@ windows:
 # Check compatibility of IPC protocol between 32 and 64 bits
 ipc-32-64-compatibility:
   stage: check
+  extends:
+    - .build-rules
   dependencies: ["debian:cmake-no-opencv", "debian:cmake:32bit"]
   needs: ["debian:cmake-no-opencv", "debian:cmake:32bit"]
   script:
