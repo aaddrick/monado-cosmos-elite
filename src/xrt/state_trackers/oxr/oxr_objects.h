@@ -2792,7 +2792,7 @@ struct oxr_hand_tracker
 	 * if OXR_HAVE_EXT_hand_tracking_data_source is not defined the list
 	 * will contain refs to all the above options.
 	 */
-	const struct oxr_hand_tracking_data_source *requested_sources[2];
+	struct oxr_hand_tracking_data_source *requested_sources[2];
 	uint32_t requested_sources_count;
 
 	XrHandEXT hand;

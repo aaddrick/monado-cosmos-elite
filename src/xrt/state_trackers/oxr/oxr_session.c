@@ -1512,12 +1512,12 @@ oxr_session_hand_joints(struct oxr_logger *log,
 	//! Convert at_time to monotonic and give to device.
 	const int64_t at_timestamp_ns = time_state_ts_to_monotonic_ns(inst->timekeeping, at_time);
 
-	const struct oxr_hand_tracking_data_source *data_sources[ARRAY_SIZE(hand_tracker->requested_sources)] = {0};
+	struct oxr_hand_tracking_data_source *data_sources[ARRAY_SIZE(hand_tracker->requested_sources)] = {0};
 	memcpy(data_sources, hand_tracker->requested_sources, sizeof(data_sources));
 
 	if (debug_get_bool_option_hand_tracking_prioritize_conforming() && //
 	    hand_tracker->requested_sources_count > 1) {
-		const struct oxr_hand_tracking_data_source *tmp = data_sources[0];
+		struct oxr_hand_tracking_data_source *tmp = data_sources[0];
 		data_sources[0] = data_sources[1];
 		data_sources[1] = tmp;
 	}
