@@ -1138,11 +1138,15 @@ vk_create_image_from_native(struct vk_bundle *vk,
 	};
 
 #ifdef VK_KHR_image_format_list
+	VkFormat formats[XRT_MAX_SWAPCHAIN_CREATE_INFO_FORMAT_LIST_COUNT] = {0};
+	for (uint32_t i = 0; i < info->format_count; ++i) {
+		formats[i] = (VkFormat)(info->formats[i]);
+	}
 	VkImageFormatListCreateInfoKHR image_format_list_create_info = {
 	    .sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO_KHR,
 	    .pNext = NULL,
 	    .viewFormatCount = info->format_count,
-	    .pViewFormats = info->formats,
+	    .pViewFormats = formats,
 	};
 	const bool has_mutable_format_list =
 	    has_mutable_usage && vk->has_KHR_image_format_list && info->format_count > 0;
