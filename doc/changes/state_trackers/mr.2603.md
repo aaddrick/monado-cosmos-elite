@@ -1,1 +1,1 @@
-Update OpenXR headers to latest SDK version
+- Change: Update OpenXR headers to latest SDK version

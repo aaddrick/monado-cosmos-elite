@@ -1,1 +1,1 @@
-- Add: support for `XR_META_body_tracking_calibration`
+- Add: Support for `XR_META_body_tracking_calibration`

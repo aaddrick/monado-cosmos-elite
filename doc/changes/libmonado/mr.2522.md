@@ -1,4 +1,4 @@
-- Added: checks for new hand-tracking role names for `mnd_root_get_device_from_role`
+- Added: Checks for new hand-tracking role names for `mnd_root_get_device_from_role`
 - Changed: Deprecated the role name strings `"hand-tracking-[left|right]"` for `mnd_root_get_device_from_role`,
   these now map to `"hand-tracking-unobstructed-[left|right]"`, to removed in the future.
-- Fixed: Fixed `monado.py` using old hand-tracking role names in `Monado.get_device_roles`
+- Fixed: `monado.py` using old hand-tracking role names in `Monado.get_device_roles`

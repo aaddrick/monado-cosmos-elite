@@ -1,1 +1,1 @@
-Add: Add byte order constants and conversion functions.
+- Add: Byte order constants and conversion functions.

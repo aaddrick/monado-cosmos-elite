@@ -1,3 +1,2 @@
-- Change: `xrt_device_set_output` returns `xrt_result_t` to improve error handling in the state tracker
-- Introduce `XRT_ERROR_OUTPUT_UNSUPPORTED`
-- Introduce `XRT_ERROR_OUTPUT_REQUEST_FAILURE`
+- Introduce: `XRT_ERROR_OUTPUT_UNSUPPORTED`
+- Introduce: `XRT_ERROR_OUTPUT_REQUEST_FAILURE`

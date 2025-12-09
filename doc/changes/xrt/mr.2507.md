@@ -1,1 +1,1 @@
-Implement `XR_EXT_user_presence`
+- Add: `XR_EXT_user_presence` implementation
