@@ -1,1 +1,1 @@
-Adds support for BC4 frames
+a/util: Support for BC4 frames

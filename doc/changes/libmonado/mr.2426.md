@@ -1,0 +1,1 @@
+- Add: mnd_root_get_device_brightness and mnd_root_set_device_brightness

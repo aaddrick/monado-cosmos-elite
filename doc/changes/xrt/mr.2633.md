@@ -1,3 +1,1 @@
-Change: Enable the use of [X_macro](https://en.wikipedia.org/wiki/X_macro) pattern with
-more of the enums in the `xrt_defines.h` header. Code has been changed to use these
-as well reducing the amount of generated code needed.
+Change: Enable the use of [X_macro](https://en.wikipedia.org/wiki/X_macro) pattern with more of the enums in the `xrt_defines.h` header. Code has been changed to use these as well reducing the amount of generated code needed.

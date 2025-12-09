@@ -1,0 +1,1 @@
+- Add: `device_get_brightness` and `device_set_brightness`

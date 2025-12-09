@@ -4,7 +4,4 @@
 - mr.2365
 - mr.2367
 ---
-- Change: `xrt_device_get_hand_tracking` return `xrt_result_t`
-- Change: `xrt_device_set_output` returns `xrt_result_t` to improve error handling in the state tracker
-- Change: `xrt_device_get_view_pose` returns `xrt_result_t` to improve error handling in the state tracker
-- Change: `xrt_device_compute_distortion` returns `xrt_result_t` to improve error handling in the state tracker
+- Change: `xrt_device_get_hand_tracking`, `xrt_device_set_output`, `xrt_device_get_view_pose`, `xrt_device_compute_distortion` now return `xrt_result_t` to improve error handling in the state tracker.

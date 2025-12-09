@@ -1,1 +1,1 @@
-- Add: Plumbing for xrt_device presence functions
+- Add: Plumbing for `xrt_device` presence functions

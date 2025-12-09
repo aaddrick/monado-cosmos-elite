@@ -1,1 +1,1 @@
-- xrt: Add brightness control feature and callbacks
+- Add: Brightness control feature and callbacks

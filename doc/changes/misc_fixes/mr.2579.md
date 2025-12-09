@@ -1,1 +1,1 @@
-- Fix: Tests_aux_d3d_d3d11 failing in DuplicateHandle before importing.
+- Fix: `tests_aux_d3d_d3d11` failing in `DuplicateHandle` before importing.

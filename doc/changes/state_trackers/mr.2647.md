@@ -1,1 +1,1 @@
-- st/oxr: Report proper timestamps in XrEventDataSessionStateChanged instead of 0.
+- Fix: Report proper timestamps in XrEventDataSessionStateChanged instead of 0.

@@ -1,1 +1,2 @@
-- Add: Extension supports for `XR_META_body_tracking_full_body` on `xrt_device`
+- Add: Support for `XR_META_body_tracking_full_body` extension implementation on `xrt_device` driver.
+

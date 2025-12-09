@@ -1,1 +1,1 @@
-- Add: Support for `XR_EXT_plane_detection` extension
+- Add: Support for `XR_EXT_plane_detection` extension implementation on `xrt_device` driver.
