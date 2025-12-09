@@ -1,4 +1,4 @@
-# OpenXR async functions (XrFutureEXT)
+# OpenXR async functions (XrFutureEXT)  {#async}
 
 <!--
 Copyright 2025, Collabora, Ltd. and the Monado contributors
