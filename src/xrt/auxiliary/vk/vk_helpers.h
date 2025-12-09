@@ -1209,8 +1209,6 @@ vk_get_memory_type(struct vk_bundle *vk, uint32_t type_bits, VkMemoryPropertyFla
  *        any errors it will add the caller name to error messages.
  * @param out_mem Output parameter: will be set to the allocated memory if
  *        everything succeeds. Not modified if there is an error.
- * @param out_size (Optional) pointer to receive the value of
- *        VkMemoryRequirements::size.
  *
  * If this fails, you may want to destroy your VkImage as well, since this
  * routine is usually used in combination with vkCreateImage.
