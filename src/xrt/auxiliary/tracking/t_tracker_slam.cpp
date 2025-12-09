@@ -321,7 +321,7 @@ struct TrackerSlam
 
 		// Exponential smoothing filter
 		bool use_exponential_smoothing_filter = false;
-		float alpha = 0.1; //!< How much should we lerp towards the @ref target value on each update
+		float alpha = 0.1; //!< How much should we lerp towards the @p target value on each update
 		struct xrt_space_relation last = XRT_SPACE_RELATION_ZERO;   //!< Last filtered relation
 		struct xrt_space_relation target = XRT_SPACE_RELATION_ZERO; //!< Target relation
 
@@ -349,11 +349,11 @@ struct TrackerSlam
 	{
 		bool enabled = false;               //!< Whether the timing extension is enabled
 		float dur_ms[UI_TIMING_POSE_COUNT]; //!< Timing durations in ms
-		int idx = 0;                        //!< Index of latest entry in @ref dur_ms
+		int idx = 0;                        //!< Index of latest entry in @p dur_ms
 		u_var_combo start_ts;               //!< UI combo box to select initial timing measurement
 		u_var_combo end_ts;                 //!< UI combo box to select final timing measurement
-		int start_ts_idx;                   //!< Selected initial timing measurement in @ref start_ts
-		int end_ts_idx;                     //!< Selected final timing measurement in @ref end_ts
+		int start_ts_idx;                   //!< Selected initial timing measurement in @p start_ts
+		int end_ts_idx;                     //!< Selected final timing measurement in @p end_ts
 		struct u_var_timing ui;             //!< Realtime UI for tracker durations
 		vector<string> columns;             //!< Column names of the measured timestamps
 		string joined_columns;              //!< Column names as a null separated string
@@ -395,7 +395,7 @@ struct TrackerSlam
 		Trajectory *trajectory;               //!< Empty if we've not received groundtruth
 		xrt_pose origin;                      //!< First ground truth pose
 		float diffs_mm[UI_GTDIFF_POSE_COUNT]; //!< Positional error wrt ground truth
-		int diff_idx = 0;                     //!< Index of last error in @ref diffs_mm
+		int diff_idx = 0;                     //!< Index of last error in @p diffs_mm
 		struct u_var_timing diff_ui;          //!< Realtime UI for positional error
 		bool override_tracking = false;       //!< Force the tracker to report gt poses instead
 	} gt;

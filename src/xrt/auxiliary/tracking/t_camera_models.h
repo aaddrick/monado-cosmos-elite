@@ -40,7 +40,8 @@ struct t_camera_calibration_kb4_params_float
 };
 
 /*!
- * Floating point parameters for @ref T_DISTORTION_OPENCV_RT8, also including metric_radius.
+ * Floating point parameters for @ref T_DISTORTION_OPENCV_RADTAN_8, also including
+ * @p metric_radius.
  * @ingroup aux_tracking
  */
 struct t_camera_calibration_rt8_params_float
