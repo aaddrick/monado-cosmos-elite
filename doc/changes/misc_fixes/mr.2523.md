@@ -1,2 +1,0 @@
-- survive,vive: Fix hand orientations being swapped for LT based controllers after HT roles/input name separation changes
-- vive: Fix typo converting hand-tracking input-name checks to `XRT_INPUT_HT_CONFORMING_[LEFT|RIGHT]`

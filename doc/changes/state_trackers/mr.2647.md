@@ -1,1 +1,0 @@
-- Fix: Report proper timestamps in XrEventDataSessionStateChanged instead of 0.

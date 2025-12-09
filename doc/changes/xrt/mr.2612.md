@@ -1,6 +1,0 @@
----
-- mr.2612
----
-- Change: Add `xrt_view_type` argument to  `xrt_device::get_view_poses` function, this decouples the type of the view from the number. Letting us have different semantics for the same view count.
-- Change: Make it possible for the compositor to expose multiple view configurations types supported, and letting the compositor control the sizes for them separately. This change introduces `xrt_view_config` and `xrt_view_config_properties` which are added to @ref xrt_system_compositor_info.
-- Change: Allow for late creation of the `xrt_system` and other system level structs. Allowing the server to launch and accept apps and decide which form factor or view configuration to support until a later date.

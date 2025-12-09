@@ -1,1 +1,0 @@
-- Add: Support for `XR_META_body_tracking_calibration` extension implementation on `xrt_device` driver.

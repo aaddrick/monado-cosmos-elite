@@ -1,5 +1,0 @@
----
-- mr.2614
----
-- Add: New UI button to the Android About page for scanning Cardboard calibration QR codes and saving them to device
-- Change: Android driver support for loading Cardboard calibration from device

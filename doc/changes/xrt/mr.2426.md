@@ -1,1 +1,0 @@
-- Add: Brightness control feature and callbacks

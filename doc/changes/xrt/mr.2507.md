@@ -1,1 +1,0 @@
-- Add: Support for `XR_EXT_user_presence` extension implementation on `xrt_device` driver.

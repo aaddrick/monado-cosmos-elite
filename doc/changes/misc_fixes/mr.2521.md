@@ -1,2 +1,0 @@
-- steamvr_lh: Lighthouse builder assigning optical hand-tracking to the wrong device role
-- Fix: Wrong sort order for stored requested hand-tracking data-sources

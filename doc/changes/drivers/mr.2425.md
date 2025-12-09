@@ -1,1 +1,0 @@
-- steamvr_lh: Generate hand tracking and palm pose from skeleton

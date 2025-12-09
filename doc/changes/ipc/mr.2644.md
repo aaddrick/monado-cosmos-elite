@@ -1,1 +1,0 @@
-- Change: Bump `IPC_MAX_CLIENTS` from 8 to 32.

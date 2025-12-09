@@ -1,1 +1,0 @@
-- Add: Support for `XR_FB_haptic_pcm` extension implementation on `xrt_device` driver.

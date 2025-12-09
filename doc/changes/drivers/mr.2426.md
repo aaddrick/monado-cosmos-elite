@@ -1,1 +1,0 @@
-- d/steamvr_lh: Support get_brightness and set_brightness

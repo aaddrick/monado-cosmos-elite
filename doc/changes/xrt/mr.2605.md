@@ -1,1 +1,0 @@
-- Add: Support for `XR_ANDROID_face_tracking`  extension implementation on `xrt_device` driver.

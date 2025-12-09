@@ -1,1 +1,0 @@
-- t/ctl: Add --set-brightness option

@@ -1,1 +1,0 @@
-- Change: Improve EGL context creation on client, and use and match reset notification strategy when creating a shared context.
