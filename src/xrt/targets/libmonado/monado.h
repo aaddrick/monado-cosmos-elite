@@ -406,7 +406,7 @@ mnd_root_recenter_local_spaces(mnd_root_t *root);
  *
  * @param root The libmonado state.
  * @param type The reference space.
- * @param offset A pointer to where the offset should be written.
+ * @param[out] out_offset A pointer to where the offset should be written.
  *
  * @return MND_SUCCESS on success
  */
@@ -434,7 +434,7 @@ mnd_root_set_reference_space_offset(mnd_root_t *root, mnd_reference_space_type_t
  *
  * @param root The libmonado state.
  * @param origin_id The ID of the tracking origin.
- * @param offset A pointer to where the offset should be written.
+ * @param[out] out_offset A pointer to where the offset should be written.
  *
  * @return MND_SUCCESS on success
  */
