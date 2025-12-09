@@ -286,7 +286,7 @@ ipc_client_xdev_destroy_plane_detection_ext(struct xrt_device *xdev, uint64_t pl
 }
 
 /*!
- * Helper function for @ref xrt_device::get_plane_detection_state.
+ * Helper function for @ref xrt_device::get_plane_detection_state_ext.
  *
  * @public @memberof xrt_device
  */
@@ -308,7 +308,7 @@ ipc_client_xdev_get_plane_detection_state_ext(struct xrt_device *xdev,
 }
 
 /*!
- * Helper function for @ref xrt_device::get_plane_detections.
+ * Helper function for @ref xrt_device::get_plane_detections_ext.
  *
  * @public @memberof xrt_device
  */
