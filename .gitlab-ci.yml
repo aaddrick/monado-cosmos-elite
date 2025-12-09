@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: CC0-1.0
-# SPDX-FileCopyrightText: 2018-2024 Collabora, Ltd. and the Monado contributors
+# SPDX-FileCopyrightText: 2018-2025 Collabora, Ltd. and the Monado contributors
 
 ###############################################
 # GENERATED - DO NOT EDIT
@@ -19,7 +19,7 @@ variables:
 
 include:
   - project: "freedesktop/ci-templates"
-    ref: 185ede0e9b9b1924b92306ab8b882a6294e92613
+    ref: fb9d50ccb3cbbb4c6dc5f9ef53a0ad3cb0d8a177
     file:
       - "/templates/debian.yml"
       - "/templates/ubuntu.yml"
