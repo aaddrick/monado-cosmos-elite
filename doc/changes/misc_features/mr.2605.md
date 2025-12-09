@@ -1,2 +1,1 @@
-### Added
-- oxr: Implements XR_ANDROID_face_tracking extension.
+- Added: Implement XR_ANDROID_face_tracking extension.

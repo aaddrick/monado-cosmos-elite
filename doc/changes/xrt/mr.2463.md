@@ -1,1 +1,1 @@
-Adds support for XR_FB_haptic_pcm extension
+Add: Support for `XR_FB_haptic_pcm` extension

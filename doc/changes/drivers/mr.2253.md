@@ -1,1 +1,5 @@
-d/solarxr: Add SolarXR IPC driver
+---
+- mr.2253
+- mr.2611
+---
+- d/solarxr: Add SolarXR IPC driver
