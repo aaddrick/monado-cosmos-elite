@@ -67,8 +67,8 @@ struct xrt_future_result
  * Each thread that references an xrt_future must properly manage the reference count using
  * @ref xrt_future_reference when entering and exiting the thread's scope.
  *
- * @see "Server-side / driver — implementing async callbacks" in @ref
- * [async-functions-and-futures](../../../../doc/async-functions-and-futures.md) for producer example code
+ * @see "Server-side / driver — implementing async callbacks" in @ref async for producer example
+ * code
  */
 struct xrt_future
 {
@@ -86,7 +86,7 @@ struct xrt_future
 	 * @brief Gets the current state of the future
 	 *
 	 * @param[in] xft          The future.
-	 * @param[out] out_state   The current state of @ref xft
+	 * @param[out] out_state   The current state of @p xft
 	 *
 	 * @note Consumer Interface
 	 *
@@ -100,7 +100,7 @@ struct xrt_future
 	 * @brief Gets the future results (after async operation has finished)
 	 *
 	 * @param[in] xft           The future.
-	 * @param[out] out_result   The future result of @ref xft
+	 * @param[out] out_result   The future result of @p xft
 	 *
 	 * @note Consumer Interface
 	 *
@@ -161,10 +161,10 @@ struct xrt_future
 	xrt_result_t (*is_cancel_requested)(const struct xrt_future *xft, bool *out_request_cancel);
 
 	/*!
-	 * @brief Signals that the asynchronous operation has completed and sets the future’s result.
+	 * @brief Signals that the asynchronous operation has completed and sets the future's result.
 	 *
 	 * @param[in] xft                  The future.
-	 * @param[in] ft_result            the result of an async operation associated with @ref xft.
+	 * @param[in] ft_result            the result of an async operation associated with @p xft.
 	 *
 	 * @note Producer interface
 	 *
@@ -265,10 +265,10 @@ xrt_future_cancel(struct xrt_future *xft)
  * @public @memberof xrt_future
  */
 static inline xrt_result_t
-xrt_future_wait(struct xrt_future *xft, int64_t timeout)
+xrt_future_wait(struct xrt_future *xft, int64_t timeout_ns)
 {
 	assert(xft && xft->wait);
-	return xft->wait(xft, timeout);
+	return xft->wait(xft, timeout_ns);
 }
 
 /*!

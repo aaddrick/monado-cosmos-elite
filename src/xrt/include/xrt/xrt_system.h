@@ -149,10 +149,10 @@ xrt_system_destroy(struct xrt_system **xsys_ptr)
  * Populated by a call from the @ref xrt_system_devices interface.
  *
  * When the caller of @ref xrt_system_devices_get_roles sees a change (based on
- * comparing @ref generation_id) the caller must do the needed actions to handle
- * device changes. For example, for the OpenXR state tracker this may include
- * rebinding, queuing a change to the current interaction profile, and queuing
- * the events associated with such a change.
+ * comparing @ref xrt_system_roles::generation_id) the caller must do the needed
+ * actions to handle device changes. For example, for the OpenXR state tracker
+ * this may include rebinding, queuing a change to the current interaction
+ * profile, and queuing the events associated with such a change.
  *
  * @see xrt_system_devices
  * @ingroup xrt_iface

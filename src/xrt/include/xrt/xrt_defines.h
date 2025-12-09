@@ -1867,14 +1867,14 @@ struct xrt_facial_base_expression_set_htc
 struct xrt_facial_eye_expression_set_htc
 {
 	struct xrt_facial_base_expression_set_htc base;
-	// ordered by xrt_eye_expression_htc
+	/// ordered by @ref xrt_eye_expression_htc
 	float expression_weights[XRT_FACIAL_EXPRESSION_EYE_COUNT_HTC];
 };
 
 struct xrt_facial_lip_expression_set_htc
 {
 	struct xrt_facial_base_expression_set_htc base;
-	// ordered by xrt_lip_expression_htc
+	/// ordered by @ref xrt_lip_expression_htc
 	float expression_weights[XRT_FACIAL_EXPRESSION_LIP_COUNT_HTC];
 };
 
@@ -1913,7 +1913,7 @@ struct xrt_facial_expression_set
 	};
 };
 
-// XR_FB_body_tracking
+/// @addtogroup XR_FB_body_tracking
 enum xrt_body_joint_fb
 {
 	XRT_BODY_JOINT_ROOT_FB = 0,
@@ -1990,7 +1990,7 @@ enum xrt_body_joint_fb
 	XRT_BODY_JOINT_NONE_FB = -1,
 };
 
-// XR_META_body_tracking_full_body
+/// @addtogroup XR_META_body_tracking_full_body
 enum xrt_full_body_joint_meta
 {
 	XRT_FULL_BODY_JOINT_ROOT_META = 0,
@@ -2081,6 +2081,7 @@ enum xrt_full_body_joint_meta
 	XRT_FULL_BODY_JOINT_NONE_META = 85,
 };
 
+/// @addtogroup XR_META_body_tracking_full_body
 enum xrt_body_joint_set_type_fb
 {
 	XRT_BODY_JOINT_SET_UNKNOWN = 0,
@@ -2090,7 +2091,7 @@ enum xrt_body_joint_set_type_fb
 	XRT_BODY_JOINT_SET_FULL_BODY_META,
 };
 
-// XR_META_body_tracking_calibration
+/// @addtogroup XR_META_body_tracking_calibration
 enum xrt_body_tracking_calibration_state_meta
 {
 	// Valid calibration, pose is safe to use
@@ -2101,7 +2102,7 @@ enum xrt_body_tracking_calibration_state_meta
 	XRT_BODY_TRACKING_CALIBRATION_STATE_INVALID_META = 3,
 };
 
-// XR_FB_body_tracking
+/// @addtogroup XR_FB_body_tracking
 struct xrt_body_skeleton_joint_fb
 {
 	struct xrt_pose pose;
@@ -2109,17 +2110,17 @@ struct xrt_body_skeleton_joint_fb
 	int32_t parent_joint;
 };
 
-// XR_FB_body_tracking
+/// @addtogroup XR_FB_body_tracking
 struct xrt_body_skeleton_fb
 {
-	// ordered by xrt_body_joint_fb
+	/// ordered by @ref xrt_body_joint_fb
 	struct xrt_body_skeleton_joint_fb joints[XRT_BODY_JOINT_COUNT_FB];
 };
 
-// XR_META_body_tracking_full_body
+/// @addtogroup  XR_META_body_tracking_full_body
 struct xrt_full_body_skeleton_meta
 {
-	// ordered by xrt_full_body_joint_meta
+	/// ordered by @ref xrt_full_body_joint_meta
 	struct xrt_body_skeleton_joint_fb joints[XRT_FULL_BODY_JOINT_COUNT_META];
 };
 

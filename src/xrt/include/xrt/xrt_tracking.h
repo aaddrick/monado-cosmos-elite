@@ -44,25 +44,25 @@ typedef int64_t timepoint_ns;
  */
 enum xrt_tracking_type
 {
-	// The device(s) are never tracked.
+	//! The device(s) are never tracked.
 	XRT_TRACKING_TYPE_NONE,
 
-	// The device(s) are tracked by RGB camera(s).
+	//! The device(s) are tracked by RGB camera(s).
 	XRT_TRACKING_TYPE_RGB,
 
-	// The device(s) are tracked by Ligthhouse
+	//! The device(s) are tracked by Ligthhouse
 	XRT_TRACKING_TYPE_LIGHTHOUSE,
 
-	// The device(s) are tracked by magnetic fields, eg. Razer Hydra.
+	//! The device(s) are tracked by magnetic fields, eg. Razer Hydra.
 	XRT_TRACKING_TYPE_MAGNETIC,
 
-	// The device(s) are tracked by external SLAM
+	//! The device(s) are tracked by external SLAM
 	XRT_TRACKING_TYPE_EXTERNAL_SLAM,
 
-	// The device(s) are tracked by other methods.
+	//! The device(s) are tracked by other methods.
 	XRT_TRACKING_TYPE_OTHER,
 
-	// The device(s) are (re)attachable.
+	//! The device(s) are (re)attachable.
 	XRT_TRACKING_TYPE_ATTACHABLE,
 };
 

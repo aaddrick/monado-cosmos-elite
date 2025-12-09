@@ -434,7 +434,7 @@ struct xrt_device
 	 * @brief Gets the face tracking calibration state
 	 *
 	 * @param[in] xdev                    The device.
-	 * @param[in] out_value               Is face tracking calibrated?
+	 * @param[in] out_face_is_calibrated  Is face tracking calibrated?
 	 *
 	 * @see xrt_input_name
 	 */
@@ -710,11 +710,8 @@ struct xrt_device
 	 * This function should never block, and never wait on congested locks.
 	 *
 	 * @param[in] xdev            The device.
-	 * @param[in] brightness      Desired display brightness. Usually between 0 and 1. Some devices may
-	 *                            allow exceeding 1 if the supported range exceeds 100%, but it will be clamped to
-	 *                            the supported range.
-	 * @param[in] relative        Whether to add \a brightness to the current brightness, instead of overwriting
-	 *                            the current brightness.
+	 * @param[in] mode            The mode to query with.
+	 * @param[out] out_info       Populated with the output data.
 	 */
 	xrt_result_t (*get_compositor_info)(struct xrt_device *xdev,
 	                                    const struct xrt_device_compositor_mode *mode,

@@ -24,6 +24,8 @@
 #include "xrt_windows.h"
 // Older MSVC versions do not have stdalign.h, define it manually using __declspec(align).
 #define XRT_ALIGNAS(n) __declspec(align(n))
+#elif defined(XRT_DOXYGEN)
+#define XRT_ALIGNAS(align)
 #else // _MSC_VER
 #include <stdalign.h>
 #define XRT_ALIGNAS(align) alignas(align)
