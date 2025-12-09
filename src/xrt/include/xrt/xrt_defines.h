@@ -2086,7 +2086,7 @@ enum xrt_body_joint_set_type_fb
 	XRT_BODY_JOINT_SET_UNKNOWN = 0,
 	// XR_FB_body_tracking
 	XRT_BODY_JOINT_SET_DEFAULT_FB,
-	// XR_Meta_body_tracking_full_body
+	// XR_META_body_tracking_full_body
 	XRT_BODY_JOINT_SET_FULL_BODY_META,
 };
 
@@ -2116,7 +2116,7 @@ struct xrt_body_skeleton_fb
 	struct xrt_body_skeleton_joint_fb joints[XRT_BODY_JOINT_COUNT_FB];
 };
 
-// XR_Meta_body_tracking_full_body
+// XR_META_body_tracking_full_body
 struct xrt_full_body_skeleton_meta
 {
 	// ordered by xrt_full_body_joint_meta
@@ -2160,7 +2160,7 @@ struct xrt_body_joint_set_fb
 	struct xrt_body_joint_location_fb joint_locations[XRT_BODY_JOINT_COUNT_FB];
 };
 
-// XR_Meta_body_tracking_full_body
+// XR_META_body_tracking_full_body
 struct xrt_full_body_joint_set_meta
 {
 	struct xrt_base_body_joint_set_meta base;
