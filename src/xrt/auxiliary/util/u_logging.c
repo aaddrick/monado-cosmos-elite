@@ -435,7 +435,7 @@ do_print(const char *file, int line, const char *func, enum u_logging_level leve
 	storage[printed++] = '\n';
 	storage[printed] = '\0'; // Don't count zero termination as printed.
 
-#if defined XRT_OS_WINDOWS
+#if defined(XRT_OS_WINDOWS)
 	// Visual Studio output needs the newline char
 	OutputDebugStringA(storage);
 #endif
