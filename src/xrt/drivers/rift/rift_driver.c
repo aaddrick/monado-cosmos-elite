@@ -344,7 +344,10 @@ rift_sensor_thread_tick(struct rift_hmd *hmd)
 
 		break;
 	}
-	case RIFT_VARIANT_DK1: return 0;
+	case RIFT_VARIANT_DK1: {
+		HMD_ERROR(hmd, "DK1 support not implemented yet");
+		return -1;
+	}
 	}
 
 	return 0;
@@ -380,6 +383,12 @@ rift_sensor_thread(void *ptr)
 	}
 
 	os_thread_helper_unlock(&hmd->sensor_thread);
+
+	if (result < 0) {
+		HMD_ERROR(hmd, "Sensor thread exiting due to error %d", result);
+	} else {
+		HMD_DEBUG(hmd, "Sensor thread exiting cleanly");
+	}
 
 	return NULL;
 }
