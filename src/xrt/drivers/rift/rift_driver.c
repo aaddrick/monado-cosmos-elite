@@ -14,11 +14,10 @@
  */
 
 #include "os/os_time.h"
+
 #include "xrt/xrt_defines.h"
 #include "xrt/xrt_device.h"
-
-#include "rift_interface.h"
-#include "rift_distortion.h"
+#include "xrt/xrt_results.h"
 
 #include "math/m_relation_history.h"
 #include "math/m_clock_tracking.h"
@@ -35,10 +34,13 @@
 #include "util/u_var.h"
 #include "util/u_visibility_mask.h"
 #include "util/u_trace_marker.h"
-#include "xrt/xrt_results.h"
 
 #include <stdio.h>
 #include <assert.h>
+
+#include "rift_distortion.h"
+#include "rift_internal.h"
+
 
 /*
  *
@@ -47,12 +49,9 @@
  */
 
 DEBUG_GET_ONCE_LOG_OPTION(rift_log, "RIFT_LOG", U_LOGGING_WARN)
-
-#define HMD_TRACE(hmd, ...) U_LOG_XDEV_IFL_T(&hmd->base, hmd->log_level, __VA_ARGS__)
-#define HMD_DEBUG(hmd, ...) U_LOG_XDEV_IFL_D(&hmd->base, hmd->log_level, __VA_ARGS__)
-#define HMD_INFO(hmd, ...) U_LOG_XDEV_IFL_I(&hmd->base, hmd->log_level, __VA_ARGS__)
-#define HMD_WARN(hmd, ...) U_LOG_XDEV_IFL_W(&hmd->base, hmd->log_level, __VA_ARGS__)
-#define HMD_ERROR(hmd, ...) U_LOG_XDEV_IFL_E(&hmd->base, hmd->log_level, __VA_ARGS__)
+DEBUG_GET_ONCE_FLOAT_OPTION(rift_override_icd_mm, "RIFT_OVERRIDE_ICD", 0.0f)
+DEBUG_GET_ONCE_BOOL_OPTION(rift_use_firmware_distortion, "RIFT_USE_FIRMWARE_DISTORTION", false)
+DEBUG_GET_ONCE_BOOL_OPTION(rift_power_override, "RIFT_POWER_OVERRIDE", false)
 
 /*
  *
@@ -90,8 +89,8 @@ rift_get_report(struct rift_hmd *hmd, uint8_t report_id, uint8_t *out, size_t ou
 static int
 rift_send_keepalive(struct rift_hmd *hmd)
 {
-	struct dk2_report_keepalive_mux report = {0, IN_REPORT_DK2,
-	                                          KEEPALIVE_INTERVAL_NS / 1000000}; // convert ns to ms
+	struct rift_dk2_keepalive_mux_report report = {0, IN_REPORT_DK2,
+	                                               KEEPALIVE_INTERVAL_NS / 1000000}; // convert ns to ms
 
 	int result = rift_send_report(hmd, FEATURE_REPORT_KEEPALIVE_MUX, &report, sizeof(report));
 
@@ -166,6 +165,225 @@ rift_set_config(struct rift_hmd *hmd, struct rift_config_report *config)
 	return rift_send_report(hmd, FEATURE_REPORT_CONFIG, config, sizeof(*config));
 }
 
+static float
+rift_decode_fixed_point_uint16(uint16_t value, uint16_t zero_value, int fractional_bits)
+{
+	float value_float = (float)value;
+	value_float -= (float)zero_value;
+	value_float *= 1.0f / (float)(1 << fractional_bits);
+	return value_float;
+}
+
+static void
+rift_parse_distortion_report(struct rift_lens_distortion_report *report, struct rift_lens_distortion *out)
+{
+	out->distortion_version = report->distortion_version;
+
+	switch (report->distortion_version) {
+	case RIFT_LENS_DISTORTION_LCSV_CATMULL_ROM_10_VERSION_1: {
+		struct rift_catmull_rom_distortion_report_data report_data = report->data.lcsv_catmull_rom_10;
+		struct rift_catmull_rom_distortion_data data;
+
+		out->eye_relief = MICROMETERS_TO_METERS(report_data.eye_relief);
+
+		for (uint16_t i = 0; i < CATMULL_COEFFICIENTS; i += 1) {
+			data.k[i] = rift_decode_fixed_point_uint16(report_data.k[i], 0, 14);
+		}
+		data.max_r = rift_decode_fixed_point_uint16(report_data.max_r, 0, 14);
+		data.meters_per_tan_angle_at_center =
+		    rift_decode_fixed_point_uint16(report_data.meters_per_tan_angle_at_center, 0, 19);
+		for (uint16_t i = 0; i < CHROMATIC_ABBERATION_COEFFEICENT_COUNT; i += 1) {
+			data.chromatic_abberation[i] =
+			    rift_decode_fixed_point_uint16(report_data.chromatic_abberation[i], 0x8000, 19);
+		}
+
+		out->data.lcsv_catmull_rom_10 = data;
+		break;
+	}
+	default: return;
+	}
+}
+
+/*
+ * Decode 3 tightly packed 21 bit values from 4 bytes.
+ * We unpack them in the higher 21 bit values first and then shift
+ * them down to the lower in order to get the sign bits correct.
+ *
+ * Code taken/reformatted from OpenHMD's rift driver
+ */
+static void
+rift_decode_sample(const uint8_t *in, int32_t *out)
+{
+	int x = (in[0] << 24) | (in[1] << 16) | ((in[2] & 0xF8) << 8);
+	int y = ((in[2] & 0x07) << 29) | (in[3] << 21) | (in[4] << 13) | ((in[5] & 0xC0) << 5);
+	int z = ((in[5] & 0x3F) << 26) | (in[6] << 18) | (in[7] << 10);
+
+	out[0] = x >> 11;
+	out[1] = y >> 11;
+	out[2] = z >> 11;
+}
+
+static void
+rift_sample_to_imu_space(const int32_t *in, struct xrt_vec3 *out)
+{
+	out->x = (float)in[0] * 0.0001f;
+	out->y = (float)in[1] * 0.0001f;
+	out->z = (float)in[2] * 0.0001f;
+}
+
+static int
+rift_sensor_thread_tick(struct rift_hmd *hmd)
+{
+	uint8_t buf[REPORT_MAX_SIZE];
+	int result;
+
+	int64_t now = os_monotonic_get_ns();
+
+	if (now - hmd->last_keepalive_time > KEEPALIVE_SEND_RATE_NS) {
+		result = rift_send_keepalive(hmd);
+
+		if (result < 0) {
+			HMD_ERROR(hmd, "Got error sending keepalive, assuming fatal, reason %d", result);
+			return result;
+		}
+	}
+
+	result = os_hid_read(hmd->hid_dev, buf, sizeof(buf), IMU_SAMPLE_RATE);
+
+	if (result < 0) {
+		HMD_ERROR(hmd, "Got error reading from device, assuming fatal, reason %d", result);
+		return result;
+	}
+
+	if (result == 0) {
+		HMD_WARN(hmd, "Timed out waiting for packet from headset, packets should come in at %dhz",
+		         IMU_SAMPLE_RATE);
+		return 0;
+	}
+
+	switch (hmd->variant) {
+	case RIFT_VARIANT_CV1:
+	case RIFT_VARIANT_DK2: {
+		// skip unknown commands
+		if (buf[0] != IN_REPORT_DK2) {
+			HMD_WARN(hmd, "Skipping unknown IN command %d", buf[0]);
+			return 0;
+		}
+
+		struct dk2_in_report report;
+
+		// don't treat invalid IN reports as fatal, just ignore them
+		if (result < (int)sizeof(report)) {
+			HMD_WARN(hmd, "Got malformed DK2 IN report with size %d", result);
+			return 0;
+		}
+
+		// TODO: handle endianness
+		memcpy(&report, buf + 1, sizeof(report));
+
+		// if there's no samples, just do nothing.
+		if (report.num_samples == 0) {
+			return 0;
+		}
+
+		if (!hmd->processed_sample_packet) {
+			hmd->last_remote_sample_time_us = report.sample_timestamp;
+			hmd->processed_sample_packet = true;
+		}
+
+		// wrap-around intentional and A-OK, given these are unsigned
+		uint32_t remote_sample_delta_us = report.sample_timestamp - hmd->last_remote_sample_time_us;
+
+		hmd->last_remote_sample_time_us = report.sample_timestamp;
+
+		hmd->last_remote_sample_time_ns += (int64_t)remote_sample_delta_us * OS_NS_PER_USEC;
+
+		m_clock_windowed_skew_tracker_push(hmd->clock_tracker, os_monotonic_get_ns(),
+		                                   hmd->last_remote_sample_time_ns);
+
+		int64_t local_timestamp_ns;
+		// if we haven't synchronized our clocks, just do nothing
+		if (!m_clock_windowed_skew_tracker_to_local(hmd->clock_tracker, hmd->last_remote_sample_time_ns,
+		                                            &local_timestamp_ns)) {
+			return 0;
+		}
+
+		if (report.num_samples > 1)
+			HMD_TRACE(hmd,
+			          "Had more than one sample queued! We aren't receiving IN reports fast enough, HMD "
+			          "had %d samples in the queue! Having to work back that first sample...",
+			          report.num_samples);
+
+		for (int i = 0; i < MIN(DK2_MAX_SAMPLES, report.num_samples); i++) {
+			struct rift_dk2_sample_pack latest_sample_pack = report.samples[i];
+
+			int32_t accel_raw[3], gyro_raw[3];
+			rift_decode_sample(latest_sample_pack.accel.data, accel_raw);
+			rift_decode_sample(latest_sample_pack.gyro.data, gyro_raw);
+
+			struct xrt_vec3 accel, gyro;
+			rift_sample_to_imu_space(accel_raw, &accel);
+			rift_sample_to_imu_space(gyro_raw, &gyro);
+
+			// work back the likely timestamp of the current sample
+			// if there's only one sample, then this will always be zero, if there's two or more samples,
+			// the previous samples will be offset by the sample rate of the IMU
+			int64_t sample_local_timestamp_ns =
+			    local_timestamp_ns - ((MIN(report.num_samples, DK2_MAX_SAMPLES) - 1) * NS_PER_SAMPLE);
+
+			// update the IMU for that sample
+			m_imu_3dof_update(&hmd->fusion, sample_local_timestamp_ns, &accel, &gyro);
+
+			// push the pose of the IMU for that sample, doing so per sample
+			struct xrt_space_relation relation = XRT_SPACE_RELATION_ZERO;
+			relation.relation_flags = (enum xrt_space_relation_flags)(
+			    XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT | XRT_SPACE_RELATION_ORIENTATION_VALID_BIT);
+			relation.pose.orientation = hmd->fusion.rot;
+			m_relation_history_push(hmd->relation_hist, &relation, sample_local_timestamp_ns);
+		}
+
+		break;
+	}
+	case RIFT_VARIANT_DK1: return 0;
+	}
+
+	return 0;
+}
+
+static void *
+rift_sensor_thread(void *ptr)
+{
+	U_TRACE_SET_THREAD_NAME("Rift sensor thread");
+
+	struct rift_hmd *hmd = (struct rift_hmd *)ptr;
+
+	os_thread_helper_lock(&hmd->sensor_thread);
+
+	// uncomment this to be able to see if things are actually progressing as expected in a debugger, without having
+	// to count yourself
+	// #define TICK_DEBUG
+
+	int result = 0;
+#ifdef TICK_DEBUG
+	int ticks = 0;
+#endif
+
+	while (os_thread_helper_is_running_locked(&hmd->sensor_thread) && result >= 0) {
+		os_thread_helper_unlock(&hmd->sensor_thread);
+
+		result = rift_sensor_thread_tick(hmd);
+
+		os_thread_helper_lock(&hmd->sensor_thread);
+#ifdef TICK_DEBUG
+		ticks += 1;
+#endif
+	}
+
+	os_thread_helper_unlock(&hmd->sensor_thread);
+
+	return NULL;
+}
+
 /*
  *
  * Driver functions
@@ -188,8 +406,9 @@ rift_hmd_destroy(struct xrt_device *xdev)
 
 	m_relation_history_destroy(&hmd->relation_hist);
 
-	if (hmd->lens_distortions)
-		free(hmd->lens_distortions);
+	// Only free if we are definitely the ones that allocated it
+	if (hmd->lens_distortions && debug_get_bool_option_rift_use_firmware_distortion())
+		free((void *)hmd->lens_distortions);
 
 	u_device_free(&hmd->base);
 }
@@ -260,224 +479,6 @@ rift_hmd_get_visibility_mask(struct xrt_device *xdev,
 	return XRT_SUCCESS;
 }
 
-static float
-rift_decode_fixed_point_uint16(uint16_t value, uint16_t zero_value, int fractional_bits)
-{
-	float value_float = (float)value;
-	value_float -= (float)zero_value;
-	value_float *= 1.0f / (float)(1 << fractional_bits);
-	return value_float;
-}
-
-static void
-rift_parse_distortion_report(struct rift_lens_distortion_report *report, struct rift_lens_distortion *out)
-{
-	out->distortion_version = report->distortion_version;
-
-	switch (report->distortion_version) {
-	case RIFT_LENS_DISTORTION_LCSV_CATMULL_ROM_10_VERSION_1: {
-		struct rift_catmull_rom_distortion_report_data report_data = report->data.lcsv_catmull_rom_10;
-		struct rift_catmull_rom_distortion_data data;
-
-		out->eye_relief = MICROMETERS_TO_METERS(report_data.eye_relief);
-
-		for (uint16_t i = 0; i < CATMULL_COEFFICIENTS; i += 1) {
-			data.k[i] = rift_decode_fixed_point_uint16(report_data.k[i], 0, 14);
-		}
-		data.max_r = rift_decode_fixed_point_uint16(report_data.max_r, 0, 14);
-		data.meters_per_tan_angle_at_center =
-		    rift_decode_fixed_point_uint16(report_data.meters_per_tan_angle_at_center, 0, 19);
-		for (uint16_t i = 0; i < CHROMATIC_ABBERATION_COEFFEICENT_COUNT; i += 1) {
-			data.chromatic_abberation[i] =
-			    rift_decode_fixed_point_uint16(report_data.chromatic_abberation[i], 0x8000, 19);
-		}
-
-		out->data.lcsv_catmull_rom_10 = data;
-		break;
-	}
-	default: return;
-	}
-}
-
-/*
- * Decode 3 tightly packed 21 bit values from 4 bytes.
- * We unpack them in the higher 21 bit values first and then shift
- * them down to the lower in order to get the sign bits correct.
- *
- * Code taken/reformatted from OpenHMD's rift driver
- */
-static void
-rift_decode_sample(const uint8_t *in, int32_t *out)
-{
-	int x = (in[0] << 24) | (in[1] << 16) | ((in[2] & 0xF8) << 8);
-	int y = ((in[2] & 0x07) << 29) | (in[3] << 21) | (in[4] << 13) | ((in[5] & 0xC0) << 5);
-	int z = ((in[5] & 0x3F) << 26) | (in[6] << 18) | (in[7] << 10);
-
-	out[0] = x >> 11;
-	out[1] = y >> 11;
-	out[2] = z >> 11;
-}
-
-static void
-rift_sample_to_imu_space(const int32_t *in, struct xrt_vec3 *out)
-{
-	out->x = (float)in[0] * 0.0001f;
-	out->y = (float)in[1] * 0.0001f;
-	out->z = (float)in[2] * 0.0001f;
-}
-
-static int
-sensor_thread_tick(struct rift_hmd *hmd)
-{
-	uint8_t buf[REPORT_MAX_SIZE];
-	int result;
-
-	int64_t now = os_monotonic_get_ns();
-
-	if (now - hmd->last_keepalive_time > KEEPALIVE_SEND_RATE_NS) {
-		result = rift_send_keepalive(hmd);
-
-		if (result < 0) {
-			HMD_ERROR(hmd, "Got error sending keepalive, assuming fatal, reason %d", result);
-			return result;
-		}
-	}
-
-	result = os_hid_read(hmd->hid_dev, buf, sizeof(buf), IMU_SAMPLE_RATE);
-
-	if (result < 0) {
-		HMD_ERROR(hmd, "Got error reading from device, assuming fatal, reason %d", result);
-		return result;
-	}
-
-	if (result == 0) {
-		HMD_WARN(hmd, "Timed out waiting for packet from headset, packets should come in at %dhz",
-		         IMU_SAMPLE_RATE);
-		return 0;
-	}
-
-	switch (hmd->variant) {
-	case RIFT_VARIANT_DK2: {
-		// skip unknown commands
-		if (buf[0] != IN_REPORT_DK2) {
-			HMD_WARN(hmd, "Skipping unknown IN command %d", buf[0]);
-			return 0;
-		}
-
-		struct dk2_in_report report;
-
-		// don't treat invalid IN reports as fatal, just ignore them
-		if (result < (int)sizeof(report)) {
-			HMD_WARN(hmd, "Got malformed DK2 IN report with size %d", result);
-			return 0;
-		}
-
-		// TODO: handle endianness
-		memcpy(&report, buf + 1, sizeof(report));
-
-		// if there's no samples, just do nothing.
-		if (report.num_samples == 0) {
-			return 0;
-		}
-
-		if (!hmd->processed_sample_packet) {
-			hmd->last_remote_sample_time_us = report.sample_timestamp;
-			hmd->processed_sample_packet = true;
-		}
-
-		// wrap-around intentional and A-OK, given these are unsigned
-		uint32_t remote_sample_delta_us = report.sample_timestamp - hmd->last_remote_sample_time_us;
-
-		hmd->last_remote_sample_time_us = report.sample_timestamp;
-
-		hmd->last_remote_sample_time_ns += (int64_t)remote_sample_delta_us * OS_NS_PER_USEC;
-
-		m_clock_windowed_skew_tracker_push(hmd->clock_tracker, os_monotonic_get_ns(),
-		                                   hmd->last_remote_sample_time_ns);
-
-		int64_t local_timestamp_ns;
-		// if we haven't synchronized our clocks, just do nothing
-		if (!m_clock_windowed_skew_tracker_to_local(hmd->clock_tracker, hmd->last_remote_sample_time_ns,
-		                                            &local_timestamp_ns)) {
-			return 0;
-		}
-
-		if (report.num_samples > 1)
-			HMD_TRACE(hmd,
-			          "Had more than one sample queued! We aren't receiving IN reports fast enough, HMD "
-			          "had %d samples in the queue! Having to work back that first sample...",
-			          report.num_samples);
-
-		for (int i = 0; i < MIN(DK2_MAX_SAMPLES, report.num_samples); i++) {
-			struct dk2_sample_pack latest_sample_pack = report.samples[i];
-
-			int32_t accel_raw[3], gyro_raw[3];
-			rift_decode_sample(latest_sample_pack.accel.data, accel_raw);
-			rift_decode_sample(latest_sample_pack.gyro.data, gyro_raw);
-
-			struct xrt_vec3 accel, gyro;
-			rift_sample_to_imu_space(accel_raw, &accel);
-			rift_sample_to_imu_space(gyro_raw, &gyro);
-
-			// work back the likely timestamp of the current sample
-			// if there's only one sample, then this will always be zero, if there's two or more samples,
-			// the previous samples will be offset by the sample rate of the IMU
-			int64_t sample_local_timestamp_ns =
-			    local_timestamp_ns - ((MIN(report.num_samples, DK2_MAX_SAMPLES) - 1) * NS_PER_SAMPLE);
-
-			// update the IMU for that sample
-			m_imu_3dof_update(&hmd->fusion, sample_local_timestamp_ns, &accel, &gyro);
-
-			// push the pose of the IMU for that sample, doing so per sample
-			struct xrt_space_relation relation = XRT_SPACE_RELATION_ZERO;
-			relation.relation_flags = (enum xrt_space_relation_flags)(
-			    XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT | XRT_SPACE_RELATION_ORIENTATION_VALID_BIT);
-			relation.pose.orientation = hmd->fusion.rot;
-			m_relation_history_push(hmd->relation_hist, &relation, sample_local_timestamp_ns);
-		}
-
-		break;
-	}
-	case RIFT_VARIANT_DK1: return 0;
-	}
-
-	return 0;
-}
-
-static void *
-sensor_thread(void *ptr)
-{
-	U_TRACE_SET_THREAD_NAME("Rift sensor thread");
-
-	struct rift_hmd *hmd = (struct rift_hmd *)ptr;
-
-	os_thread_helper_lock(&hmd->sensor_thread);
-
-	// uncomment this to be able to see if things are actually progressing as expected in a debugger, without having
-	// to count yourself
-	// #define TICK_DEBUG
-
-	int result = 0;
-#ifdef TICK_DEBUG
-	int ticks = 0;
-#endif
-
-	while (os_thread_helper_is_running_locked(&hmd->sensor_thread) && result >= 0) {
-		os_thread_helper_unlock(&hmd->sensor_thread);
-
-		result = sensor_thread_tick(hmd);
-
-		os_thread_helper_lock(&hmd->sensor_thread);
-#ifdef TICK_DEBUG
-		ticks += 1;
-#endif
-	}
-
-	os_thread_helper_unlock(&hmd->sensor_thread);
-
-	return NULL;
-}
-
 struct rift_hmd *
 rift_hmd_create(struct os_hid_device *dev, enum rift_variant variant, char *device_name, char *serial_number)
 {
@@ -513,7 +514,7 @@ rift_hmd_create(struct os_hid_device *dev, enum rift_variant variant, char *devi
 	}
 	HMD_DEBUG(hmd, "Got config from hmd, config flags: %X", hmd->config.config_flags);
 
-	if (getenv("RIFT_POWER_OVERRIDE") != NULL) {
+	if (debug_get_bool_option_rift_power_override()) {
 		hmd->config.config_flags |= RIFT_CONFIG_REPORT_OVERRIDE_POWER;
 		HMD_INFO(hmd, "Enabling the override power config flag.");
 	} else {
@@ -544,31 +545,36 @@ rift_hmd_create(struct os_hid_device *dev, enum rift_variant variant, char *devi
 	}
 	HMD_DEBUG(hmd, "After writing, HMD has config flags: %X", hmd->config.config_flags);
 
-	if (getenv("RIFT_USE_FIRMWARE_DISTORTION") != NULL) {
+	if (debug_get_bool_option_rift_use_firmware_distortion()) {
 		// get the lens distortions
-		struct rift_lens_distortion_report lens_distortion;
-		result = rift_get_lens_distortion(hmd, &lens_distortion);
+		struct rift_lens_distortion_report lens_distortion_report;
+		result = rift_get_lens_distortion(hmd, &lens_distortion_report);
 		if (result < 0) {
 			HMD_ERROR(hmd, "Failed to get lens distortion, reason %d", result);
 			goto error;
 		}
 
-		hmd->num_lens_distortions = lens_distortion.num_distortions;
-		hmd->lens_distortions = calloc(lens_distortion.num_distortions, sizeof(struct rift_lens_distortion));
+		hmd->num_lens_distortions = lens_distortion_report.num_distortions;
+		struct rift_lens_distortion *lens_distortions =
+		    calloc(lens_distortion_report.num_distortions, sizeof(struct rift_lens_distortion));
 
-		rift_parse_distortion_report(&lens_distortion, &hmd->lens_distortions[lens_distortion.distortion_idx]);
+		rift_parse_distortion_report(&lens_distortion_report,
+		                             &lens_distortions[lens_distortion_report.distortion_idx]);
 		// TODO: actually verify we initialize all the distortions. if the headset is working correctly, this
 		// should have happened, but you never know.
 		for (uint16_t i = 1; i < hmd->num_lens_distortions; i++) {
-			result = rift_get_lens_distortion(hmd, &lens_distortion);
+			result = rift_get_lens_distortion(hmd, &lens_distortion_report);
 			if (result < 0) {
 				HMD_ERROR(hmd, "Failed to get lens distortion idx %d, reason %d", i, result);
+				free(lens_distortions);
 				goto error;
 			}
 
-			rift_parse_distortion_report(&lens_distortion,
-			                             &hmd->lens_distortions[lens_distortion.distortion_idx]);
+			rift_parse_distortion_report(&lens_distortion_report,
+			                             &lens_distortions[lens_distortion_report.distortion_idx]);
 		}
+
+		hmd->lens_distortions = lens_distortions;
 
 		// TODO: pick the correct distortion for the eye relief setting the user has picked
 		hmd->distortion_in_use = 0;
@@ -630,18 +636,10 @@ rift_hmd_create(struct os_hid_device *dev, enum rift_variant variant, char *devi
 
 	hmd->extra_display_info.icd = MICROMETERS_TO_METERS(hmd->display_info.lens_separation);
 
-	char *icd_str = getenv("RIFT_OVERRIDE_ICD");
-	if (icd_str != NULL) {
-		// mm -> meters
-		float icd = strtof(icd_str, NULL) / 1000.0f;
-
-		// 0 is error, and less than zero is invalid
-		if (icd > 0.0f) {
-			hmd->extra_display_info.icd = icd;
-			HMD_INFO(hmd, "Forcing ICD to %f", hmd->extra_display_info.icd);
-		} else {
-			HMD_ERROR(hmd, "Failed to parse ICD override, expected float in millimeters, got %s", icd_str);
-		}
+	float icd_override_mm = debug_get_float_option_rift_override_icd_mm();
+	if (icd_override_mm > 0.0f) {
+		hmd->extra_display_info.icd = icd_override_mm / 1000.0f;
+		HMD_INFO(hmd, "Forcing ICD to %f", hmd->extra_display_info.icd);
 	} else {
 		HMD_DEBUG(hmd, "Using default ICD of %f", hmd->extra_display_info.icd);
 	}
@@ -701,7 +699,7 @@ rift_hmd_create(struct os_hid_device *dev, enum rift_variant variant, char *devi
 	m_imu_3dof_init(&hmd->fusion, M_IMU_3DOF_USE_GRAVITY_DUR_20MS);
 	hmd->clock_tracker = m_clock_windowed_skew_tracker_alloc(64);
 
-	result = os_thread_helper_start(&hmd->sensor_thread, sensor_thread, hmd);
+	result = os_thread_helper_start(&hmd->sensor_thread, rift_sensor_thread, hmd);
 
 	if (result < 0) {
 		HMD_ERROR(hmd, "Failed to start sensor thread");

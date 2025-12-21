@@ -10,10 +10,10 @@
 #include "xrt/xrt_prober.h"
 
 #include "util/u_misc.h"
+#include "util/u_logging.h"
 
-#include "rift_interface.h"
+#include "rift_internal.h"
 
-static const char DK2_PRODUCT_STRING[] = "Rift DK2";
 
 int
 rift_found(struct xrt_prober *xp,
@@ -56,7 +56,11 @@ rift_found(struct xrt_prober *xp,
 	switch (dev->product_id) {
 	case OCULUS_DK2_PID:
 		variant = RIFT_VARIANT_DK2;
-		name = DK2_PRODUCT_STRING;
+		name = RIFT_DK2_PRODUCT_STRING;
+		break;
+	case OCULUS_CV1_PID:
+		variant = RIFT_VARIANT_CV1;
+		name = RIFT_CV1_PRODUCT_STRING;
 		break;
 	default: return -1; break;
 	}
