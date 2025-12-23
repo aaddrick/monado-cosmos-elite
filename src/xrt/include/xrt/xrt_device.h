@@ -288,6 +288,7 @@ struct xrt_device_supported
 	bool form_factor_check;
 	bool stage;
 	bool face_tracking;
+	bool face_tracking_calibration_state;
 	bool body_tracking;
 	bool body_tracking_calibration;
 	bool battery_status;

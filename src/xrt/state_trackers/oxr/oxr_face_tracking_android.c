@@ -138,6 +138,11 @@ oxr_get_face_calibration_state_android(struct oxr_logger *log,
                                        struct oxr_face_tracker_android *facial_tracker_android,
                                        XrBool32 *faceIsCalibratedOutput)
 {
+	if (!facial_tracker_android->xdev->supported.face_tracking_calibration_state) {
+		return oxr_error(log, XR_ERROR_FEATURE_UNSUPPORTED,
+		                 "Device does not support getting the face tracking calibration state");
+	}
+
 	bool face_is_calibrated = false;
 	const xrt_result_t xret =
 	    xrt_device_get_face_calibration_state_android(facial_tracker_android->xdev, &face_is_calibrated);
