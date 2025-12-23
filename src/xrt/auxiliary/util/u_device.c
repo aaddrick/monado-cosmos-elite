@@ -591,6 +591,7 @@ u_device_populate_function_pointers(struct xrt_device *xdev,
 	 */
 	xdev->get_hand_tracking = u_device_ni_get_hand_tracking;
 	xdev->get_face_tracking = u_device_ni_get_face_tracking;
+	xdev->get_face_calibration_state_android = u_device_ni_get_face_calibration_state_android;
 	xdev->get_body_skeleton = u_device_ni_get_body_skeleton;
 	xdev->get_body_joints = u_device_ni_get_body_joints;
 	xdev->reset_body_tracking_calibration_meta = u_device_ni_reset_body_tracking_calibration_meta;

@@ -44,6 +44,13 @@ u_device_ni_get_face_tracking(struct xrt_device *xdev,
 }
 
 xrt_result_t
+u_device_ni_get_face_calibration_state_android(struct xrt_device *xdev, bool *out_face_is_calibrated)
+{
+	E(get_face_calibration_state_android);
+	return XRT_ERROR_NOT_IMPLEMENTED;
+}
+
+xrt_result_t
 u_device_ni_get_body_skeleton(struct xrt_device *xdev,
                               enum xrt_input_name body_tracking_type,
                               struct xrt_body_skeleton *out_value)

@@ -50,6 +50,14 @@ u_device_ni_get_face_tracking(struct xrt_device *xdev,
                               struct xrt_facial_expression_set *out_value);
 
 /*!
+ * Not implemented function for @ref xrt_device::get_face_tracking.
+ *
+ * @ingroup aux_util
+ */
+xrt_result_t
+u_device_ni_get_face_calibration_state_android(struct xrt_device *xdev, bool *out_face_is_calibrated);
+
+/*!
  * Not implemented function for @ref xrt_device::get_body_skeleton.
  *
  * @ingroup aux_util
