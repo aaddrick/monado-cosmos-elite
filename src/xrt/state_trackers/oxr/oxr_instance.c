@@ -197,18 +197,25 @@ detect_engine(struct oxr_logger *log, struct oxr_instance *inst, const XrInstanc
 }
 
 static void
-apply_quirks(struct oxr_logger *log, struct oxr_instance *inst)
+apply_quirks(struct oxr_logger *log, struct oxr_instance *inst, const XrInstanceCreateInfo *create_info)
 {
 	// Reset.
 	inst->quirks.skip_end_session = false;
 	inst->quirks.disable_vulkan_format_depth = false;
 	inst->quirks.disable_vulkan_format_depth_stencil = false;
 	inst->quirks.no_validation_error_in_create_ref_space = false;
+	inst->quirks.parallel_views = false;
 
 	if (starts_with("UnrealEngine", inst->appinfo.detected.engine.name) && //
 	    inst->appinfo.detected.engine.major == 4 &&                        //
 	    inst->appinfo.detected.engine.minor <= 27) {
 		inst->quirks.skip_end_session = true;
+	}
+
+	// This only works on Beat Saber <1.40.9, on newer versions
+	// the application name is "Unity Application" which is too generic.
+	if (strcmp("Beat Saber", create_info->applicationInfo.applicationName) == 0) {
+		inst->quirks.parallel_views = true;
 	}
 
 	// Currently always true.
@@ -391,7 +398,7 @@ oxr_instance_create(struct oxr_logger *log,
 	detect_engine(log, inst, createInfo);
 
 	// Apply any quirks
-	apply_quirks(log, inst);
+	apply_quirks(log, inst, createInfo);
 
 	u_var_add_root((void *)inst, "XrInstance", true);
 
