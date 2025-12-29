@@ -1311,6 +1311,9 @@ submit_projection_layer(struct oxr_session *sess,
 #endif // OXR_HAVE_KHR_composition_layer_depth
 
 	enum xrt_layer_composition_flags flags = convert_layer_flags(proj->layerFlags);
+	if (sess->sys->inst->quirks.no_texture_source_alpha) {
+		flags &= ~XRT_LAYER_COMPOSITION_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+	}
 
 	for (uint32_t i = 0; i < proj->viewCount; i++) {
 		scs[i] = XRT_CAST_OXR_HANDLE_TO_PTR(struct oxr_swapchain *, proj->views[i].subImage.swapchain);

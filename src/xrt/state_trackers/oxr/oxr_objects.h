@@ -1825,6 +1825,13 @@ struct oxr_instance
 
 		//! For applications that use stage and don't offer recentering.
 		bool map_stage_to_local_floor;
+
+		/*!
+		 * Beat Saber submits its projection layer with XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT set.
+		 * This breaks rendering because the game uses the alpha texture to store data for the bloom shader,
+		 * causing most of the game to render as black, only showing glowing parts of the image.
+		 */
+		bool no_texture_source_alpha;
 	} quirks;
 
 	//! Debug messengers
