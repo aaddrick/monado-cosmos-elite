@@ -119,7 +119,9 @@ Added config parsing case with lighthouse support (no camera tracking for extern
 ### 4. Fix buffer overflow in _get_lighthouse()
 **File**: `src/xrt/auxiliary/vive/vive_config.c`
 
-**The Bug**: The original code allocated the sensor array based on `map_size`, but indexed it using channel numbers from `channelMap` which could be larger than the array size.
+> **⚠️ UPSTREAM BUG**: This is a bug in upstream Monado, not specific to the Cosmos Elite. The Cosmos Elite triggers it because its lighthouse sensors use non-contiguous channel numbers that exceed the array bounds. Other devices with similar sensor configurations could also be affected. This fix should be submitted upstream to the Monado project.
+
+**The Bug**: The original code allocated the sensor array based on `map_size` (the number of sensors), but indexed into it using channel numbers from `channelMap`. Channel numbers can be sparse/non-contiguous (e.g., 0, 5, 10, 15...) and larger than the sensor count, causing writes past the end of the allocated array.
 
 **The Fix**:
 ```c
