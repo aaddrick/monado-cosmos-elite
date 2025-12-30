@@ -393,6 +393,11 @@ convert_imu_to_openxr(struct vive_device *d, struct xrt_vec3 *gyro, struct xrt_v
 
 		break;
 	}
+	case VIVE_VARIANT_COSMOS_ELITE: { // Use config-defined orientation
+		// IMU orientation is defined in config, no axis flip needed here
+		break;
+	}
+	case VIVE_VARIANT_BEYOND:
 	default: {
 		VIVE_ERROR(d, "Unhandled Vive variant");
 		return;
@@ -1232,6 +1237,7 @@ vive_device_create(struct os_hid_device *mainboard_dev,
 	case VIVE_VARIANT_PRO2: snprintf(d->base.str, XRT_DEVICE_NAME_LEN, "HTC Vive Pro 2 (vive)"); break;
 	case VIVE_VARIANT_INDEX: snprintf(d->base.str, XRT_DEVICE_NAME_LEN, "Valve Index (vive)"); break;
 	case VIVE_VARIANT_BEYOND: snprintf(d->base.str, XRT_DEVICE_NAME_LEN, "Bigscreen Beyond (vive)"); break;
+	case VIVE_VARIANT_COSMOS_ELITE: snprintf(d->base.str, XRT_DEVICE_NAME_LEN, "HTC Vive Cosmos Elite (vive)"); break;
 	case VIVE_UNKNOWN: snprintf(d->base.str, XRT_DEVICE_NAME_LEN, "Unknown HMD (vive)"); break;
 	}
 	snprintf(d->base.serial, XRT_DEVICE_NAME_LEN, "%s", d->config.firmware.device_serial_number);

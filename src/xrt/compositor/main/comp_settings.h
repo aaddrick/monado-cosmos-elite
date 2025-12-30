@@ -31,6 +31,7 @@ XRT_MAYBE_UNUSED static const char *NV_DIRECT_ALLOWLIST[] = {
     "Sony SIE  HMD *08",           // PSVR
     "HTC Corporation HTC-VIVE",    // HTC Vive
     "HTC Corporation VIVE Pro",    // HTC Vive Pro
+    "HTC Corporation VIVE Cosmos", // HTC Vive Cosmos Elite
     "Oculus VR Inc. Rift",         // DK1, DK2 and CV1
     "Valve Corporation Index HMD", // Valve Index
     "Seiko/Epson SEC144A",         // Samsung Odyssey+

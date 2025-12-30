@@ -39,6 +39,9 @@ vive_determine_variant(const char *model_number)
 	} else if (strcmp(model_number, "Beyond") == 0) {
 		variant = VIVE_VARIANT_BEYOND;
 		U_LOG_D("Found Bigscreen Beyond HMD");
+	} else if (strcmp(model_number, "VIVE Cosmos External Tracking") == 0) {
+		variant = VIVE_VARIANT_COSMOS_ELITE;
+		U_LOG_D("Found HTC Vive Cosmos Elite HMD");
 	} else {
 		U_LOG_W("Failed to parse Vive HMD variant!\n\tfirmware.model_[number|name]: '%s'", model_number);
 	}

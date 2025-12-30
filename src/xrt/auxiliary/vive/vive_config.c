@@ -158,17 +158,24 @@ _get_lighthouse(struct vive_config *d, const cJSON *json)
 	}
 
 	uint32_t *map = U_TYPED_ARRAY_CALLOC(uint32_t, map_size);
-	struct lh_sensor *s = U_TYPED_ARRAY_CALLOC(struct lh_sensor, map_size);
 
+	// First pass: build the channel map and find max channel value
 	size_t i = 0;
 	const cJSON *item = NULL;
+	uint32_t max_channel = 0;
 	cJSON_ArrayForEach(item, json_map)
 	{
 		// Build the channel map
 		int map_item = 0;
 		u_json_get_int(item, &map_item);
 		map[i++] = (uint32_t)map_item;
+		if ((uint32_t)map_item > max_channel) {
+			max_channel = (uint32_t)map_item;
+		}
 	}
+
+	// Allocate sensor array based on max channel value + 1
+	struct lh_sensor *s = U_TYPED_ARRAY_CALLOC(struct lh_sensor, max_channel + 1);
 
 	i = 0;
 	item = NULL;
@@ -191,7 +198,7 @@ _get_lighthouse(struct vive_config *d, const cJSON *json)
 	map = NULL;
 
 	d->lh.sensors = s;
-	d->lh.sensor_count = map_size;
+	d->lh.sensor_count = max_channel + 1;
 
 
 	// Transform the sensors into IMU space.
@@ -361,6 +368,11 @@ _calculate_fov(struct vive_config *d)
 		h_meters = 0.07;
 		// eye relief knob adjusts this around [0.0255(near)-0.275(far)]
 		eye_to_screen_distance = 0.0255;
+	} else if (d->variant == VIVE_VARIANT_COSMOS_ELITE) {
+		// Cosmos Elite: 1440x1700 per eye, 90Hz
+		lens_horizontal_separation = 0.063;
+		h_meters = 0.068;
+		eye_to_screen_distance = 0.024;
 	}
 
 	double fov = 2 * atan2(w_meters - lens_horizontal_separation / 2.0, eye_to_screen_distance);
@@ -489,13 +501,36 @@ vive_config_parse(struct vive_config *d, char *json_string, enum u_logging_level
 		const cJSON *cameras_json = u_json_get(json, "tracked_cameras");
 		_get_cameras(d, cameras_json);
 	} break;
+	case VIVE_VARIANT_COSMOS_ELITE: {
+		// Cosmos Elite with external tracking uses lighthouse - no camera tracking needed
+		const cJSON *head = cJSON_GetObjectItemCaseSensitive(json, "head");
+		_get_pose_from_pos_x_z(head, &d->display.trackref);
+
+		const cJSON *imu = cJSON_GetObjectItemCaseSensitive(json, "imu");
+		_get_pose_from_pos_x_z(imu, &d->imu.trackref);
+
+		JSON_VEC3(imu, "acc_bias", &d->imu.acc_bias);
+		JSON_VEC3(imu, "acc_scale", &d->imu.acc_scale);
+		JSON_VEC3(imu, "gyro_bias", &d->imu.gyro_bias);
+
+		_get_lighthouse(d, json);
+
+		struct xrt_pose trackref_to_head;
+		struct xrt_pose imu_to_head;
+
+		math_pose_invert(&d->display.trackref, &trackref_to_head);
+		math_pose_transform(&trackref_to_head, &d->imu.trackref, &imu_to_head);
+
+		d->display.imuref = imu_to_head;
+		// No camera tracking for external lighthouse tracking
+	} break;
 	default:
 		VIVE_ERROR(d, "Unknown Vive variant.");
 		vive_config_teardown(d);
 		return false;
 	}
 
-	if (d->variant != VIVE_VARIANT_INDEX) {
+	if (d->variant != VIVE_VARIANT_INDEX && d->variant != VIVE_VARIANT_COSMOS_ELITE) {
 		JSON_STRING(json, "mb_serial_number", d->firmware.mb_serial_number);
 	}
 	if (d->variant == VIVE_VARIANT_VIVE) {
@@ -506,7 +541,7 @@ vive_config_parse(struct vive_config *d, char *json_string, enum u_logging_level
 
 	const cJSON *device_json = cJSON_GetObjectItemCaseSensitive(json, "device");
 	if (device_json) {
-		if (d->variant != VIVE_VARIANT_INDEX) {
+		if (d->variant != VIVE_VARIANT_INDEX && d->variant != VIVE_VARIANT_COSMOS_ELITE) {
 			JSON_DOUBLE(device_json, "persistence", &d->display.persistence);
 			JSON_FLOAT(device_json, "physical_aspect_x_over_y", &d->distortion.values[0].aspect_x_over_y);
 
