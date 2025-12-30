@@ -1,5 +1,19 @@
 # Monado - XR Runtime (XRT)
 
+## HTC Vive Cosmos Elite Support (Fork)
+
+**This fork adds support for the HTC Vive Cosmos Elite with external tracking faceplate (lighthouse-based tracking).**
+
+See [COSMOS_ELITE_SETUP.md](COSMOS_ELITE_SETUP.md) for detailed setup instructions.
+
+### Quick Summary of Changes
+- Added `VIVE_VARIANT_COSMOS_ELITE` device variant
+- Fixed buffer overflow in `_get_lighthouse()` sensor parsing
+- Added Cosmos Elite to NVIDIA direct mode allowlist
+- Full libsurvive integration for lighthouse tracking
+
+---
+
 <!--
 Copyright 2018-2021, Collabora, Ltd.
 

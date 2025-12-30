@@ -191,6 +191,66 @@ mkdir -p ~/.config/openxr/1
 echo '{"file_format_version":"1.0.0","runtime":{"library_path":"/usr/local/lib/libopenxr_monado.so"}}' > ~/.config/openxr/1/active_runtime.json
 ```
 
+### SteamVR Monado Driver
+
+Monado builds a SteamVR driver that can provide tracking to SteamVR. After installing Monado, copy the driver to SteamVR:
+
+```bash
+# The driver is installed to /usr/local/share/steamvr-monado/
+# Copy it to SteamVR's drivers folder:
+sudo cp -r /usr/local/share/steamvr-monado ~/.steam/steam/steamapps/common/SteamVR/drivers/monado
+
+# Or for debian-installation:
+sudo cp -r /usr/local/share/steamvr-monado ~/.steam/debian-installation/steamapps/common/SteamVR/drivers/monado
+```
+
+Configure SteamVR to use the Monado driver by editing `~/.steam/steam/config/steamvr.vrsettings`:
+
+```json
+{
+   "steamvr" : {
+      "forcedDriver" : "monado",
+      "activateMultipleDrivers" : true,
+      "requireHmd" : true
+   },
+   "driver_lighthouse" : {
+      "enable" : false
+   },
+   "driver_monado" : {
+      "enable" : true
+   }
+}
+```
+
+**Note**: The Monado SteamVR driver requires the `monado-service` to be running:
+```bash
+# Run with null compositor for tracking-only mode
+XRT_COMPOSITOR_NULL=1 monado-service
+```
+
+### OpenVR Paths Configuration
+
+If needed, register the external driver in `~/.config/openvr/openvrpaths.vrpath`:
+
+```json
+{
+    "config" : [
+        "/home/YOUR_USER/.steam/debian-installation/config"
+    ],
+    "external_drivers" : [
+        "/usr/local/share/steamvr-monado"
+    ],
+    "jsonid" : "vrpathreg",
+    "log" : [
+        "/home/YOUR_USER/.steam/debian-installation/logs"
+    ],
+    "runtime" : [
+        "/home/YOUR_USER/.steam/debian-installation/steamapps/common/SteamVR"
+    ],
+    "version" : 1
+}
+```
+
 ## Testing
 
 ### Test libsurvive
