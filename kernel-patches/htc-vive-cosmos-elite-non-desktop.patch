@@ -1,0 +1,34 @@
+From: Aaddrick Williams <aaddrick@gmail.com>
+Date: Tue, 31 Dec 2025 21:00:00 -0500
+Subject: [PATCH] drm/edid: Add HTC Vive Cosmos Elite and Vive Pro 2 to non-desktop list
+
+Add EDID quirks for HTC Vive Cosmos Elite (0xaa03) and Vive Pro 2
+(0xaa04) VR headsets to mark them as non-desktop displays.
+
+This allows Wayland compositors to properly identify these as VR
+headsets and offer them for DRM leasing, enabling VR runtimes like
+Monado and SteamVR to acquire the display.
+
+The Cosmos Elite with external tracking faceplate uses lighthouse
+base stations and has manufacturer ID "HVR" with product code 0xaa03.
+
+Signed-off-by: Aaddrick Williams <aaddrick@gmail.com>
+---
+ drivers/gpu/drm/drm_edid.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+--- a/drivers/gpu/drm/drm_edid.c
++++ b/drivers/gpu/drm/drm_edid.c
+@@ -222,9 +222,11 @@ static const struct edid_quirk {
+ 	EDID_QUIRK('V', 'L', 'V', 0x91be, BIT(EDID_QUIRK_NON_DESKTOP)),
+ 	EDID_QUIRK('V', 'L', 'V', 0x91bf, BIT(EDID_QUIRK_NON_DESKTOP)),
+
+-	/* HTC Vive and Vive Pro VR Headsets */
++	/* HTC Vive, Vive Pro, Vive Cosmos Elite, and Vive Pro 2 VR Headsets */
+ 	EDID_QUIRK('H', 'V', 'R', 0xaa01, BIT(EDID_QUIRK_NON_DESKTOP)),
+ 	EDID_QUIRK('H', 'V', 'R', 0xaa02, BIT(EDID_QUIRK_NON_DESKTOP)),
++	EDID_QUIRK('H', 'V', 'R', 0xaa03, BIT(EDID_QUIRK_NON_DESKTOP)),
++	EDID_QUIRK('H', 'V', 'R', 0xaa04, BIT(EDID_QUIRK_NON_DESKTOP)),
+
+ 	/* Oculus Rift DK1, DK2, CV1 and Rift S VR Headsets */
+ 	EDID_QUIRK('O', 'V', 'R', 0x0001, BIT(EDID_QUIRK_NON_DESKTOP)),

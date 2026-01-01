@@ -1,13 +1,13 @@
 # HTC Vive Cosmos Elite on Linux - Setup Guide
 
-This document details the process of getting an HTC Vive Cosmos Elite VR headset working on Linux (Pop!_OS 24.04) with SteamVR.
+This document details the process of getting an HTC Vive Cosmos Elite VR headset working on Linux with SteamVR/Monado.
 
 ## Hardware Configuration
 
 - **Headset**: HTC Vive Cosmos Elite with **External Tracking Faceplate** (lighthouse-based tracking)
 - **Base Stations**: SteamVR 1.0 Base Stations (channels B and C for optical sync)
 - **GPU**: NVIDIA GeForce RTX 4060
-- **OS**: Pop!_OS (Ubuntu-based) with kernel 6.17.9
+- **OS**: Tested on Pop!_OS 24.04 and Nobara Linux (Fedora-based)
 - **Display Protocol**: DisplayPort (DP-3)
 
 > **Important**: The Cosmos Elite with external tracking faceplate uses lighthouse base stations for positional tracking, unlike the regular Cosmos which uses inside-out camera tracking. This is a critical distinction for driver support.
@@ -64,10 +64,17 @@ cd monado-src
 git clone https://github.com/aaddrick/monado-cosmos-elite.git monado-src
 cd monado-src
 
-# Build dependencies
+# Build dependencies (Ubuntu/Pop!_OS)
 sudo apt install build-essential cmake libvulkan-dev libx11-dev libxxf86vm-dev \
     libxrandr-dev libxcb-randr0-dev libx11-xcb-dev libudev-dev libsystemd-dev \
     libeigen3-dev libcjson-dev glslang-tools libhidapi-dev libusb-1.0-0-dev
+
+# Build dependencies (Fedora/Nobara)
+sudo dnf install cmake gcc gcc-c++ ninja-build vulkan-headers vulkan-loader-devel \
+    mesa-libGL-devel mesa-libEGL-devel libX11-devel libXxf86vm-devel libXrandr-devel \
+    libxcb-devel xcb-util-devel libxkbcommon-devel systemd-devel eigen3-devel \
+    cjson-devel glslang glslc hidapi-devel libusb1-devel SDL2-devel libdrm-devel \
+    wayland-devel wayland-protocols-devel python3-devel
 
 # Configure and build
 mkdir build && cd build
@@ -269,14 +276,30 @@ monado-cli probe
 
 ## Current Blockers
 
-### NVIDIA Vulkan Direct Mode on X11
-The NVIDIA driver's `vkAcquireXlibDisplayEXT` returns `VK_ERROR_UNKNOWN` when trying to acquire the headset display. This is a known limitation of NVIDIA's Linux Vulkan implementation.
+### Kernel Non-Desktop Quirk (CRITICAL)
+
+The Linux kernel maintains a list of VR headsets that should be marked as "non-desktop" displays. The Cosmos Elite (EDID manufacturer "HVR", product code 0xaa03) is **missing** from this list in current kernels.
+
+Without this quirk:
+- Wayland compositors cannot offer the display for DRM leasing
+- The headset appears as a regular desktop monitor
+- VR runtimes cannot acquire exclusive display access
+
+**Solution**: Apply the kernel patch in `kernel-patches/htc-vive-cosmos-elite-non-desktop.patch` which adds:
+```c
+EDID_QUIRK('H', 'V', 'R', 0xaa03, BIT(EDID_QUIRK_NON_DESKTOP)),  // Cosmos Elite
+EDID_QUIRK('H', 'V', 'R', 0xaa04, BIT(EDID_QUIRK_NON_DESKTOP)),  // Vive Pro 2
+```
+
+This patch should be submitted upstream to the Linux kernel.
+
+### NVIDIA Vulkan Direct Mode on Wayland
+The NVIDIA driver's `vkAcquireXlibDisplayEXT` returns `VK_ERROR_UNKNOWN` when trying to acquire the headset display on Wayland. Even with the non-desktop quirk, NVIDIA's DRM lease support on Wayland is limited.
 
 **Potential Workarounds**:
-1. Run from a TTY (Ctrl+Alt+F3) without X11
-2. Use Wayland instead of X11
-3. Use WiVRn for wireless VR streaming
-4. Wait for NVIDIA driver improvements
+1. Run from a TTY (Ctrl+Alt+F3) without the desktop compositor
+2. Wait for NVIDIA driver improvements for DRM leasing
+3. Use AMD GPU (better Linux VR support)
 
 ### SteamVR viveVR Driver
 SteamVR's lighthouse driver hard-codes a requirement for the `viveVR` peer driver which only exists on Windows. This cannot be bypassed without SteamVR source code modifications.
