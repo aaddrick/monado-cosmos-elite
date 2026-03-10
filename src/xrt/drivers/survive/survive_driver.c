@@ -909,7 +909,7 @@ compute_distortion(struct xrt_device *xdev, uint32_t view, float u, float v, str
 	struct survive_device *d = (struct survive_device *)xdev;
 	u_compute_distortion_vive(&d->hmd.config.distortion.values[view], u, v, result);
 
-	if (d->hmd.config.variant == VIVE_VARIANT_PRO2) {
+	if (d->hmd.config.variant == VIVE_VARIANT_PRO2 || d->hmd.config.variant == VIVE_VARIANT_COSMOS_ELITE) {
 		// Flip Y coordinates
 		result->r.y = 1.0f - result->r.y;
 		result->g.y = 1.0f - result->g.y;

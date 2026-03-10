@@ -370,7 +370,7 @@ _calculate_fov(struct vive_config *d)
 		eye_to_screen_distance = 0.0255;
 	} else if (d->variant == VIVE_VARIANT_COSMOS_ELITE) {
 		// Cosmos Elite: 1440x1700 per eye, 90Hz
-		lens_horizontal_separation = 0.063;
+		lens_horizontal_separation = 0.055;
 		h_meters = 0.068;
 		eye_to_screen_distance = 0.024;
 	}

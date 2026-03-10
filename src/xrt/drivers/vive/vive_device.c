@@ -393,8 +393,13 @@ convert_imu_to_openxr(struct vive_device *d, struct xrt_vec3 *gyro, struct xrt_v
 
 		break;
 	}
-	case VIVE_VARIANT_COSMOS_ELITE: { // Use config-defined orientation
-		// IMU orientation is defined in config, no axis flip needed here
+	case VIVE_VARIANT_COSMOS_ELITE: {
+		accel->x = -accel->x;
+		accel->y = accel->y;
+		accel->z = -accel->z;
+		gyro->x = -gyro->x;
+		gyro->y = gyro->y;
+		gyro->z = -gyro->z;
 		break;
 	}
 	case VIVE_VARIANT_BEYOND:
@@ -989,7 +994,7 @@ compute_distortion(struct xrt_device *xdev, uint32_t view, float u, float v, str
 	struct vive_device *d = vive_device(xdev);
 	u_compute_distortion_vive(&d->config.distortion.values[view], u, v, result);
 
-	if (d->config.variant == VIVE_VARIANT_PRO2) {
+	if (d->config.variant == VIVE_VARIANT_PRO2 || d->config.variant == VIVE_VARIANT_COSMOS_ELITE) {
 		// Flip Y coordinates
 		result->r.y = 1.0f - result->r.y;
 		result->g.y = 1.0f - result->g.y;

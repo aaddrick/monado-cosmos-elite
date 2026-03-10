@@ -172,6 +172,13 @@ case VIVE_VARIANT_COSMOS_ELITE:
 "HTC Corporation VIVE Cosmos", // HTC Vive Cosmos Elite
 ```
 
+### 8. Fix upside-down display
+**File**: `src/xrt/drivers/survive/survive_driver.c`
+
+```c
+if (d->hmd.config.variant == VIVE_VARIANT_PRO2 || d->hmd.config.variant == VIVE_VARIANT_COSMOS_ELITE)
+```
+
 ## System Configuration
 
 ### udev Rules

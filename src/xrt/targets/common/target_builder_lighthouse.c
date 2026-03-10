@@ -581,7 +581,8 @@ lighthouse_open_system_impl(struct xrt_builder *xb,
 			case VIVE_PID:
 			case VIVE_PRO_MAINBOARD_PID:
 			case VIVE_PRO2_MAINBOARD_PID:
-			case VIVE_PRO_LHR_PID: {
+			case VIVE_PRO_LHR_PID:
+			case VIVE_COSMOS_ELITE_MAINBOARD_PID: {
 				struct vive_source *vs = vive_source_create(xfctx);
 				int num_devices = vive_found(          //
 				    xp,                                //
